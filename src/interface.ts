@@ -1,15 +1,14 @@
-import {ContractType, SubjectType} from './enum';
+import {ValidatorResult} from 'jsonschema';
+import {ContractStatusEnum, ContractType, SubjectType} from './enum';
 
 export interface ContractPolicyInfo {
     policyId: string;
-    policyName?: string;
-    policyText?: string;
-    fsmDescriptionInfo?: object;
+    policyText: string;
+    fsmDescriptionInfo: object;
     status?: number;
 }
 
 export interface ContractInfo {
-
     contractId: string;
     contractName: string;
     contractType: ContractType;
@@ -32,7 +31,6 @@ export interface ContractInfo {
     subjectType: SubjectType;
 
     // 合同状态机部分
-    contractPolicyInfo?: ContractPolicyInfo;
     fsmCurrentState?: string;
     fsmRunningStatus?: number;
     fsmDeclarations?: object;
@@ -41,10 +39,10 @@ export interface ContractInfo {
     policyId: string;
     sortId?: number;
     signature?: string;
-    status?: number;
+    status?: ContractStatusEnum;
     authStatus: number;
     uniqueKey?: string;
-    policyInfo?: PolicyInfo;
+    createDate?: Date;
 }
 
 export interface SubjectBaseInfo {
@@ -112,9 +110,41 @@ export interface IContractService {
 
     count(condition: object): Promise<number>;
 
+    setDefaultExecContract(contract: ContractInfo): Promise<boolean>;
+
     updateContractInfo(contract: ContractInfo, options: any): Promise<boolean>;
 
     addContractChangedHistory(contract: ContractInfo, fromState: string, toState: string, event: string, triggerDate: Date);
+
+    /**
+     * 签约标的物
+     * @param {CreateContractOptions} options
+     * @param {string | number} licenseeId
+     * @param {ContractType} contractType
+     * @returns {Promise<ContractInfo>}
+     */
+    signSubject(options: BeSignSubjectOptions, licenseeId: string | number, contractType: ContractType, sortId?: number): Promise<ContractInfo>;
+
+    /**
+     * 批量签约标的物
+     * @param {BeSignSubjectOptions[]} subjects
+     * @param {string | number} licenseeId
+     * @param {ContractType} contractType
+     * @param {SubjectType} subjectType
+     * @returns {Promise<ContractInfo[]>}
+     */
+    batchSignSubjects(subjects: BeSignSubjectOptions[], licenseeId: string | number, contractType: ContractType, subjectType: SubjectType): Promise<ContractInfo[]>;
+}
+
+export interface IPolicyService {
+
+    findOrCreatePolicy(subjectType: SubjectType, policyText: string): Promise<ContractPolicyInfo>;
+
+    findOne(condition: object, ...args): Promise<ContractPolicyInfo>;
+
+    find(condition: object, ...args): Promise<ContractPolicyInfo[]>;
+
+    findByIds(policyIds: string[], ...args): Promise<ContractPolicyInfo[]>;
 }
 
 export interface IOutsideApiService {
@@ -123,7 +153,7 @@ export interface IOutsideApiService {
 
     getNodeInfo(nodeId: number): Promise<NodeInfo>;
 
-    getSubjectInfo(subjectId: string, subjectType: string): Promise<SubjectBaseInfo>;
+    getSubjectInfo(subjectId: string, subjectType: SubjectType): Promise<SubjectBaseInfo>;
 
     getSubjectInfos(subjectIds: string[], subjectType: SubjectType): Promise<SubjectBaseInfo[]>;
 
@@ -132,4 +162,11 @@ export interface IOutsideApiService {
 
 export interface IEventHandler {
     handle(...args): Promise<any>;
+}
+
+/**
+ * 针对object做校验的基础接口
+ */
+export interface IJsonSchemaValidate {
+    validate(instance: object[] | object, ...args): ValidatorResult;
 }

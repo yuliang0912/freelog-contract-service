@@ -1,8 +1,8 @@
 import {isString} from 'lodash';
 import {provide, inject} from 'midway';
-import {ContractInfo} from '../../interface';
+import {ContractInfo, ContractPolicyInfo} from '../../interface';
 import {ArgumentError} from 'egg-freelog-base';
-import {ContractFsmEventEnum} from '../../enum';
+import {ContractFsmEventEnum, ContractFsmRunningStatusEnum} from '../../enum';
 
 @provide('contractFsmGenerator')
 export class ContractFsmGenerator {
@@ -12,19 +12,26 @@ export class ContractFsmGenerator {
     @inject()
     contractStateMachineBuilder;
 
-    contractWarpToFsm(contractInfo: ContractInfo) {
-        if (!contractInfo.contractPolicyInfo) {
+    contractWarpToFsm(contractInfo: ContractInfo, contractPolicyInfo: ContractPolicyInfo) {
+        if (!contractPolicyInfo) {
             throw new ArgumentError('param contractInfo.contractPolicyInfo is invalid');
         }
 
         const builder = this.contractStateMachineBuilder
-            .setFsmDescriptionInfo(contractInfo.contractPolicyInfo.fsmDescriptionInfo)
+            .setFsmDescriptionInfo(contractPolicyInfo.fsmDescriptionInfo)
             .setAttachData({contractInfo})
             .setOnEnterStateEventHandle(this._onEnterStateEventHandle());
         if (isString(contractInfo.fsmCurrentState)) {
             builder.setInitialState(contractInfo.fsmCurrentState);
         }
         return builder.build();
+    }
+
+    isCanExecEvent(contractInfo: ContractInfo, contractPolicyInfo: ContractPolicyInfo, eventId: string): boolean {
+        if (contractInfo.fsmRunningStatus === ContractFsmRunningStatusEnum.Locked) {
+            return false;
+        }
+        return this.contractWarpToFsm(contractInfo, contractPolicyInfo).can(eventId);
     }
 
     _onEnterStateEventHandle(): (lifeCycle, ...args) => void {

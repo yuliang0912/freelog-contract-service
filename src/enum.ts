@@ -2,9 +2,9 @@
  * 标的物类型
  */
 export enum SubjectType {
-    Resource = 'Resource',
-    Presentable = 'Presentable',
-    UserGroup = 'UserGroup'
+    Resource = 1,
+    Presentable = 2,
+    UserGroup = 3
 }
 
 /**
@@ -65,7 +65,13 @@ export enum ContractFsmRunningStatusEnum {
      * 合同已终止
      * @type {number}
      */
-    Terminated = 8
+    Terminated = 8,
+
+    /**
+     * 初始化异常
+     * @type {number}
+     */
+    InitializedError = 16
 }
 
 export enum ContractAuthStatusEnum {
@@ -91,4 +97,23 @@ export enum ContractAuthStatusEnum {
      * @type {number}
      */
     Unknown = 8
+}
+
+export enum ContractStatusEnum {
+    /**
+     * 正常生效中
+     */
+    Executed = 0,
+
+    /**
+     * 合同已终止(未授权,并且不再接受新事件)
+     * @type {number}
+     */
+    Terminated = 1,
+
+    /**
+     * 异常的,例如签名不对,冻结等.
+     * @type {number}
+     */
+    Exception = 2
 }

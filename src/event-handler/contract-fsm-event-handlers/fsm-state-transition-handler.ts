@@ -27,16 +27,17 @@ export class ContractFsmStateTransitionHandler implements IEventHandler {
         const contractInfo = lifeCycle.fsm.contractInfo as ContractInfo;
         const history = lifeCycle.fsm.history as string[];
 
-        // 状态机默认初始化时,会触发一次从none到initialState的状态改变事件.此事件一般无意义,无需对事件作出实际数据变动
+        // 状态机默认初始化时,会触发一次从none到initialState的状态改变事件.此事件一般无意义,无需对事件作出回应
         if (history.length === 1 && contractInfo.fsmRunningStatus !== ContractFsmRunningStatusEnum.Uninitialized) {
             return;
         }
-        console.log(fromState, toState, eventId);
 
-        await this.contractService.addContractChangedHistory(contractInfo, fromState, toState, eventId, new Date()).then(console.log);
-        // return this.contractService.updateContractInfo(contractInfo, {
-        //     fsmCurrentState: toState,fsmRunningStatus:this._getContractFsmRunningStatus()
-        // });
+        console.log(`contract:${contractInfo.contractId} fsm state transition event: from ${fromState} to ${toState} by event [id:${eventId}]`);
+
+        await this.contractService.addContractChangedHistory(contractInfo, fromState, toState, eventId, new Date());
+        await this.contractService.updateContractInfo(contractInfo, {
+            fsmCurrentState: toState, fsmRunningStatus: this._getContractFsmRunningStatus()
+        });
     }
 
     /**

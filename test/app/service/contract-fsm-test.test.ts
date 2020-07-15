@@ -6,7 +6,7 @@ describe('test/app/contract', () => {
     it('#initial-contract', async () => {
         // 取出 userService
         // const contractFsmGenerator: any = await app.applicationContext.getAsync('contractFsmGenerator');
-        const contractPolicyCompiler: any = await app.applicationContext.getAsync('contractPolicyCompiler');
+        // const contractPolicyCompiler: any = await app.applicationContext.getAsync('contractPolicyCompiler');
         const contractEventHandler: any = await app.applicationContext.getAsync('contractEventHandler');
         const contractInfo: ContractInfo = {
             licensorId: 50020,
@@ -23,7 +23,7 @@ describe('test/app/contract', () => {
             subjectType: SubjectType.Presentable,
             contractId: '5d2ed69f4ff8021fcc7e8772',
             contractName: '合同名称',
-            contractPolicyInfo: contractPolicyCompiler.compilePolicyText('', '策略1'),
+            // contractPolicyInfo: contractPolicyCompiler.compilePolicyText('', '策略1'),
             policyId: 'aa1',
             fsmCurrentState: 'initial',
             fsmRunningStatus: ContractFsmRunningStatusEnum.Uninitialized,

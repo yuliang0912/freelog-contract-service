@@ -10,7 +10,7 @@ import {differenceWith, isEmpty, first} from 'lodash';
 @provide('outsideApiService')
 export class OutsideApiService implements IOutsideApiService {
 
-    readonly subjectWrapMap: Map<string, (subjectIds: string[]) => Promise<SubjectBaseInfo[]>> = new Map();
+    readonly subjectWrapMap: Map<SubjectType, (subjectIds: string[]) => Promise<SubjectBaseInfo[]>> = new Map();
     readonly licenseeWrapMap: Map<number, (licenseeId: string | number) => Promise<LicenseeInfo>> = new Map();
 
     @inject()
@@ -81,9 +81,9 @@ export class OutsideApiService implements IOutsideApiService {
      * @private
      */
     async _resourceInfoWrapToSubjectBaseInfo(resourceIds: string[]): Promise<SubjectBaseInfo[]> {
-        const resourceInfos = await this.ctx.curlIntranetApi(`${this.ctx.webApi.ResourceInfo}/list?resourceIds=${resourceIds.toString()}&projection=resourceName,userId,username,policies,status`);
+        const resourceInfos = await this.ctx.curlIntranetApi(`${this.ctx.webApi.resourceInfoV2}/list?resourceIds=${resourceIds.toString()}&projection=resourceName,userId,username,policies,status`);
         const invalidResourceIds = differenceWith(resourceIds, resourceInfos, (x, y: any) => x === y.resourceId);
-        if (isEmpty(invalidResourceIds)) {
+        if (!isEmpty(invalidResourceIds)) {
             throw new ApplicationError(this.ctx.gettext('sign-subject-invalid-error', `,resourceId:[${invalidResourceIds.toString()}]`));
         }
         const offlineResourceIds = resourceInfos.filter((x: any) => x.status !== 1).map(x => x.resourceId);
@@ -114,7 +114,7 @@ export class OutsideApiService implements IOutsideApiService {
     async _presentableWrapToSubjectBaseInfo(presentableIds: string[]): Promise<SubjectBaseInfo[]> {
         const presentableInfos = await this.ctx.curlIntranetApi(`${this.ctx.webApi.presentableInfo}/list?presentableIds=${presentableIds.toString()}`);
         const invalidPresentableIds = differenceWith(presentableIds, presentableInfos, (x, y: any) => x === y.presentableId);
-        if (isEmpty(invalidPresentableIds)) {
+        if (!isEmpty(invalidPresentableIds)) {
             throw new ApplicationError(this.ctx.gettext('sign-subject-invalid-error', `,presentableIds:[${invalidPresentableIds.toString()}]`));
         }
         const offlinePresentableIds = presentableInfos.filter((x: any) => x.isOnline !== 1).map(x => x.presentableId);
@@ -147,7 +147,7 @@ export class OutsideApiService implements IOutsideApiService {
      * @private
      */
     async _resourceInfoWrapToLicenseeInfo(resourceId: string): Promise<LicenseeInfo> {
-        const resourceInfo = await this.ctx.curlIntranetApi(`${this.ctx.webApi.ResourceInfo}/${resourceId}?projection=resourceName,userId,username,status`);
+        const resourceInfo = await this.ctx.curlIntranetApi(`${this.ctx.webApi.resourceInfoV2}/${resourceId}?projection=resourceName,userId,username,status`);
         if (!resourceInfo) {
             throw new ApplicationError(this.ctx.gettext('resource-entity-not-found'));
         }

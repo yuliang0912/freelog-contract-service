@@ -3,7 +3,7 @@ import {ContractInfo} from '../../interface';
 import {hmacSha1} from 'egg-freelog-base/app/extend/helper/crypto_helper';
 import {pick} from 'lodash';
 import {ArgumentError} from 'egg-freelog-base';
-import {SubjectType} from '../../enum';
+import {SubjectType, ContractStatusEnum} from '../../enum';
 
 @scope('Singleton')
 @provide('contractInfoSignatureProvider')
@@ -12,7 +12,7 @@ export class ContractInfoSignatureProvider {
     @config('contractSignKey')
     contractSignKey: string;
     readonly contractUniqueKeySignFields = ['subjectId', 'subjectType', 'licenseeId', 'policyId', 'statusValue'];
-    readonly contractBaseInfoSignFields = ['contractId', 'licensorId', 'licensorOwnerId', 'licenseeId', 'licenseeOwnerId', 'subjectId', 'subjectType', 'policyId', 'currentFsmState', 'createDate'];
+    readonly contractBaseInfoSignFields = ['contractId', 'licensorId', 'licensorOwnerId', 'licenseeId', 'licenseeOwnerId', 'subjectId', 'subjectType', 'policyId', 'fsmCurrentState', 'createDate'];
 
     /**
      * 合同基础信息签名
@@ -41,8 +41,8 @@ export class ContractInfoSignatureProvider {
      * @returns {string}
      */
     contractBaseInfoUniqueKeyGenerate(contract: ContractInfo | { subjectId: string, subjectType: SubjectType, licenseeId: string | number, policyId: string, status: number, contractId?: string }): string {
-        // 正常终结允许重签的,则生成随机的key,绝不重复. 合约为终止或者异常的,不允许重签.
-        contract['statusValue'] = contract.status === 1 ? contract.contractId : 'unique';
+        // 只有正常终结的合同允许重签,其他状态的合约(正常或者异常等)不允许重签.
+        contract['statusValue'] = contract.status === ContractStatusEnum.Terminated ? contract.contractId : 'refuseSignContract';
         return this._contractSignature(contract, this.contractUniqueKeySignFields, this.contractSignKey);
     }
 
@@ -58,7 +58,7 @@ export class ContractInfoSignatureProvider {
         const signContractObject = pick(contract, signFields);
         const signContractObjectKeys = Object.keys(signContractObject).sort();
         if (signContractObjectKeys.length !== signFields.length) {
-            throw new ArgumentError('contract is invalid');
+            throw new ArgumentError('contract is invalid, signature failed');
         }
         const signText = signContractObjectKeys.map(key => signContractObject[key].toString()).join('-');
 

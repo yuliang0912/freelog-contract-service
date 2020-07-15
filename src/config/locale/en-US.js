@@ -6,7 +6,7 @@ module.exports = {
 
     'params-validate-failed': '参数%s校验失败',
 
-    'params-required-validate-failed': '缺少必选参数',
+    'params-required-validate-failed': '缺少必选参数%s',
 
     'params-comb-validate-failed': '组合参数%s校验失败',
 

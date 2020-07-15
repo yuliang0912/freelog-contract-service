@@ -10,9 +10,8 @@ export class ContractPolicyCompiler {
      * @param policyName
      * @returns {ContractPolicyInfo}
      */
-    compilePolicyText(policyText, policyName): ContractPolicyInfo {
+    compilePolicyText(policyText): ContractPolicyInfo {
         return {
-            policyName,
             policyId: '8cefe2f1dcc6dd0bdaadac946cb63dbc',
             policyText: 'for public:\n  initial:\n    active\n   presentable\n    terminate',
             fsmDescriptionInfo: {

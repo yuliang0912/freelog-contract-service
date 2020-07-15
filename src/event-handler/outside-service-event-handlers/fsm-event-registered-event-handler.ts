@@ -8,5 +8,4 @@ export class FsmEventRegisteredEventHandler implements IEventHandler {
     async handle() {
         return null;
     }
-
 }

@@ -1,4 +1,4 @@
-import {omit, assign, isNumber} from 'lodash';
+import {omit, assign, isUndefined, isNumber} from 'lodash';
 import {scope, provide} from 'midway';
 import {MongooseModelBase, IMongooseModelBase} from './mongoose-model-base';
 
@@ -57,16 +57,16 @@ export class ContractInfoModel extends MongooseModelBase implements IMongooseMod
             return this.id;
         });
         contractInfoScheme.virtual('isDefault').get(function (this: any) {
-            return this.execSortId === 1;
+            return isUndefined(this.sortId) ? undefined : this.sortId === 1;
         });
         contractInfoScheme.virtual('isAuth').get(function (this: any) {
-            return isNumber(this.authStatus) && (this.authStatus & 2) === 2;
+            return isUndefined(this.authStatus) ? undefined : isNumber(this.authStatus) && (this.authStatus & 2) === 2;
         });
         contractInfoScheme.virtual('isTestAuth').get(function (this: any) {
-            return isNumber(this.authStatus) && (this.authStatus & 4) === 4;
+            return isUndefined(this.authStatus) ? undefined : isNumber(this.authStatus) && (this.authStatus & 4) === 4;
         });
         contractInfoScheme.virtual('isPending').get(function (this: any) {
-            return isNumber(this.authStatus) && (this.authStatus & 8) === 8;
+            return isUndefined(this.authStatus) ? undefined : isNumber(this.authStatus) && (this.authStatus & 8) === 8;
         });
 
         return this.mongoose.model('contract-infos', contractInfoScheme);
@@ -77,7 +77,7 @@ export class ContractInfoModel extends MongooseModelBase implements IMongooseMod
             getters: true,
             virtuals: true,
             transform(doc, ret) {
-                return assign({contractId: doc.id}, omit(ret, ['_id', 'id', 'sortId', 'signature', 'fsmDeclarations']));
+                return assign({contractId: doc.id}, omit(ret, ['_id', 'id', 'sortId', 'signature', 'uniqueKey', 'fsmDeclarations']));
             }
         };
     }

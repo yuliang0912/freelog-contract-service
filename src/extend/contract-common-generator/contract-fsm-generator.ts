@@ -1,6 +1,6 @@
 import {isString} from 'lodash';
 import {provide, inject} from 'midway';
-import {ContractInfo, ContractPolicyInfo} from '../../interface';
+import {ContractInfo, ContractPolicyInfo, IContractFsmEventHandler} from '../../interface';
 import {ArgumentError} from 'egg-freelog-base';
 import {ContractFsmEventEnum, ContractFsmRunningStatusEnum} from '../../enum';
 
@@ -8,7 +8,7 @@ import {ContractFsmEventEnum, ContractFsmRunningStatusEnum} from '../../enum';
 export class ContractFsmGenerator {
 
     @inject()
-    contractEventHandler;
+    contractFsmEventHandler: IContractFsmEventHandler;
     @inject()
     contractStateMachineBuilder;
 
@@ -36,7 +36,7 @@ export class ContractFsmGenerator {
 
     _onEnterStateEventHandle(): (lifeCycle, ...args) => void {
         return (lifeCycle, ...args) => {
-            return this.contractEventHandler.emitContractFsmEventHandle(ContractFsmEventEnum.FsmStateTransition, lifeCycle, ...args);
+            return this.contractFsmEventHandler.handle(ContractFsmEventEnum.FsmStateTransition, lifeCycle, ...args);
         };
     }
 }

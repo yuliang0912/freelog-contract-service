@@ -1,43 +1,47 @@
-import {IEventHandler} from '../interface';
-import {ApplicationError} from 'egg-freelog-base';
-import {provide, scope, init, inject} from 'midway';
+import {provide, scope, inject} from 'midway';
 import {ContractEventEnum, ContractFsmEventEnum, OutsideServiceEventEnum} from '../enum';
+import {
+    ICommonEventHandler, IContractEventHandler, IContractFsmEventHandler, IOutsideServiceEventHandler
+} from '../interface';
 
 @scope('Singleton')
-@provide('contractEventHandler')
-export class ContractEventHandler {
+@provide('commonEventHandler')
+export class ContractEventHandler implements ICommonEventHandler {
 
     @inject()
-    initialContractEventHandler: IEventHandler;
+    contractEventHandler: IContractEventHandler;
     @inject()
-    contractFsmStateTransitionHandler: IEventHandler;
+    contractFsmEventHandler: IContractFsmEventHandler;
+    @inject()
+    outsideServiceEventHandler: IOutsideServiceEventHandler;
 
-    readonly contractEventHandlerMap: Map<ContractEventEnum, IEventHandler> = new Map();
-    readonly contractFsmEventHandlerMap: Map<ContractFsmEventEnum, IEventHandler> = new Map();
-    readonly outsideServiceEventHandlerMap: Map<OutsideServiceEventEnum, IEventHandler> = new Map();
-
-    async emitContractEvent(eventEnum: ContractEventEnum, ...args): Promise<any> {
-        return this._execEventHandle(this.contractEventHandlerMap, eventEnum, ...args);
+    /**
+     * 触发合同事件
+     * @param {ContractEventEnum} eventEnum
+     * @param args
+     * @returns {Promise<any>}
+     */
+    async contractEventHandle(eventEnum: ContractEventEnum, ...args): Promise<any> {
+        return this.contractEventHandler.handle(eventEnum, ...args);
     }
 
-    async emitContractFsmEventHandle(eventEnum: ContractFsmEventEnum, ...args): Promise<any> {
-        return this._execEventHandle(this.contractFsmEventHandlerMap, eventEnum, ...args);
+    /**
+     * 触发合同状态机事件
+     * @param {ContractFsmEventEnum} eventEnum
+     * @param args
+     * @returns {Promise<any>}
+     */
+    async contractFsmEventHandle(eventEnum: ContractFsmEventEnum, ...args): Promise<any> {
+        return this.contractFsmEventHandler.handle(eventEnum, ...args);
     }
 
-    async emitOutsideServiceEventHandle(eventEnum: OutsideServiceEventEnum, ...args): Promise<any> {
-        return this._execEventHandle(this.outsideServiceEventHandlerMap, eventEnum, ...args);
-    }
-
-    _execEventHandle(handleMap: Map<any, IEventHandler>, eventEnum, ...args) {
-        if (!handleMap.has(eventEnum)) {
-            throw new ApplicationError(`${eventEnum} even handler is not implement`);
-        }
-        return handleMap.get(eventEnum).handle(...args);
-    }
-
-    @init()
-    initialEventHandler() {
-        this.contractEventHandlerMap.set(ContractEventEnum.InitialContractFsmEvent, this.initialContractEventHandler);
-        this.contractFsmEventHandlerMap.set(ContractFsmEventEnum.FsmStateTransition, this.contractFsmStateTransitionHandler);
+    /**
+     * 触发接收到外部服务事件
+     * @param {OutsideServiceEventEnum} eventEnum
+     * @param args
+     * @returns {Promise<any>}
+     */
+    async outsideServiceEventHandle(eventEnum: OutsideServiceEventEnum, ...args): Promise<any> {
+        return this.outsideServiceEventHandler.handle(eventEnum, ...args);
     }
 }

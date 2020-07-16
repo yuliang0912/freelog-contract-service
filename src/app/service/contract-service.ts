@@ -1,8 +1,14 @@
 import * as  mongoose from 'mongoose';
-import {isString, pick, first, isEmpty, assign, isNumber} from 'lodash';
+import {isString, pick, isEmpty, assign, isNumber} from 'lodash';
 import {provide, inject} from 'midway';
 import {ArgumentError, LogicError} from 'egg-freelog-base';
-import {ContractInfo, BeSignSubjectOptions, IContractService, IOutsideApiService} from '../../interface';
+import {
+    ContractInfo,
+    BeSignSubjectOptions,
+    IContractService,
+    IOutsideApiService,
+    IContractEventHandler
+} from '../../interface';
 import {
     ContractAuthStatusEnum, ContractEventEnum,
     ContractFsmRunningStatusEnum, ContractStatusEnum,
@@ -15,17 +21,17 @@ export class ContractService implements IContractService {
     @inject()
     ctx;
     @inject()
-    contractEventHandler;
-    @inject()
     contractInfoProvider;
     @inject()
     contractPolicyInfoProvider;
     @inject()
     contractChangedHistoryProvider;
     @inject()
+    contractInfoSignatureProvider;
+    @inject()
     outsideApiService: IOutsideApiService;
     @inject()
-    contractInfoSignatureProvider;
+    contractEventHandler: IContractEventHandler;
 
     /**
      * 批量签约标的物
@@ -84,69 +90,9 @@ export class ContractService implements IContractService {
 
         const latestSignedContracts = await this.contractInfoProvider.insertMany(beSignContracts);
 
-        this.contractEventHandler.emitContractEvent(ContractEventEnum.InitialContractFsmEvent, latestSignedContracts).then();
+        this.contractEventHandler.handle(ContractEventEnum.InitialContractFsmEvent, latestSignedContracts).then();
 
         return [...latestSignedContracts, ...hasSignedAndEfficientContracts];
-    }
-
-    /**
-     * 签约标的物
-     * @param {CreateContractOptions} options
-     * @param {string | number} licenseeId
-     * @param {ContractType} contractType
-     * @returns {Promise<ContractInfo>}
-     */
-    async signSubject(options: BeSignSubjectOptions, licenseeId: string | number, contractType: ContractType, sortId?: number): Promise<ContractInfo> {
-
-        return this.batchSignSubjects([options], licenseeId, contractType, options.subjectType).then(list => first(list));
-        //
-        // const {isCanReSign, uniqueKey, signedContractInfo} = await this._checkIsCanReSignContract({
-        //     subjectId: options.subjectId,
-        //     subjectType: options.subjectType,
-        //     policyId: options.policyId,
-        //     status: ContractStatusEnum.Executed,
-        //     licenseeId
-        // });
-        // if (!isCanReSign) {
-        //     return signedContractInfo;
-        // }
-        //
-        // const licenseeInfo = await this.outsideApiService.getLicenseeInfo(licenseeId, contractType);
-        // const subjectBaseInfo = await this.outsideApiService.getSubjectInfo(options.subjectId, options.subjectType);
-        //
-        // // 策略目前专门存放在独立的策略库中.标的物属性中只记录策略ID以及自定义策略名称和启用状态
-        // const subjectPolicyInfo = subjectBaseInfo.policies.find(x => x.policyId === options.policyId);
-        // if (!subjectPolicyInfo || subjectPolicyInfo.status !== 1) {
-        //     throw new ArgumentError(this.ctx.gettext('subject-policy-check-failed'));
-        // }
-        // const contractPolicyInfo = await this.contractPolicyInfoProvider.findOne({policyId: subjectPolicyInfo.policyId});
-        //
-        // const {licenseeName, licenseeOwnerId, licenseeOwnerName} = licenseeInfo;
-        // const {licensorId, licensorName, licensorOwnerId, licensorOwnerName, subjectId, subjectName, subjectType} = subjectBaseInfo;
-        //
-        // const contract: ContractInfo = {
-        //     licensorId, licensorName, licensorOwnerId, licensorOwnerName,
-        //     licenseeId, licenseeName, licenseeOwnerId, licenseeOwnerName,
-        //     subjectId, subjectName, subjectType, contractType, uniqueKey,
-        //     contractId: mongoose.Types.ObjectId,
-        //     contractName: subjectPolicyInfo.policyName,
-        //     policyId: subjectPolicyInfo.policyId,
-        //     sortId: isNumber(sortId) ? sortId : 1,
-        //     fsmCurrentState: 'none',
-        //     authStatus: ContractAuthStatusEnum.Unknown,
-        //     status: ContractStatusEnum.Executed,
-        //     fsmRunningStatus: ContractFsmRunningStatusEnum.Uninitialized,
-        //     createDate: new Date()
-        // };
-        //
-        // contract.signature = this.contractInfoSignatureProvider.contractBaseInfoSignature(contract);
-        //
-        // const latestSignedContractInfo = await this.contractInfoProvider.create(contract);
-        //
-        // // 后续优化,一般来说只有用户的合同需要马上初始化并且获得授权结果,其他类型的合同实时性要求并没有那么高.所以初始化体系可以设计优先级别
-        // this.contractEventHandler.emitContractEvent(ContractEventEnum.InitialContractFsmEvent, latestSignedContractInfo, contractPolicyInfo).then();
-        //
-        // return latestSignedContractInfo;
     }
 
     /**
@@ -160,8 +106,8 @@ export class ContractService implements IContractService {
         if (isString(options.contractName)) {
             model.contractName = options.contractName;
         }
-        if (isNumber(options.sortIndex)) {
-            model.sortIndex = options.sortIndex;
+        if (isNumber(options.sortId)) {
+            model.sortId = options.sortId;
         }
         if (isNumber(options.authStatus)) {
             model.authStatus = options.authStatus;
@@ -237,10 +183,6 @@ export class ContractService implements IContractService {
                 histories: [fsmStateTransitionInfo]
             });
         });
-    }
-
-    async _checkIsCanReSignContract(baseInfo: { subjectId: string, subjectType: SubjectType, licenseeId: string | number, policyId: string, status: number, contractId?: string }): Promise<any> {
-        return this._checkIsCanReSignContracts([baseInfo]).then(list => first(list));
     }
 
     /**

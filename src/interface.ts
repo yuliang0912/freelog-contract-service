@@ -1,5 +1,12 @@
 import {ValidatorResult} from 'jsonschema';
-import {ContractStatusEnum, ContractType, SubjectType} from './enum';
+import {
+    ContractEventEnum,
+    ContractFsmEventEnum,
+    ContractStatusEnum,
+    ContractType,
+    OutsideServiceEventEnum,
+    SubjectType
+} from './enum';
 
 export interface ContractPolicyInfo {
     policyId: string;
@@ -85,16 +92,13 @@ export interface LicenseeInfo {
 
 export interface UpdateContractBaseInfoOptions {
     contractName?: string;
-    sortIndex?: number;
+    sortId?: number;
 }
 
 export interface BeSignSubjectOptions {
     subjectId: string;
-    subjectType: SubjectType;
     policyId: string;
 }
-
-// export toBeSigned
 
 export interface IContractService {
 
@@ -115,15 +119,6 @@ export interface IContractService {
     updateContractInfo(contract: ContractInfo, options: any): Promise<boolean>;
 
     addContractChangedHistory(contract: ContractInfo, fromState: string, toState: string, event: string, triggerDate: Date);
-
-    /**
-     * 签约标的物
-     * @param {CreateContractOptions} options
-     * @param {string | number} licenseeId
-     * @param {ContractType} contractType
-     * @returns {Promise<ContractInfo>}
-     */
-    signSubject(options: BeSignSubjectOptions, licenseeId: string | number, contractType: ContractType, sortId?: number): Promise<ContractInfo>;
 
     /**
      * 批量签约标的物
@@ -162,6 +157,26 @@ export interface IOutsideApiService {
 
 export interface IEventHandler {
     handle(...args): Promise<any>;
+}
+
+export interface IContractEventHandler {
+    handle(eventEnum: ContractEventEnum, ...args): Promise<any>;
+}
+
+export interface IContractFsmEventHandler {
+    handle(eventEnum: ContractFsmEventEnum, ...args): Promise<any>;
+}
+
+export interface IOutsideServiceEventHandler {
+    handle(eventEnum: OutsideServiceEventEnum, ...args): Promise<any>;
+}
+
+export interface ICommonEventHandler {
+    contractEventHandle(eventEnum: ContractEventEnum, ...args): Promise<any>;
+
+    contractFsmEventHandle(eventEnum: ContractFsmEventEnum, ...args): Promise<any>;
+
+    outsideServiceEventHandle(eventEnum: OutsideServiceEventEnum, ...args): Promise<any>;
 }
 
 /**

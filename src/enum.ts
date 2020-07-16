@@ -25,6 +25,8 @@ export enum ContractEventEnum {
      * 该事件会初始化策略声明信息.以及更改合同信息中的状态机相关属性.
      */
     InitialContractFsmEvent = 'InitialContractFsmEvent',
+
+    SetContractAuthStatusEvent = 'SetContractAuthStatusEvent',
 }
 
 /**
@@ -41,6 +43,95 @@ export enum ContractFsmEventEnum {
  */
 export enum OutsideServiceEventEnum {
 
+    /**
+     * 支付中心的支付订单状态改变事件
+     */
+    PaymentOrderStatusChangedEvent = 'auth#paymentOrderStatusChangedEvent',
+
+    /**
+     * 支付中心的支付订单状态改变事件
+     */
+    TransferRecordTradeStatusChangedEvent = 'auth#transferRecordTradeStatusChangedEvent',
+
+    /**
+     * 已注册的事件触发事件
+     */
+    RegisteredEventTriggerEvent = 'auth#RegisteredEventTriggerEvent',
+
+    /**
+     * 支付服务询问是否确认支付事件
+     */
+    InquirePaymentEvent = 'auth#inquirePaymentEvent',
+
+    /**
+     * 支付服务询问是否确认转账事件
+     */
+    InquireTransferEvent = 'auth#inquireTransferEvent',
+
+    /**
+     * 事件注册完成事件
+     */
+    RegisterCompletedEvent = 'auth#registerCompletedEvent',
+
+    /**
+     * 发行方案创建事件
+     */
+    ReleaseSchemeCreateEvent = 'auth#releaseSchemeCreateEvent',
+
+    /**
+     * 发行方案绑定合同事件
+     */
+    ReleaseSchemeBindContractEvent = 'auth#releaseSchemeBindContractEvent',
+
+    /**
+     * 发行方案授权状态变更事件
+     */
+    ReleaseSchemeAuthChangedEvent = 'auth#releaseSchemeAuthChangedEvent',
+
+    /**
+     * 发行方案所关联的合同授权发生变更事件
+     */
+    ReleaseContractAuthChangedEvent = 'auth#releaseContractAuthChangedEvent',
+
+    /**
+     * 发行方案授权重置事件(重新计算授权状态)
+     */
+    ReleaseSchemeAuthResetEvent = 'auth#releaseSchemeAuthResetEvent',
+
+    /**
+     * 生成方案授权信息事件
+     */
+    GenerateSchemeAuthInfoEvent = 'auth#generateSchemeAuthInfoEvent',
+
+    /**
+     * 节点合同授权发生变更事件
+     */
+    NodeContractAuthChangedEvent = 'auth#nodeContractAuthChangedEvent',
+
+    /**
+     * presentable授权结果重置事件(重新计算授权状态)
+     */
+    PresentableAuthResultResetEvent = 'auth#presentableAuthResultResetEvent',
+
+    /**
+     * presentable绑定关联合约事件
+     */
+    PresentableBindContractEvent = 'auth#presentableBindContractEvent',
+
+    /**
+     * presentable创建事件
+     */
+    PresentableCreatedEvent = 'auth#PresentableCreatedEvent',
+
+    /**
+     * presentable更新版本事件
+     */
+    PresentableLockedVersionChangedEvent = 'auth#presentableLockedVersionChangedEvent',
+
+    /**
+     * 生成presentable授权信息事件
+     */
+    GeneratePresentableAuthInfoEvent = 'auth#generatePresentableAuthInfoEvent',
 }
 
 export enum ContractFsmRunningStatusEnum {
@@ -117,3 +208,18 @@ export enum ContractStatusEnum {
      */
     Exception = 2
 }
+
+export enum IdentityTypeEnum {
+
+    /**
+     * 甲方
+     */
+    Licensor = 1,
+
+    /**
+     * 乙方
+     * @type {number}
+     */
+    Licensee = 2
+}
+

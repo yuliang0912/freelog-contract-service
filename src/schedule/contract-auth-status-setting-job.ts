@@ -1,6 +1,7 @@
 import {isEmpty} from 'lodash';
 import {provide, schedule, CommonSchedule, inject} from 'midway';
-import {ContractAuthStatusEnum, ContractFsmRunningStatusEnum, ContractStatusEnum} from '../enum';
+import {ContractAuthStatusEnum, ContractEventEnum, ContractFsmRunningStatusEnum, ContractStatusEnum} from '../enum';
+import {IContractEventHandler} from '../interface';
 
 const scheduleOptions = {
     cron: '0 */3 * * * *',
@@ -16,7 +17,7 @@ export class ContractAuthStatusSettingJob implements CommonSchedule {
     @inject()
     contractInfoProvider;
     @inject()
-    contractEventHandler;
+    contractEventHandler: IContractEventHandler;
 
     async exec(ctx) {
 
@@ -28,6 +29,7 @@ export class ContractAuthStatusSettingJob implements CommonSchedule {
 
         if (!isEmpty(unknownAuthStatusContracts)) {
             console.log(`未知授权状态的合约数量:${unknownAuthStatusContracts.length}`);
+            await this.contractEventHandler.handle(ContractEventEnum.SetContractAuthStatusEvent, unknownAuthStatusContracts);
         }
     }
 }

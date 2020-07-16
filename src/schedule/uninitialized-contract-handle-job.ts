@@ -1,6 +1,7 @@
 import {isEmpty} from 'lodash';
 import {provide, schedule, CommonSchedule, inject} from 'midway';
 import {ContractEventEnum, ContractFsmRunningStatusEnum, ContractStatusEnum} from '../enum';
+import {IContractEventHandler} from "../interface";
 
 const scheduleOptions = {
     cron: '0 */5 * * * *',
@@ -16,7 +17,7 @@ export class UninitializedContractHandleJob implements CommonSchedule {
     @inject()
     contractInfoProvider;
     @inject()
-    contractEventHandler;
+    contractEventHandler: IContractEventHandler;
 
     async exec(ctx) {
 
@@ -30,7 +31,7 @@ export class UninitializedContractHandleJob implements CommonSchedule {
         }, null, {limit: 500, sort: {createDate: 1}});
 
         if (!isEmpty(uninitializedContracts)) {
-            await this.contractEventHandler.emitContractEvent(ContractEventEnum.InitialContractFsmEvent, uninitializedContracts);
+            await this.contractEventHandler.handle(ContractEventEnum.InitialContractFsmEvent, uninitializedContracts);
         }
     }
 }

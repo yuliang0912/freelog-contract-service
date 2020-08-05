@@ -35,5 +35,15 @@ export default () => {
         username: 'yuliang'
     };
 
+    config.rabbitMq = {
+        connOptions: {
+            host: '192.168.164.165',
+            port: 5672,
+            login: 'guest',
+            password: 'guest',
+            authMechanism: 'AMQPLAIN',
+        },
+    };
+
     return config;
 };

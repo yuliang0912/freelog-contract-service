@@ -53,10 +53,6 @@ export default (appInfo: EggAppInfo) => {
 
     config.rabbitMq = {
         connOptions: {
-            host: '192.168.164.165',
-            port: 5672,
-            login: 'guest',
-            password: 'guest',
             authMechanism: 'AMQPLAIN',
             heartbeat: 60  // 每2分钟保持一次连接
         },

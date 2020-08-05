@@ -18,5 +18,15 @@ export default () => {
         amzS3: {}
     };
 
+    config.rabbitMq = {
+        connOptions: {
+            host: 'rabbitmq-prod.common',
+            port: 5672,
+            login: 'prod_user_auth',
+            password: 'rabbit@freelog',
+            authMechanism: 'AMQPLAIN'
+        },
+    };
+
     return config;
 };

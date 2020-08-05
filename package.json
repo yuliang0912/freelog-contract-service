@@ -35,8 +35,8 @@
     "node": ">=10.16.0"
   },
   "scripts": {
-    "start": "egg-scripts start --title=freelog-contract-service-v2  --framework=midway --ts",
-    "stop": "egg-scripts stop  --title=freelog-contract-service-v2",
+    "start": "egg-scripts start --title=freelog-contract-service  --framework=midway --ts",
+    "stop": "egg-scripts stop  --title=freelog-contract-service",
     "start_build": "npm run build && cross-env NODE_ENV=development midway-bin dev",
     "clean": "midway-bin clean",
     "dev": "cross-env NODE_ENV=local port=7109 midway-bin dev --ts",

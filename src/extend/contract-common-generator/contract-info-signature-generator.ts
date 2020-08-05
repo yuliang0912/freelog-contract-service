@@ -55,13 +55,13 @@ export class ContractInfoSignatureProvider {
      * @private
      */
     _contractSignature(contract, signFields: string[], signKey: string): string {
+
         const signContractObject = pick(contract, signFields);
         const signContractObjectKeys = Object.keys(signContractObject).sort();
         if (signContractObjectKeys.length !== signFields.length) {
             throw new ArgumentError('contract is invalid, signature failed');
         }
         const signText = signContractObjectKeys.map(key => signContractObject[key].toString()).join('-');
-
         return hmacSha1(signText, signKey);
     }
 }

@@ -1,10 +1,10 @@
 import {scope, provide} from 'midway';
-import {omit, assign} from 'lodash';
+import {omit} from 'lodash';
 import {MongooseModelBase, IMongooseModelBase} from './mongoose-model-base';
 
 @scope('Singleton')
-@provide('model.ContractPolicyInfo')
-export class ContractPolicyInfoModel extends MongooseModelBase implements IMongooseModelBase {
+@provide('model.PolicyInfo')
+export class PolicyInfoModel extends MongooseModelBase implements IMongooseModelBase {
 
     buildMongooseModel() {
 
@@ -13,27 +13,31 @@ export class ContractPolicyInfoModel extends MongooseModelBase implements IMongo
          * 整个平台相同的策略会根据一定的算法计算.仅保留一份.
          */
         const contractPolicyInfoScheme = new this.mongoose.Schema({
+            userId: {type: Number, required: true},
             policyId: {type: String, required: true},
+            policyName: {type: String, required: true},
             policyText: {type: String, required: true},
             subjectType: {type: String, required: true},
+            // isPublic: {type: Number, required: false, enum: [0, 1], default: 0},
+            // 状态机描述信息.牵扯到具体的变量信息等,则保存在具体的合约中
             fsmDescriptionInfo: {type: this.mongoose.Schema.Types.Mixed, required: true},
             status: {type: Number, default: 0, required: true},
         }, {
             versionKey: false,
             timestamps: {createdAt: 'createDate', updatedAt: 'updateDate'},
-            toJSON: ContractPolicyInfoModel.toObjectOptions,
-            toObject: ContractPolicyInfoModel.toObjectOptions
+            toJSON: PolicyInfoModel.toObjectOptions,
+            toObject: PolicyInfoModel.toObjectOptions
         });
 
         contractPolicyInfoScheme.index({policyId: 1}, {unique: true});
 
-        return this.mongoose.model('contract-policy-infos', contractPolicyInfoScheme);
+        return this.mongoose.model('subject-policy-infos', contractPolicyInfoScheme);
     }
 
     static get toObjectOptions() {
         return {
             transform(doc, ret) {
-                return assign({contractId: doc.id}, omit(ret, ['_id', 'id']));
+                return omit(ret, ['_id', 'id']);
             }
         };
     }

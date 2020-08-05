@@ -1,18 +1,18 @@
 import * as  mongoose from 'mongoose';
-import {isString, pick, isEmpty, assign, isNumber} from 'lodash';
+import {isString, pick, first, isEmpty, assign, isNumber} from 'lodash';
 import {provide, inject} from 'midway';
-import {ArgumentError, LogicError} from 'egg-freelog-base';
+import {ArgumentError, ApplicationError, LogicError} from 'egg-freelog-base';
 import {
     ContractInfo,
     BeSignSubjectOptions,
     IContractService,
     IOutsideApiService,
-    IContractEventHandler
+    IContractEventHandler, IPolicyService, PolicyInfo
 } from '../../interface';
 import {
     ContractAuthStatusEnum, ContractEventEnum,
     ContractFsmRunningStatusEnum, ContractStatusEnum,
-    ContractType, SubjectType
+    IdentityType, SubjectType
 } from '../../enum';
 
 @provide('contractService')
@@ -23,7 +23,7 @@ export class ContractService implements IContractService {
     @inject()
     contractInfoProvider;
     @inject()
-    contractPolicyInfoProvider;
+    policyService: IPolicyService;
     @inject()
     contractChangedHistoryProvider;
     @inject()
@@ -35,12 +35,12 @@ export class ContractService implements IContractService {
 
     /**
      * 批量签约标的物
-     * @param {BeSignSubjectOptions[]} subjects
-     * @param {string | number} licenseeId
-     * @param {ContractType} contractType
-     * @returns {Promise<ContractInfo[]>}
+     * @param subjects
+     * @param licenseeId
+     * @param licenseeIdentityType
+     * @param subjectType
      */
-    async batchSignSubjects(subjects: BeSignSubjectOptions[], licenseeId: string | number, contractType: ContractType, subjectType: SubjectType): Promise<ContractInfo[]> {
+    async batchSignSubjects(subjects: BeSignSubjectOptions[], licenseeId: string | number, licenseeIdentityType: IdentityType, subjectType: SubjectType): Promise<ContractInfo[]> {
 
         const subjectMap: Map<string, any> = new Map(subjects.map(x => [x.subjectId, {policyId: x.policyId}]));
 
@@ -58,26 +58,27 @@ export class ContractService implements IContractService {
             return hasSignedAndEfficientContracts;
         }
 
-        const {licenseeName, licenseeOwnerId, licenseeOwnerName} = await this.outsideApiService.getLicenseeInfo(licenseeId, contractType);
+        const {licenseeName, licenseeOwnerId, licenseeOwnerName} = await this.outsideApiService.getLicenseeInfo(licenseeId, licenseeIdentityType);
         const beSignSubjectList = await this.outsideApiService.getSubjectInfos(beSignSubjects.map(x => x.subjectId), subjectType);
+        const beSignSubjectPolicyMap: Map<string, PolicyInfo> = await this.policyService.findByIds(beSignSubjects.map(x => x.policyId)).then(list => new Map(list.map(x => [x.policyId, x])));
 
         const invalidPolicyIds = [];
         const beSignContracts = beSignSubjectList.map(subjectInfo => {
             const beSignSubject = subjectMap.get(subjectInfo.subjectId);
             const {licensorId, licensorName, licensorOwnerId, policies, licensorOwnerName, subjectId, subjectName, subjectType} = subjectInfo;
             const subjectPolicyInfo = policies.find(x => x.policyId === beSignSubject.policyId);
-            if (!subjectPolicyInfo || subjectPolicyInfo.status !== 1) {
-                invalidPolicyIds.push(beSignSubject.policyId);
+            if (!subjectPolicyInfo || subjectPolicyInfo.status !== 1 || !beSignSubjectPolicyMap.has(beSignSubject.policyId)) {
+                invalidPolicyIds.push({subjectId: subjectInfo.subjectId, policyId: beSignSubject.policyId});
                 return;
             }
             const contract: ContractInfo = {
                 licensorId, licensorName, licensorOwnerId, licensorOwnerName,
-                licenseeId, licenseeName, licenseeOwnerId, licenseeOwnerName,
-                subjectId, subjectName, subjectType, contractType,
+                licenseeId, licenseeName, licenseeOwnerId, licenseeOwnerName, licenseeIdentityType,
+                subjectId, subjectName, subjectType,
                 contractId: mongoose.Types.ObjectId,
                 contractName: subjectPolicyInfo.policyName,
                 policyId: subjectPolicyInfo.policyId,
-                fsmCurrentState: 'none',
+                fsmCurrentState: '',
                 authStatus: ContractAuthStatusEnum.Unknown,
                 status: ContractStatusEnum.Executed,
                 fsmRunningStatus: ContractFsmRunningStatusEnum.Uninitialized,
@@ -87,6 +88,10 @@ export class ContractService implements IContractService {
             contract.uniqueKey = this.contractInfoSignatureProvider.contractBaseInfoUniqueKeyGenerate(contract);
             return contract;
         });
+
+        if (!isEmpty(invalidPolicyIds)) {
+            throw new ApplicationError(this.ctx.gettext('subject-policy-check-failed'), invalidPolicyIds);
+        }
 
         const latestSignedContracts = await this.contractInfoProvider.insertMany(beSignContracts);
 
@@ -118,7 +123,7 @@ export class ContractService implements IContractService {
         if (isNumber(options.fsmRunningStatus)) {
             model.fsmRunningStatus = options.fsmRunningStatus;
         }
-        if (isString(options.fsmCurrentState)) {
+        if (isString(options.fsmCurrentState) && options.fsmCurrentState.length) {
             model.fsmCurrentState = options.fsmCurrentState;
         }
         if (!Object.keys(model).length) {
@@ -134,7 +139,7 @@ export class ContractService implements IContractService {
      */
     async setDefaultExecContract(contract: ContractInfo): Promise<boolean> {
 
-        if (contract.contractType !== ContractType.UserToNode) {
+        if (contract.licenseeIdentityType !== IdentityType.ClientUser) {
             throw new LogicError('please check contractType');
         }
 
@@ -185,10 +190,35 @@ export class ContractService implements IContractService {
         });
     }
 
+    async addContractChangedHistoryAndLockFsmRunningStatus(contract: ContractInfo, fromState: string, toState: string, event: string, triggerDate: Date) {
+
+        const fsmStateTransitionInfo = {
+            fromState, toState, event, triggerDate
+        };
+        const existingHistoryInfo = await this.contractChangedHistoryProvider.findOne({contractId: contract.contractId}, {histories: {$slice: -1}});
+        if (existingHistoryInfo && !isEmpty(existingHistoryInfo.histories)) {
+            const latestEventRecord: any = first(existingHistoryInfo.histories);
+            // 逻辑上事件历史记录必须能够按状态机的事件接受顺序串联起来
+            if (latestEventRecord.toState !== fsmStateTransitionInfo.fromState) {
+                throw new LogicError(`please check contract event,add contract event history failed.contractId:${contract.contractId},eventId:${event}`);
+            }
+        }
+        if (existingHistoryInfo) {
+            await this.contractChangedHistoryProvider.updateOne({
+                contractId: contract.contractId
+            }, {$push: {histories: fsmStateTransitionInfo}});
+        } else {
+            await this.contractChangedHistoryProvider.create({
+                contractId: contract.contractId,
+                histories: [fsmStateTransitionInfo]
+            });
+        }
+        return this.contractInfoProvider.updateOne({_id: contract.contractId}, {fsmRunningStatus: ContractFsmRunningStatusEnum.Locked});
+    }
+
     /**
      * 检查合同是否可以重签
-     * @param {Array<{subjectId: string; subjectType: SubjectType; licenseeId: string | number; policyId: string; status: number; contractId?: string}>} baseInfos
-     * @returns {Promise<any>}
+     * @param baseInfos
      * @private
      */
     async _checkIsCanReSignContracts(baseInfos: Array<{ subjectId: string, subjectType: SubjectType, licenseeId: string | number, policyId: string, status: number, contractId?: string }>): Promise<any[]> {
@@ -200,7 +230,7 @@ export class ContractService implements IContractService {
         const hasSignedAndEfficientContracts = await this.find({uniqueKey: {$in: contractUniqueKeys}});
 
         return baseInfos.map(baseInfo => {
-            const existingContract = hasSignedAndEfficientContracts.find(x => x.subjectId === baseInfo.subjectId && x.subjectType === baseInfo.subjectType && x.policyId === baseInfo.policyId && x.licenseeId === baseInfo.licenseeId);
+            const existingContract = hasSignedAndEfficientContracts.find(x => x.subjectId === baseInfo.subjectId && x.subjectType === baseInfo.subjectType && x.policyId === baseInfo.policyId && x.licenseeId.toString() === baseInfo.licenseeId.toString());
             return assign(baseInfo, {
                 isCanReSign: !Boolean(existingContract),
                 signedContractInfo: existingContract

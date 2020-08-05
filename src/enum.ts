@@ -8,12 +8,12 @@ export enum SubjectType {
 }
 
 /**
- * 合同类型
+ * 身份类型
  */
-export enum ContractType {
-    ResourceToResource = 1,
-    NodeToResource = 2,
-    UserToNode = 3
+export enum IdentityType {
+    Resource = 1,
+    Node,
+    ClientUser
 }
 
 /**
@@ -72,66 +72,6 @@ export enum OutsideServiceEventEnum {
      * 事件注册完成事件
      */
     RegisterCompletedEvent = 'auth#registerCompletedEvent',
-
-    /**
-     * 发行方案创建事件
-     */
-    ReleaseSchemeCreateEvent = 'auth#releaseSchemeCreateEvent',
-
-    /**
-     * 发行方案绑定合同事件
-     */
-    ReleaseSchemeBindContractEvent = 'auth#releaseSchemeBindContractEvent',
-
-    /**
-     * 发行方案授权状态变更事件
-     */
-    ReleaseSchemeAuthChangedEvent = 'auth#releaseSchemeAuthChangedEvent',
-
-    /**
-     * 发行方案所关联的合同授权发生变更事件
-     */
-    ReleaseContractAuthChangedEvent = 'auth#releaseContractAuthChangedEvent',
-
-    /**
-     * 发行方案授权重置事件(重新计算授权状态)
-     */
-    ReleaseSchemeAuthResetEvent = 'auth#releaseSchemeAuthResetEvent',
-
-    /**
-     * 生成方案授权信息事件
-     */
-    GenerateSchemeAuthInfoEvent = 'auth#generateSchemeAuthInfoEvent',
-
-    /**
-     * 节点合同授权发生变更事件
-     */
-    NodeContractAuthChangedEvent = 'auth#nodeContractAuthChangedEvent',
-
-    /**
-     * presentable授权结果重置事件(重新计算授权状态)
-     */
-    PresentableAuthResultResetEvent = 'auth#presentableAuthResultResetEvent',
-
-    /**
-     * presentable绑定关联合约事件
-     */
-    PresentableBindContractEvent = 'auth#presentableBindContractEvent',
-
-    /**
-     * presentable创建事件
-     */
-    PresentableCreatedEvent = 'auth#PresentableCreatedEvent',
-
-    /**
-     * presentable更新版本事件
-     */
-    PresentableLockedVersionChangedEvent = 'auth#presentableLockedVersionChangedEvent',
-
-    /**
-     * 生成presentable授权信息事件
-     */
-    GeneratePresentableAuthInfoEvent = 'auth#generatePresentableAuthInfoEvent',
 }
 
 export enum ContractFsmRunningStatusEnum {
@@ -223,3 +163,22 @@ export enum IdentityTypeEnum {
     Licensee = 2
 }
 
+export enum ContractCanBeRegisteredEventEnum {
+
+    /**
+     * 周期事件
+     */
+    EndOfCycleEvent = 'A101',
+
+    /**
+     * 时间事件
+     * @type {string}
+     */
+    TimeEvent = 'A102',
+
+    /**
+     * 相对时间事件
+     * @type {string}
+     */
+    RelativeTimeEvent = 'A103'
+}

@@ -1,17 +1,10 @@
 import {isEmpty} from 'lodash';
+import {IContractEventHandler} from '../interface';
 import {provide, schedule, CommonSchedule, inject} from 'midway';
 import {ContractAuthStatusEnum, ContractEventEnum, ContractFsmRunningStatusEnum, ContractStatusEnum} from '../enum';
-import {IContractEventHandler} from '../interface';
-
-const scheduleOptions = {
-    cron: '0 */3 * * * *',
-    type: 'worker',
-    immediate: false, // 启动时是否立即执行一次
-    disable: false
-};
 
 @provide()
-@schedule(scheduleOptions)
+@schedule(ContractAuthStatusSettingJob.scheduleOptions)
 export class ContractAuthStatusSettingJob implements CommonSchedule {
 
     @inject()
@@ -31,5 +24,14 @@ export class ContractAuthStatusSettingJob implements CommonSchedule {
             console.log(`未知授权状态的合约数量:${unknownAuthStatusContracts.length}`);
             await this.contractEventHandler.handle(ContractEventEnum.SetContractAuthStatusEvent, unknownAuthStatusContracts);
         }
+    }
+
+    static get scheduleOptions() {
+        return {
+            cron: '0 */3 * * * *',
+            type: 'worker',
+            immediate: false, // 启动时是否立即执行一次
+            disable: false
+        };
     }
 }

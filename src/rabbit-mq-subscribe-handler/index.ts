@@ -21,13 +21,12 @@ export class RabbitMqSubscribeHandler {
      */
     subscribe() {
         const handlerFunc = this.messageHandle.bind(this);
-        const subscribeQueue = () => {
-            this.rabbitMq.queues.forEach(({name}) => this.rabbitClient.subscribe(name, handlerFunc));
-        };
+        const subscribeQueues = () => this.rabbitMq.queues.forEach(({name}) => this.rabbitClient.subscribe(name, handlerFunc));
+
         if (this.rabbitClient.isReady) {
-            subscribeQueue();
+            subscribeQueues();
         } else {
-            this.rabbitClient.on('ready', subscribeQueue);
+            this.rabbitClient.on('ready', subscribeQueues);
         }
     }
 
@@ -58,59 +57,28 @@ export class RabbitMqSubscribeHandler {
      * @private
      */
     @init()
-    __registerEventMap() {
+    initial() {
 
-        const {patrun} = this;
+        const eventRouteMap: Map<object, OutsideServiceEventEnum> = new Map();
 
-        patrun.add({routingKey: 'event.contract.trigger'}, OutsideServiceEventEnum.RegisteredEventTriggerEvent);
+        eventRouteMap.set({routingKey: 'event.contract.trigger'}, OutsideServiceEventEnum.RegisteredEventTriggerEvent);
 
-        patrun.add({
-            routingKey: 'event.payment.order',
-            eventName: 'PaymentOrderTradeStatusChanged'
+        eventRouteMap.set({
+            routingKey: 'event.payment.order', eventName: 'PaymentOrderTradeStatusChanged'
         }, OutsideServiceEventEnum.PaymentOrderStatusChangedEvent);
 
-        patrun.add({
-            routingKey: 'event.payment.order',
-            eventName: 'TransferRecordTradeStatusChanged'
+        eventRouteMap.set({
+            routingKey: 'event.payment.order', eventName: 'TransferRecordTradeStatusChanged'
         }, OutsideServiceEventEnum.TransferRecordTradeStatusChangedEvent);
 
-        patrun.add({
-            routingKey: 'event.payment.order',
-            eventName: 'inquirePaymentEvent'
+        eventRouteMap.set({
+            routingKey: 'event.payment.order', eventName: 'inquirePaymentEvent'
         }, OutsideServiceEventEnum.InquirePaymentEvent);
 
-        patrun.add({
-            routingKey: 'event.payment.order',
-            eventName: 'inquireTransferEvent'
+        eventRouteMap.set({
+            routingKey: 'event.payment.order', eventName: 'inquireTransferEvent'
         }, OutsideServiceEventEnum.InquireTransferEvent);
 
-        patrun.add({
-            routingKey: 'release.scheme.created',
-            eventName: 'releaseSchemeCreatedEvent'
-        }, OutsideServiceEventEnum.ReleaseSchemeCreateEvent);
-
-        patrun.add({
-            routingKey: 'release.scheme.bindContract', eventName: 'releaseSchemeBindContractEvent'
-        }, OutsideServiceEventEnum.ReleaseSchemeBindContractEvent);
-
-        patrun.add({
-            routingKey: 'auth.releaseScheme.authStatus.changed', eventName: 'releaseSchemeAuthChangedEvent'
-        }, OutsideServiceEventEnum.ReleaseSchemeAuthChangedEvent);
-
-        patrun.add({
-            routingKey: 'auth.releaseScheme.authStatus.reset', eventName: 'releaseSchemeAuthResultResetEvent'
-        }, OutsideServiceEventEnum.ReleaseSchemeAuthResetEvent);
-
-        patrun.add({
-            routingKey: 'contract.1.contractStatus.changed', eventName: 'contractAuthChangedEvent'
-        }, OutsideServiceEventEnum.ReleaseContractAuthChangedEvent);
-
-        patrun.add({
-            routingKey: 'contract.2.contractStatus.changed', eventName: 'contractAuthChangedEvent'
-        }, OutsideServiceEventEnum.NodeContractAuthChangedEvent);
-
-        patrun.add({
-            routingKey: 'node.presentable.created', eventName: 'presentableCreatedEvent'
-        }, OutsideServiceEventEnum.PresentableCreatedEvent);
+        eventRouteMap.forEach((value, key) => this.patrun.add(key, value));
     }
 }

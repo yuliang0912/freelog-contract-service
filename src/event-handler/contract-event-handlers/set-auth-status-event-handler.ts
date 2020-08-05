@@ -1,7 +1,7 @@
 import * as queue from 'async/queue';
 import {provide, scope} from 'midway';
 import {ContractInfo, IEventHandler} from '../../interface';
-import {ContractAuthStatusEnum} from '../../enum';
+import {ContractAuthStatusEnum, ContractFsmRunningStatusEnum} from '../../enum';
 
 @scope('Singleton')
 @provide('setAuthStatusEventHandler')
@@ -12,6 +12,9 @@ export class SetAuthStatusEventHandler implements IEventHandler {
 
     async handle(contractInfos: ContractInfo[]) {
         contractInfos.forEach(contractInfo => {
+            if (contractInfo.fsmRunningStatus === ContractFsmRunningStatusEnum.Uninitialized || contractInfo.fsmRunningStatus === ContractFsmRunningStatusEnum.InitializedError) {
+                return;
+            }
             if (contractInfo.authStatus !== ContractAuthStatusEnum.Unknown) {
                 return;
             }
@@ -27,7 +30,7 @@ export class SetAuthStatusEventHandler implements IEventHandler {
     }
 
     async _setAuthStatusEventHandle(contractInfo: ContractInfo) {
-        throw new Error('授权结果实际取决于标的物服务自身.需要等标的物服务先实现授权API');
+        throw new Error('授权结果实际取决于标的物服务自身.需要等标的物服务先实现授权API,然后调用授权服务的授权API获取结果');
     }
 
     async _callback() {

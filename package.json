@@ -1,18 +1,19 @@
 {
-  "name": "freelog-resource-provider",
+  "name": "freelog-contract-service",
   "version": "1.0.0",
   "description": "飞致网络合同服务!",
   "private": true,
   "dependencies": {
+    "@freelog/resource-policy-lang": "0.0.34",
     "ali-oss": "^6.10.0",
     "amqp": "^0.2.7",
     "async": "^3.2.0",
-    "egg-freelog-base": "^2.0.7",
+    "egg-freelog-base": "^2.0.10",
     "egg-scripts": "^2.10.0",
     "javascript-state-machine": "^3.1.0",
     "jsonschema": "^1.2.6",
     "midway": "^1.20.2",
-    "mongoose": "^5.9.24",
+    "mongoose": "^5.9.25",
     "patrun": "^4.0.0",
     "probe-image-size": "^5.0.0",
     "semver": "^7.3.2"
@@ -28,17 +29,17 @@
     "tslib": "^1.8.1",
     "tslint": "^5.11.0",
     "tslint-midway-contrib": "^1.20.1",
-    "typescript": "^3.9.6"
+    "typescript": "^3.9.7"
   },
   "engines": {
     "node": ">=10.16.0"
   },
   "scripts": {
-    "start": "egg-scripts start --daemon --title=midway-server-my_first_midway_project --framework=midway --ts",
-    "stop": "egg-scripts stop --title=midway-server-my_first_midway_project",
+    "start": "egg-scripts start --daemon --title=freelog-contract-service --framework=midway --ts",
+    "stop": "egg-scripts stop --title=freelog-contract-service",
     "start_build": "npm run build && cross-env NODE_ENV=development midway-bin dev",
     "clean": "midway-bin clean",
-    "dev": "cross-env NODE_ENV=local midway-bin dev --ts",
+    "dev": "cross-env NODE_ENV=local port=7109 midway-bin dev --ts",
     "debug": "cross-env NODE_ENV=local midway-bin debug --ts",
     "test": "npm run lint && midway-bin test --ts",
     "cov": "midway-bin cov --ts",

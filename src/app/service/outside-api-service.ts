@@ -1,6 +1,6 @@
 import {provide, inject, init} from 'midway';
 import {ApplicationError} from 'egg-freelog-base';
-import {SubjectType, ContractType} from '../../enum';
+import {SubjectType, IdentityType} from '../../enum';
 import {
     IOutsideApiService, LicenseeInfo, NodeInfo, SubjectBaseInfo, UserInfo
 } from '../../interface';
@@ -22,7 +22,7 @@ export class OutsideApiService implements IOutsideApiService {
      * @returns {Promise<UserInfo>}
      */
     async getUserInfo(userId: number): Promise<UserInfo> {
-        return this.ctx.curlIntranetApi(`${this.ctx.webApi.UserInfo}/${userId}`);
+        return this.ctx.curlIntranetApi(`${this.ctx.webApi.userInfo}/${userId}`);
     }
 
     /**
@@ -31,7 +31,7 @@ export class OutsideApiService implements IOutsideApiService {
      * @returns {Promise<NodeInfo>}
      */
     async getNodeInfo(nodeId: number): Promise<NodeInfo> {
-        return this.ctx.curlIntranetApi(`${this.ctx.webApi.NodeInfo}/${nodeId}`);
+        return this.ctx.curlIntranetApi(`${this.ctx.webApi.nodeInfoV2}/${nodeId}`);
     }
 
     /**
@@ -50,9 +50,8 @@ export class OutsideApiService implements IOutsideApiService {
 
     /**
      * 批量获取标的物信息
-     * @param {string} subjectId 标的物ID
-     * @param {SubjectType} subjectType 标的物类型
-     * @returns {Promise<SubjectBaseInfo>}
+     * @param subjectIds
+     * @param subjectType
      */
     async getSubjectInfos(subjectIds: string[], subjectType: SubjectType): Promise<SubjectBaseInfo[]> {
         if (!this.subjectWrapMap.has(subjectType)) {
@@ -64,14 +63,14 @@ export class OutsideApiService implements IOutsideApiService {
     /**
      * 获取乙方信息
      * @param {string | number} licenseeId
-     * @param {ContractType} contractType
+     * @param {IdentityType} identityType
      * @returns {Promise<LicenseeInfo>}
      */
-    async getLicenseeInfo(licenseeId: string | number, contractType: ContractType): Promise<LicenseeInfo> {
-        if (!this.licenseeWrapMap.has(contractType)) {
-            throw new ApplicationError(`please check code,not support contractType:${contractType}.`);
+    async getLicenseeInfo(licenseeId: string | number, identityType: IdentityType): Promise<LicenseeInfo> {
+        if (!this.licenseeWrapMap.has(identityType)) {
+            throw new ApplicationError(`please check code,not support identityType:${identityType}.`);
         }
-        return this.licenseeWrapMap.get(contractType).call(this, licenseeId);
+        return this.licenseeWrapMap.get(identityType).call(this, licenseeId);
     }
 
     /**
@@ -209,8 +208,8 @@ export class OutsideApiService implements IOutsideApiService {
         this.subjectWrapMap.set(SubjectType.Resource, this._resourceInfoWrapToSubjectBaseInfo);
         this.subjectWrapMap.set(SubjectType.Presentable, this._presentableWrapToSubjectBaseInfo);
 
-        this.licenseeWrapMap.set(ContractType.UserToNode, this._userInfoWrapToLicenseeInfo);
-        this.licenseeWrapMap.set(ContractType.NodeToResource, this._nodeInfoWrapToLicenseeInfo);
-        this.licenseeWrapMap.set(ContractType.ResourceToResource, this._resourceInfoWrapToLicenseeInfo);
+        this.licenseeWrapMap.set(IdentityType.ClientUser, this._userInfoWrapToLicenseeInfo);
+        this.licenseeWrapMap.set(IdentityType.Node, this._nodeInfoWrapToLicenseeInfo);
+        this.licenseeWrapMap.set(IdentityType.Resource, this._resourceInfoWrapToLicenseeInfo);
     }
 }

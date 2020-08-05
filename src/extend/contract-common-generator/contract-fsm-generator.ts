@@ -1,42 +1,63 @@
-import {isString} from 'lodash';
 import {provide, inject} from 'midway';
-import {ContractInfo, ContractPolicyInfo, IContractFsmEventHandler} from '../../interface';
 import {ArgumentError} from 'egg-freelog-base';
 import {ContractFsmEventEnum, ContractFsmRunningStatusEnum} from '../../enum';
+import {ContractInfo, PolicyInfo, IContractFsmEventHandler} from '../../interface';
 
 @provide('contractFsmGenerator')
 export class ContractFsmGenerator {
 
     @inject()
-    contractFsmEventHandler: IContractFsmEventHandler;
-    @inject()
     contractStateMachineBuilder;
+    @inject()
+    contractFsmEventHandler: IContractFsmEventHandler;
 
-    contractWarpToFsm(contractInfo: ContractInfo, contractPolicyInfo: ContractPolicyInfo) {
+    /**
+     * 合同转换为可执行的状态机
+     * @param {ContractInfo} contractInfo
+     * @param {ContractPolicyInfo} contractPolicyInfo
+     * @returns {any}
+     */
+    contractWarpToFsm(contractInfo: ContractInfo, contractPolicyInfo: PolicyInfo) {
         if (!contractPolicyInfo) {
             throw new ArgumentError('param contractInfo.contractPolicyInfo is invalid');
         }
-
-        const builder = this.contractStateMachineBuilder
-            .setFsmDescriptionInfo(contractPolicyInfo.fsmDescriptionInfo)
-            .setAttachData({contractInfo})
-            .setOnEnterStateEventHandle(this._onEnterStateEventHandle());
-        if (isString(contractInfo.fsmCurrentState)) {
-            builder.setInitialState(contractInfo.fsmCurrentState);
+        try {
+            return this.contractStateMachineBuilder
+                .setFsmDescriptionInfo(contractPolicyInfo.fsmDescriptionInfo)
+                .setAttachData({contractInfo})
+                .setOnEnterStateEventHandle(this._onEnterStateEventHandle(contractPolicyInfo.fsmDescriptionInfo))
+                .setInitialState(contractInfo.fsmCurrentState)
+                .build();
+        } catch (e) {
+            throw e;
         }
-        return builder.build();
     }
 
-    isCanExecEvent(contractInfo: ContractInfo, contractPolicyInfo: ContractPolicyInfo, eventId: string): boolean {
+    /**
+     * 是否可以执行指定的事件
+     * @param {ContractInfo} contractInfo
+     * @param {ContractPolicyInfo} contractPolicyInfo
+     * @param {string} eventId
+     * @returns {boolean}
+     */
+    isCanExecEvent(contractInfo: ContractInfo, contractPolicyInfo: PolicyInfo, eventId: string): boolean {
         if (contractInfo.fsmRunningStatus === ContractFsmRunningStatusEnum.Locked) {
             return false;
         }
         return this.contractWarpToFsm(contractInfo, contractPolicyInfo).can(eventId);
     }
 
-    _onEnterStateEventHandle(): (lifeCycle, ...args) => void {
+    _onEnterStateEventHandle(fsmDescriptionInfo: object): (lifeCycle, ...args) => void {
         return (lifeCycle, ...args) => {
-            return this.contractFsmEventHandler.handle(ContractFsmEventEnum.FsmStateTransition, lifeCycle, ...args);
+            const {fsm, from, to} = lifeCycle;
+            const history = fsm.history as string[];
+            const contractInfo = fsm.contractInfo as ContractInfo;
+            // 状态机默认初始化时,会触发一次从none到initialState的状态改变事件.此事件一般无意义,无需对事件作出回应
+            if (history.length === 1 && ![ContractFsmRunningStatusEnum.Uninitialized, ContractFsmRunningStatusEnum.InitializedError].includes(contractInfo.fsmRunningStatus)) {
+                return;
+            }
+            // fsm.fsmDescriptionInfo
+            return this.contractFsmEventHandler.handle(ContractFsmEventEnum.FsmStateTransition, contractInfo, fsmDescriptionInfo, from, to, fsm.currEvent, ...args);
         };
     }
 }

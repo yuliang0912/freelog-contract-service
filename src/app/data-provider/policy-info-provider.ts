@@ -3,8 +3,8 @@ import * as MongoBaseOperation from 'egg-freelog-base/lib/database/mongo-base-op
 
 @provide()
 @scope('Singleton')
-export default class ContractPolicyInfoProvider extends MongoBaseOperation {
-    constructor(@inject('model.ContractPolicyInfo') model) {
+export default class PolicyInfoProvider extends MongoBaseOperation {
+    constructor(@inject('model.PolicyInfo') model) {
         super(model);
     }
 }

@@ -1,7 +1,7 @@
-import {IContractFsmEventHandler, IEventHandler} from '../../interface';
 import {ApplicationError} from 'egg-freelog-base';
 import {provide, scope, init, inject} from 'midway';
 import {ContractFsmEventEnum} from '../../enum';
+import {IContractFsmEventHandler, IEventHandler} from '../../interface';
 
 @scope('Singleton')
 @provide('contractFsmEventHandler')

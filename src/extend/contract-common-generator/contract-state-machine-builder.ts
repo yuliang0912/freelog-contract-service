@@ -1,10 +1,10 @@
-import {forIn} from 'lodash';
+import {forIn, isString} from 'lodash';
 import * as StateMachine from 'javascript-state-machine';
 import {scope, provide} from 'midway';
 import {ApplicationError} from 'egg-freelog-base';
 import * as StateMachineHistory from 'javascript-state-machine/lib/history';
 
-@scope('Prototype')
+@scope('Prototype') // 每次都重新获取新实例
 @provide('contractStateMachineBuilder')
 export class ContractStateMachineBuilder {
 
@@ -12,6 +12,7 @@ export class ContractStateMachineBuilder {
     initialState: string;
     attachData: object = {};
     fsmDescriptionInfo;
+    isExecutedEvent = false; // freelog系统合约特性.每次事件单独创建一个状态机.不存在连续执行两次事件的情况
 
     /**
      * 构建状态机
@@ -20,7 +21,7 @@ export class ContractStateMachineBuilder {
         if (!this.fsmDescriptionInfo) {
             throw new ApplicationError('fsmDescriptionInfo is unset');
         }
-        const fmsConfig = {
+        const fsmConfig = {
             init: this.initialState,
             data: Object.assign(this.attachData, {currEvent: {eventId: this.initialState}}),
             transitions: this._fsmDescriptionInfoWarpToFsmTransitions(),
@@ -29,21 +30,25 @@ export class ContractStateMachineBuilder {
                 new StateMachineHistory()
             ]
         };
-        const stateMachine = new StateMachine(fmsConfig);
+        const stateMachine = new StateMachine(fsmConfig);
         stateMachine.execEvent = this.execEvent;
         return stateMachine;
     }
 
     async execEvent(this: any, event, ...otherArgs) {
         const {eventId} = event;
+        if (this.isExecutedEvent) {
+            throw new ApplicationError(`无效的事件,${eventId},状态机只支持执行1次事件`);
+        }
         if (!Reflect.has(this, eventId)) {
             throw new ApplicationError(`无效的事件,${eventId}`);
         }
         if (this.cannot(eventId)) {
             throw new ApplicationError(`合同当前状态,不能执行${event.eventId}事件`);
         }
+        this.isExecutedEvent = true;
         this.currEvent = event;
-        this.eventId.call(null, ...otherArgs);
+        this[eventId].call(this, ...otherArgs);
         return true;
     }
 
@@ -72,7 +77,11 @@ export class ContractStateMachineBuilder {
      * @returns {this}
      */
     setInitialState(initialState: string) {
-        this.initialState = initialState;
+        if (isString(initialState) && initialState.length) {
+            this.initialState = initialState;
+        } else {
+            this.initialState = 'none';
+        }
         return this;
     }
 

@@ -1,6 +1,6 @@
 import {provide, inject} from 'midway';
 // import {ArgumentError} from 'egg-freelog-base';
-import {IPolicyCompiler, IPolicyService, PolicyInfo} from '../../interface';
+import {IPolicyCompiler, IPolicyService, PageResult, PolicyInfo} from '../../interface';
 import {SubjectType} from '../../enum';
 
 @provide('policyService')
@@ -43,8 +43,13 @@ export class PolicyService implements IPolicyService {
         return this.policyInfoProvider.count(condition);
     }
 
-    async findPageList(condition: object, page: number, pageSize: number, projection: string[], orderBy?: object): Promise<PolicyInfo[]> {
-        return this.policyInfoProvider.findPageList(condition, page, pageSize, projection.join(' '), orderBy);
+    async findPageList(condition: object, page: number, pageSize: number, projection: string[], orderBy?: object): Promise<PageResult> {
+        let dataList = [];
+        const totalItem = await this.count(condition);
+        if (totalItem > (page - 1) * pageSize) {
+            dataList = await this.policyInfoProvider.findPageList(condition, page, pageSize, projection.join(' '), orderBy);
+        }
+        return {page, pageSize, totalItem, dataList};
     }
 
     async findOne(condition: object, ...args): Promise<PolicyInfo> {

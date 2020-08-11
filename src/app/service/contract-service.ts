@@ -7,7 +7,7 @@ import {
     BeSignSubjectOptions,
     IContractService,
     IOutsideApiService,
-    IContractEventHandler, IPolicyService, PolicyInfo
+    IContractEventHandler, IPolicyService, PolicyInfo, PageResult
 } from '../../interface';
 import {
     ContractAuthStatusEnum, ContractEventEnum,
@@ -79,7 +79,7 @@ export class ContractService implements IContractService {
                 contractName: subjectPolicyInfo.policyName,
                 policyId: subjectPolicyInfo.policyId,
                 fsmCurrentState: '',
-                authStatus: ContractAuthStatusEnum.Unknown,
+                authStatus: ContractAuthStatusEnum.Unauthorized,
                 status: ContractStatusEnum.Executed,
                 fsmRunningStatus: ContractFsmRunningStatusEnum.Uninitialized,
                 createDate: new Date()
@@ -143,7 +143,7 @@ export class ContractService implements IContractService {
             throw new LogicError('please check contractType');
         }
 
-        await this.contractInfoProvider.updateMany(pick(contract, ['subjectId', 'subjectType', 'licenseeId', 'contractType']), {sortId: 0});
+        await this.contractInfoProvider.updateMany(pick(contract, ['subjectId', 'subjectType', 'licenseeId']), {sortId: 0});
 
         return this.contractInfoProvider.updateOne({_id: contract.contractId}, {sortId: 1}).then(data => Boolean(data.ok));
     }
@@ -164,8 +164,13 @@ export class ContractService implements IContractService {
         return this.contractInfoProvider.find({_id: {$in: contractIds}}, ...args);
     }
 
-    async findPageList(condition: object, page: number, pageSize: number, projection: string[], orderBy: object): Promise<ContractInfo[]> {
-        return this.contractInfoProvider.findPageList(condition, page, pageSize, projection.join(' '), orderBy);
+    async findPageList(condition: object, page: number, pageSize: number, projection: string[], orderBy: object): Promise<PageResult> {
+        let dataList = [];
+        const totalItem = await this.count(condition);
+        if (totalItem > (page - 1) * pageSize) {
+            dataList = await this.contractInfoProvider.findPageList(condition, page, pageSize, projection.join(' '), orderBy);
+        }
+        return {page, pageSize, totalItem, dataList};
     }
 
     async count(condition: object): Promise<number> {

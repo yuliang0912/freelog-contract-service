@@ -1,4 +1,4 @@
-import { ContractInfo, BeSignSubjectOptions, IContractService, IOutsideApiService, IContractEventHandler, IPolicyService } from '../../interface';
+import { ContractInfo, BeSignSubjectOptions, IContractService, IOutsideApiService, IContractEventHandler, IPolicyService, PageResult } from '../../interface';
 import { IdentityType, SubjectType } from '../../enum';
 export declare class ContractService implements IContractService {
     ctx: any;
@@ -33,7 +33,7 @@ export declare class ContractService implements IContractService {
     findById(contractId: string, ...args: any[]): Promise<ContractInfo>;
     find(condition: object, ...args: any[]): Promise<ContractInfo[]>;
     findByIds(contractIds: string[], ...args: any[]): Promise<ContractInfo[]>;
-    findPageList(condition: object, page: number, pageSize: number, projection: string[], orderBy: object): Promise<ContractInfo[]>;
+    findPageList(condition: object, page: number, pageSize: number, projection: string[], orderBy: object): Promise<PageResult>;
     count(condition: object): Promise<number>;
     addContractChangedHistory(contract: ContractInfo, fromState: string, toState: string, event: string, triggerDate: Date): Promise<any>;
     addContractChangedHistoryAndLockFsmRunningStatus(contract: ContractInfo, fromState: string, toState: string, event: string, triggerDate: Date): Promise<any>;

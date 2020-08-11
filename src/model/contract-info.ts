@@ -1,6 +1,7 @@
-import {omit, assign, isUndefined, isNumber} from 'lodash';
+import {omit, assign, isNumber} from 'lodash';
 import {scope, provide} from 'midway';
 import {MongooseModelBase, IMongooseModelBase} from './mongoose-model-base';
+import {ContractAuthStatusEnum} from '../enum';
 
 @scope('Singleton')
 @provide('model.ContractInfo')
@@ -10,10 +11,7 @@ export class ContractInfoModel extends MongooseModelBase implements IMongooseMod
         /**
          * 合同信息,此次新版把策略信息提取出来放入contract-policy-info中存放.这样相同策略可以共用
          * 相比于旧版,此版本的策略减少了身份认证部分.调整成了签约限制.所以目前合约的授权只受状态机影响.
-         * 所以合同中设置了合同是否授权的字段.当状态发生改变时,重新去授权物服务重新获取一次授权结果.然后保存.
-         * 授权服务在授权过程中,如果合同不是未知授权状态,则可以直接使用.否则还需要额外调用一次标的物服务实时获取授权结果.
-         * 正常情况下,系统会在状态发生变更以后,第一时间调用授权服务进行再授权检查.
-         * 合同的授权结果最终由授权服务决定.授权服务本地也会保存合同的授权结果以方便更快捷的授权.合同中的授权结果(authStatus)属于缓存信息.
+         * 所以合同中设置了合同是否授权的字段.当状态发生改变时,根据当前状态下的颜色集属性,重新计算授权结果.然后保存.
          */
         const contractInfoScheme = new this.mongoose.Schema({
             // contractCode: {type: String, required: false}, // 合同编号,目前还不需要此字段.
@@ -34,10 +32,10 @@ export class ContractInfoModel extends MongooseModelBase implements IMongooseMod
             sortId: {type: Number, default: 0, required: true}, // 排序ID,数字大的优先级别高,取代isDefault,目前为兼容模式 1:默认 0:非默认
             signature: {type: String, required: true}, // 具体加密算法以及字段详见代码:extend/contract-common-generator/contract-info-signature-generator.ts
             uniqueKey: {type: String, required: true}, // 具体加密算法以及字段详见代码:extend/contract-common-generator/contract-info-signature-generator.ts
-            fsmCurrentState: {type: String, default: null, required: false}, // 状态机中当前的状态名
+            fsmCurrentState: {type: String, default: null, required: false}, // 状态机中当前的状态
             fsmDeclarations: {type: this.mongoose.Schema.Types.Mixed, default: {}, required: false}, // 状态机中相关的参数以及声明信息
             fsmRunningStatus: {type: Number, default: 1, required: true}, // 状态机运行状态 1:未初始化 2:系统锁定状态 4:生效中(已初始化,未终止) 8:已终止
-            authStatus: {type: Number, default: 1, required: true}, // 合同授权状态 1:未授权 2:正式授权 4:测试授权 8:未知 授权结果由授权服务通过消息队列通知.但是发起方是合同服务
+            authStatus: {type: Number, default: 1, required: true}, // 合同授权状态: 参考ContractAuthStatusEnum
             status: {type: Number, default: 0, required: true}, // 合同状态 0:正常 1:已终止(不接受任何事件,也不给授权,事实上无效的合约) 2:异常
             // remark: {type: String, required: true}, 备注牵扯到甲方备注和乙方备注. 需要具体了解需求,再做设计
         }, {
@@ -57,16 +55,13 @@ export class ContractInfoModel extends MongooseModelBase implements IMongooseMod
             return this.id;
         });
         contractInfoScheme.virtual('isDefault').get(function (this: any) {
-            return isUndefined(this.sortId) ? undefined : this.sortId === 1;
+            return isNumber(this.sortId) ? this.sortId === 1 : undefined;
         });
         contractInfoScheme.virtual('isAuth').get(function (this: any) {
-            return isUndefined(this.authStatus) ? undefined : isNumber(this.authStatus) && (this.authStatus & 2) === 2;
+            return isNumber(this.authStatus) ? (this.authStatus & ContractAuthStatusEnum.Authorized) === ContractAuthStatusEnum.Authorized : undefined;
         });
         contractInfoScheme.virtual('isTestAuth').get(function (this: any) {
-            return isUndefined(this.authStatus) ? undefined : isNumber(this.authStatus) && (this.authStatus & 4) === 4;
-        });
-        contractInfoScheme.virtual('isPending').get(function (this: any) {
-            return isUndefined(this.authStatus) ? undefined : isNumber(this.authStatus) && (this.authStatus & 8) === 8;
+            return isNumber(this.authStatus) ? (this.authStatus & ContractAuthStatusEnum.TestNodeAuthorized) === ContractAuthStatusEnum.TestNodeAuthorized : undefined;
         });
 
         return this.mongoose.model('contract-infos', contractInfoScheme);

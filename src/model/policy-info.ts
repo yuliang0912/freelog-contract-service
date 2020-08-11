@@ -18,8 +18,6 @@ export class PolicyInfoModel extends MongooseModelBase implements IMongooseModel
             policyName: {type: String, required: true},
             policyText: {type: String, required: true},
             subjectType: {type: String, required: true},
-            // isPublic: {type: Number, required: false, enum: [0, 1], default: 0},
-            // 状态机描述信息.牵扯到具体的变量信息等,则保存在具体的合约中
             fsmDescriptionInfo: {type: this.mongoose.Schema.Types.Mixed, required: true},
             status: {type: Number, default: 0, required: true},
         }, {

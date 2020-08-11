@@ -1,9 +1,9 @@
-import {controller, get, post, put, inject, provide} from 'midway';
+import {isNumber} from 'lodash';
 import {SubjectType} from '../../enum';
 import {IPolicyService} from '../../interface';
 import {LoginUser, InternalClient} from 'egg-freelog-base';
 import {visitorIdentity} from '../../extend/vistorIdentityDecorator';
-import {isNumber} from 'lodash';
+import {controller, get, post, put, inject, provide} from 'midway';
 
 @provide()
 @controller('/v2/policies')
@@ -21,16 +21,11 @@ export class PolicyController {
         const projection: string[] = ctx.checkQuery('projection').optional().toSplitArray().default([]).value;
         ctx.validateParams();
 
-        let dataList = [];
         const condition: any = {userId: ctx.userId};
         if (isNumber(subjectType)) {
             condition.subjectType = subjectType;
         }
-        const totalItem = await this.policyService.count(condition);
-        if (totalItem > (page - 1) * pageSize) {
-            dataList = await this.policyService.findPageList(condition, page, pageSize, projection, {createDate: -1});
-        }
-        ctx.success({page, pageSize, totalItem, dataList});
+        await this.policyService.findPageList(condition, page, pageSize, projection, {createDate: -1}).then(ctx.success);
     }
 
     @get('/list')
@@ -44,11 +39,11 @@ export class PolicyController {
         ctx.validateParams();
 
         const condition: any = {policyId: {$in: policyIds}};
-        if (isNumber(subjectType)) {
-            condition.subjectType = subjectType;
-        }
         if (isNumber(userId)) {
             condition.userId = userId;
+        }
+        if (isNumber(subjectType)) {
+            condition.subjectType = subjectType;
         }
 
         await this.policyService.find(condition, projection.join(' ')).then(ctx.success);

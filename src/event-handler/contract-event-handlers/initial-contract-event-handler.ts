@@ -1,8 +1,7 @@
 import * as queue from 'async/queue';
 import {provide, scope, inject} from 'midway';
-import {ApplicationError} from 'egg-freelog-base';
 import {ContractInfo, PolicyInfo, IEventHandler, IPolicyService, IContractService} from '../../interface';
-import {ContractAuthStatusEnum, ContractFsmRunningStatusEnum} from '../../enum';
+import {ContractFsmRunningStatusEnum} from '../../enum';
 
 @scope('Singleton')
 @provide('initialContractEventHandler')
@@ -39,7 +38,7 @@ export class InitialContractEventHandler implements IEventHandler {
             }
             const callback = this._callback.bind({contractInfo, contractService: this.contractService});
             if (!contractPolicyMap.has(contractInfo.policyId)) {
-                callback(new Error(`policy [id:${contractInfo.policyId}] is not found`));
+                callback(new Error(`policy [id:${contractInfo.policyId}] is invalid`));
                 return;
             }
             this.taskQueue.push({
@@ -51,9 +50,6 @@ export class InitialContractEventHandler implements IEventHandler {
 
     async _initialContract(contract: { contractInfo: ContractInfo, policyInfo: PolicyInfo }) {
         const {contractInfo, policyInfo} = contract;
-        if (contractInfo.authStatus !== ContractAuthStatusEnum.Unknown) {
-            throw new ApplicationError('please check contract data. contract.authStatus is invalid');
-        }
         // 目前初始态的状态名固定为init或initial (后续规则也可能修改为第一个)
         contractInfo.fsmCurrentState = Object.keys(policyInfo.fsmDescriptionInfo).find(x => /^(init|initial)$/i.test(x));
         this.contractFsmGenerator.contractWarpToFsm(contractInfo, policyInfo);

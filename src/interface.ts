@@ -8,6 +8,13 @@ import {
     SubjectType
 } from './enum';
 
+export interface PageResult {
+    page: number;
+    pageSize: number;
+    totalItem: number;
+    dataList: any[];
+}
+
 export interface ContractInfo {
     contractId: string;
     contractName: string;
@@ -105,7 +112,7 @@ export interface IContractService {
 
     findByIds(contractIds: string[], ...args): Promise<ContractInfo[]>;
 
-    findPageList(condition: object, page: number, pageSize: number, projection: string[], orderBy: object): Promise<ContractInfo[]>;
+    findPageList(condition: object, page: number, pageSize: number, projection: string[], orderBy: object): Promise<PageResult>;
 
     count(condition: object): Promise<number>;
 
@@ -130,7 +137,7 @@ export interface IPolicyService {
 
     findOrCreatePolicy(subjectType: SubjectType, policyName: string, policyText: string): Promise<PolicyInfo>;
 
-    findPageList(condition: object, page: number, pageSize: number, projection: string[], orderBy: object): Promise<PolicyInfo[]>;
+    findPageList(condition: object, page: number, pageSize: number, projection: string[], orderBy: object): Promise<PageResult>;
 
     findOne(condition: object, ...args): Promise<PolicyInfo>;
 

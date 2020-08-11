@@ -9,8 +9,6 @@ export class ContractEventHandler implements IContractEventHandler {
 
     @inject()
     initialContractEventHandler: IEventHandler;
-    @inject()
-    setAuthStatusEventHandler: IEventHandler;
 
     readonly contractEventHandlerMap: Map<ContractEventEnum, IEventHandler> = new Map();
 
@@ -24,6 +22,5 @@ export class ContractEventHandler implements IContractEventHandler {
     @init()
     initialEventHandler() {
         this.contractEventHandlerMap.set(ContractEventEnum.InitialContractFsmEvent, this.initialContractEventHandler);
-        this.contractEventHandlerMap.set(ContractEventEnum.SetContractAuthStatusEvent, this.setAuthStatusEventHandler);
     }
 }

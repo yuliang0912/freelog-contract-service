@@ -1,4 +1,4 @@
-import { IPolicyCompiler, IPolicyService, PolicyInfo } from '../../interface';
+import { IPolicyCompiler, IPolicyService, PageResult, PolicyInfo } from '../../interface';
 import { SubjectType } from '../../enum';
 export declare class PolicyService implements IPolicyService {
     ctx: any;
@@ -13,7 +13,7 @@ export declare class PolicyService implements IPolicyService {
      */
     findOrCreatePolicy(subjectType: SubjectType, policyName: string, policyText: string): Promise<PolicyInfo>;
     count(condition: object): Promise<number>;
-    findPageList(condition: object, page: number, pageSize: number, projection: string[], orderBy?: object): Promise<PolicyInfo[]>;
+    findPageList(condition: object, page: number, pageSize: number, projection: string[], orderBy?: object): Promise<PageResult>;
     findOne(condition: object, ...args: any[]): Promise<PolicyInfo>;
     find(condition: object, ...args: any[]): Promise<PolicyInfo[]>;
     findByIds(policyIds: string[], ...args: any[]): Promise<PolicyInfo[]>;

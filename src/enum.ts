@@ -24,9 +24,7 @@ export enum ContractEventEnum {
      * 初始化合同状态机.合同创建完以后,开始异步执行创建具体状态机事件.
      * 该事件会初始化策略声明信息.以及更改合同信息中的状态机相关属性.
      */
-    InitialContractFsmEvent = 'InitialContractFsmEvent',
-
-    SetContractAuthStatusEvent = 'SetContractAuthStatusEvent',
+    InitialContractFsmEvent = 'InitialContractFsmEvent'
 }
 
 /**
@@ -105,29 +103,26 @@ export enum ContractFsmRunningStatusEnum {
     InitializedError = 16
 }
 
+/**
+ * 授权状态(1:只获得正式授权 2:只获得测试授权 3:获得正式和测试授权 999:未获得授权)
+ */
 export enum ContractAuthStatusEnum {
     /**
-     * 未授权
-     */
-    Unauthorized = 1,
-
-    /**
-     * 已获得正式授权
+     * 只获得正式授权
      * @type {number}
      */
-    Authorized = 2,
+    Authorized = 1,
 
     /**
      * 只获得测试授权
      * @type {number}
      */
-    TestNodeAuthorized = 4,
+    TestNodeAuthorized = 2,
 
     /**
-     * 未知,需要再次调用标的物服务进行授权结果
-     * @type {number}
+     * 未获得任何授权
      */
-    Unknown = 8
+    Unauthorized = 128,
 }
 
 export enum ContractStatusEnum {

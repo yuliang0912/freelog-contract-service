@@ -1,5 +1,11 @@
 import { ValidatorResult } from 'jsonschema';
 import { ContractEventEnum, ContractFsmEventEnum, ContractStatusEnum, IdentityType, OutsideServiceEventEnum, SubjectType } from './enum';
+export interface PageResult {
+    page: number;
+    pageSize: number;
+    totalItem: number;
+    dataList: any[];
+}
 export interface ContractInfo {
     contractId: string;
     contractName: string;
@@ -73,7 +79,7 @@ export interface IContractService {
     findById(contractId: string, ...args: any[]): Promise<ContractInfo>;
     find(condition: object, ...args: any[]): Promise<ContractInfo[]>;
     findByIds(contractIds: string[], ...args: any[]): Promise<ContractInfo[]>;
-    findPageList(condition: object, page: number, pageSize: number, projection: string[], orderBy: object): Promise<ContractInfo[]>;
+    findPageList(condition: object, page: number, pageSize: number, projection: string[], orderBy: object): Promise<PageResult>;
     count(condition: object): Promise<number>;
     setDefaultExecContract(contract: ContractInfo): Promise<boolean>;
     updateContractInfo(contract: ContractInfo, options: any): Promise<boolean>;
@@ -90,7 +96,7 @@ export interface IContractService {
 }
 export interface IPolicyService {
     findOrCreatePolicy(subjectType: SubjectType, policyName: string, policyText: string): Promise<PolicyInfo>;
-    findPageList(condition: object, page: number, pageSize: number, projection: string[], orderBy: object): Promise<PolicyInfo[]>;
+    findPageList(condition: object, page: number, pageSize: number, projection: string[], orderBy: object): Promise<PageResult>;
     findOne(condition: object, ...args: any[]): Promise<PolicyInfo>;
     find(condition: object, ...args: any[]): Promise<PolicyInfo[]>;
     findByIds(policyIds: string[], ...args: any[]): Promise<PolicyInfo[]>;

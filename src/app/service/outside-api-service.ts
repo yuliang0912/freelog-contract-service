@@ -120,7 +120,7 @@ export class OutsideApiService implements IOutsideApiService {
         if (!isEmpty(offlinePresentableIds)) {
             throw new ApplicationError(this.ctx.gettext('sign-subject-offline-error', `,resourceId:[${offlinePresentableIds.toString()}]`));
         }
-        const nodeInfoMap = await this.ctx.curlIntranetApi(`${this.ctx.webApi.nodeInfo}/list?nodeId=${presentableInfos.map(x => x.nodeId).toString()}`).then(list => {
+        const nodeInfoMap = await this.ctx.curlIntranetApi(`${this.ctx.webApi.nodeInfoV2}/list?nodeId=${presentableInfos.map(x => x.nodeId).toString()}`).then(list => {
             return new Map(list.map(x => [x.nodeId, x]));
         });
 
@@ -132,8 +132,8 @@ export class OutsideApiService implements IOutsideApiService {
                 subjectName: presentableInfo.presentableName,
                 licensorId: nodeInfo.nodeId,
                 licensorName: nodeInfo.nodeName,
-                licensorOwnerId: nodeInfo.userId,
-                licensorOwnerName: nodeInfo.username,
+                licensorOwnerId: nodeInfo.ownerUserId,
+                licensorOwnerName: nodeInfo.ownerUserName,
                 policies: presentableInfo.policies,
             };
         });

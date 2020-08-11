@@ -4,14 +4,13 @@ export declare class ContractController {
     policyService: IPolicyService;
     contractService: IContractService;
     batchSignSubjectValidator: IJsonSchemaValidate;
-    index(ctx: any): Promise<void>;
+    index(ctx: any): Promise<any>;
     list(ctx: any): Promise<void>;
     /**
-     * 查询历史合同
+     * 查询历史合同(可以通过index查询,传入status=ContractStatusEnum.Terminated实现)
      * @param ctx
      * @returns {Promise<void>}
      */
-    terminatedContracts(ctx: any): Promise<void>;
     createContract(ctx: any): Promise<void>;
     batchCreateContracts(ctx: any): Promise<void>;
     show(ctx: any): Promise<void>;

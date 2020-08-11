@@ -1,9 +1,9 @@
 import {controller, get, inject, post, provide, put} from 'midway';
-import {IContractService, IJsonSchemaValidate, IPolicyService} from '../../interface';
+import {IContractService, IJsonSchemaValidate, IPolicyService, PolicyInfo} from '../../interface';
 import {visitorIdentity} from '../../extend/vistorIdentityDecorator';
 import {ArgumentError, AuthorizationError, ApplicationError, InternalClient, LoginUser} from 'egg-freelog-base';
 import {ContractStatusEnum, IdentityType, IdentityTypeEnum, SubjectType} from '../../enum';
-import {first, isEmpty, isString, isNumber, isUndefined} from 'lodash';
+import {first, isEmpty, isString, isUndefined} from 'lodash';
 import {mongoObjectId} from 'egg-freelog-base/app/extend/helper/common_regex';
 
 @provide()
@@ -32,6 +32,8 @@ export class ContractController {
         const isDefault = ctx.checkQuery('isDefault').optional().toInt().in([0, 1]).value;
         const keywords = ctx.checkQuery('keywords').optional().decodeURIComponent().toLowercase().value;
         const status = ctx.checkQuery('status').optional().in([ContractStatusEnum.Terminated, ContractStatusEnum.Executed, ContractStatusEnum.Exception]).value;
+        const authStatus = ctx.checkQuery('authStatus').optional().toInt().value;
+        const isLoadingPolicyInfo = ctx.checkQuery('isLoadingPolicyInfo').optional().toInt().in([0, 1, 2]).default(0).value;
         const licenseeIdentityType = ctx.checkQuery('licenseeIdentityType').optional().toInt().in([IdentityType.Resource, IdentityType.Node, IdentityType.ClientUser]).value;
         const order = ctx.checkQuery('order').optional().in(['asc', 'desc']).default('desc').value;
         const projection: string[] = ctx.checkQuery('projection').optional().toSplitArray().default([]).value;
@@ -65,6 +67,9 @@ export class ContractController {
         if (!isUndefined(status)) {
             condition.status = status;
         }
+        if (!isUndefined(authStatus)) {
+            condition.authStatus = authStatus;
+        }
         if (isString(keywords) && keywords.length) {
             const searchRegExp = new RegExp(keywords, 'i');
             if (mongoObjectId.test(keywords)) {
@@ -73,12 +78,20 @@ export class ContractController {
                 condition.$or = [{contractName: searchRegExp}, {licensorName: searchRegExp}, {licenseeName: searchRegExp}];
             }
         }
-        let dataList = [];
-        const totalItem = await this.contractService.count(condition);
-        if (totalItem > (page - 1) * pageSize) {
-            dataList = await this.contractService.findPageList(condition, page, pageSize, projection, {createDate: order === 'asc' ? 1 : -1});
+
+        const pageResult = await this.contractService.findPageList(condition, page, pageSize, projection, {createDate: order === 'asc' ? 1 : -1});
+
+        if (!pageResult.dataList.length || !isLoadingPolicyInfo) {
+            return ctx.success(pageResult);
         }
-        ctx.success({page, pageSize, totalItem, dataList});
+        const policyMap: Map<string, PolicyInfo> = await this.policyService.findByIds(pageResult.dataList.map(x => x.policyId), 'policyId policyName policyText fsmDescriptionInfo').then(list => new Map(list.map(x => [x.policyId, x])));
+
+        pageResult.dataList = pageResult.dataList.map(item => {
+            const model = item.toObject();
+            model.policyInfo = policyMap.get(model.policyId) ?? {};
+            return model;
+        });
+        ctx.success(pageResult);
     }
 
     @get('/list')
@@ -120,45 +133,53 @@ export class ContractController {
     }
 
     /**
-     * 查询历史合同
+     * 查询历史合同(可以通过index查询,传入status=ContractStatusEnum.Terminated实现)
      * @param ctx
      * @returns {Promise<void>}
      */
-    @get('/terminated')
-    @visitorIdentity(LoginUser)
-    async terminatedContracts(ctx) {
-        const page = ctx.checkQuery('page').optional().default(1).toInt().gt(0).value;
-        const pageSize = ctx.checkQuery('pageSize').optional().default(10).gt(0).lt(101).toInt().value;
-        const subjectId = ctx.checkQuery('subjectId').exist().value;
-        const subjectType = ctx.checkQuery('subjectType').optional().in([SubjectType.Presentable, SubjectType.Resource, SubjectType.UserGroup]).value;
-        const identityType = ctx.checkQuery('identityType').exist().toInt().in([1, 2]).value; // 甲方or乙方
-        const policyId = ctx.checkQuery('policyId').optional().exist().isMd5().value;
-        const licenseeIdentityType = ctx.checkQuery('licenseeIdentityType').optional().toInt().in([IdentityType.Resource, IdentityType.Node, IdentityType.ClientUser]).value;
-        const projection: string[] = ctx.checkQuery('projection').optional().toSplitArray().default([]).value;
-        ctx.validateParams();
-
-        const identityField = identityType === 1 ? 'licensorId' : 'licenseeId';
-        const condition: any = {
-            subjectId, status: ContractStatusEnum.Terminated,
-            [identityField]: ctx.request.userId.toString()
-        };
-        if (policyId) {
-            condition.policyId = policyId;
-        }
-        if (isNumber(licenseeIdentityType)) {
-            condition.licenseeIdentityType = licenseeIdentityType;
-        }
-        if (isNumber(subjectType)) {
-            condition.subjectType = subjectType;
-        }
-
-        let dataList = [];
-        const totalItem = await this.contractService.count(condition);
-        if (totalItem > (page - 1) * pageSize) {
-            dataList = await this.contractService.findPageList(condition, page, pageSize, projection, {createDate: -1});
-        }
-        ctx.success({page, pageSize, totalItem, dataList});
-    }
+    // @get('/terminated')
+    // @visitorIdentity(LoginUser)
+    // async terminatedContracts(ctx) {
+    //     const page = ctx.checkQuery('page').optional().default(1).toInt().gt(0).value;
+    //     const pageSize = ctx.checkQuery('pageSize').optional().default(10).gt(0).lt(101).toInt().value;
+    //     const subjectId = ctx.checkQuery('subjectId').exist().value;
+    //     const subjectType = ctx.checkQuery('subjectType').optional().in([SubjectType.Presentable, SubjectType.Resource, SubjectType.UserGroup]).value;
+    //     const identityType = ctx.checkQuery('identityType').exist().toInt().in([1, 2]).value; // 甲方or乙方
+    //     const policyId = ctx.checkQuery('policyId').optional().exist().isMd5().value;
+    //     const licenseeIdentityType = ctx.checkQuery('licenseeIdentityType').optional().toInt().in([IdentityType.Resource, IdentityType.Node, IdentityType.ClientUser]).value;
+    //     const isLoadingPolicyInfo = ctx.checkQuery('isLoadingPolicyInfo').optional().toInt().in([0, 1, 2]).default(0).value;
+    //     const projection: string[] = ctx.checkQuery('projection').optional().toSplitArray().default([]).value;
+    //     ctx.validateParams();
+    //
+    //     const identityField = identityType === 1 ? 'licensorId' : 'licenseeId';
+    //     const condition: any = {
+    //         subjectId, status: ContractStatusEnum.Terminated,
+    //         [identityField]: ctx.request.userId.toString()
+    //     };
+    //     if (policyId) {
+    //         condition.policyId = policyId;
+    //     }
+    //     if (isNumber(licenseeIdentityType)) {
+    //         condition.licenseeIdentityType = licenseeIdentityType;
+    //     }
+    //     if (isNumber(subjectType)) {
+    //         condition.subjectType = subjectType;
+    //     }
+    //
+    //     const pageResult = await this.contractService.findPageList(condition, page, pageSize, projection, {createDate: -1});
+    //
+    //     if (!pageResult.dataList.length || !isLoadingPolicyInfo) {
+    //         return ctx.success(pageResult);
+    //     }
+    //     const policyMap: Map<string, PolicyInfo> = await this.policyService.findByIds(pageResult.dataList.map(x => x.policyId), 'policyId policyName policyText fsmDescriptionInfo').then(list => new Map(list.map(x => [x.policyId, x])));
+    //
+    //     pageResult.dataList = pageResult.dataList.map(item => {
+    //         const model = item.toObject();
+    //         model.policyInfo = policyMap.get(model.policyId) ?? {};
+    //         return model;
+    //     });
+    //     ctx.success(pageResult);
+    // }
 
     @post('/')
     @visitorIdentity(LoginUser)

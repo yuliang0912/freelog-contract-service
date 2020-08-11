@@ -38,6 +38,11 @@ export declare class ContractService implements IContractService {
     addContractChangedHistory(contract: ContractInfo, fromState: string, toState: string, event: string, triggerDate: Date): Promise<any>;
     addContractChangedHistoryAndLockFsmRunningStatus(contract: ContractInfo, fromState: string, toState: string, event: string, triggerDate: Date): Promise<any>;
     /**
+     * 给资源填充策略详情信息
+     * @param resources
+     */
+    fillContractPolicyInfo(contracts: ContractInfo[]): Promise<ContractInfo[]>;
+    /**
      * 检查合同是否可以重签
      * @param baseInfos
      * @private

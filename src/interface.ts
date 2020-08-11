@@ -131,6 +131,8 @@ export interface IContractService {
      * @returns {Promise<ContractInfo[]>}
      */
     batchSignSubjects(subjects: BeSignSubjectOptions[], licenseeId: string | number, identityType: IdentityType, subjectType: SubjectType): Promise<ContractInfo[]>;
+
+    fillContractPolicyInfo(contracts: ContractInfo[]): Promise<ContractInfo[]>;
 }
 
 export interface IPolicyService {

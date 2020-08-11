@@ -1,5 +1,5 @@
 import {controller, get, inject, post, provide, put} from 'midway';
-import {IContractService, IJsonSchemaValidate, IPolicyService, PolicyInfo} from '../../interface';
+import {IContractService, IJsonSchemaValidate, IPolicyService} from '../../interface';
 import {visitorIdentity} from '../../extend/vistorIdentityDecorator';
 import {ArgumentError, AuthorizationError, ApplicationError, InternalClient, LoginUser} from 'egg-freelog-base';
 import {ContractStatusEnum, IdentityType, IdentityTypeEnum, SubjectType} from '../../enum';
@@ -33,7 +33,7 @@ export class ContractController {
         const keywords = ctx.checkQuery('keywords').optional().decodeURIComponent().toLowercase().value;
         const status = ctx.checkQuery('status').optional().in([ContractStatusEnum.Terminated, ContractStatusEnum.Executed, ContractStatusEnum.Exception]).value;
         const authStatus = ctx.checkQuery('authStatus').optional().toInt().value;
-        const isLoadingPolicyInfo = ctx.checkQuery('isLoadingPolicyInfo').optional().toInt().in([0, 1, 2]).default(0).value;
+        const isLoadPolicyInfo = ctx.checkQuery('isLoadPolicyInfo').optional().toInt().in([0, 1, 2]).default(0).value;
         const licenseeIdentityType = ctx.checkQuery('licenseeIdentityType').optional().toInt().in([IdentityType.Resource, IdentityType.Node, IdentityType.ClientUser]).value;
         const order = ctx.checkQuery('order').optional().in(['asc', 'desc']).default('desc').value;
         const projection: string[] = ctx.checkQuery('projection').optional().toSplitArray().default([]).value;
@@ -80,17 +80,9 @@ export class ContractController {
         }
 
         const pageResult = await this.contractService.findPageList(condition, page, pageSize, projection, {createDate: order === 'asc' ? 1 : -1});
-
-        if (!pageResult.dataList.length || !isLoadingPolicyInfo) {
-            return ctx.success(pageResult);
+        if (isLoadPolicyInfo) {
+            pageResult.dataList = await this.contractService.fillContractPolicyInfo(pageResult.dataList);
         }
-        const policyMap: Map<string, PolicyInfo> = await this.policyService.findByIds(pageResult.dataList.map(x => x.policyId), 'policyId policyName policyText fsmDescriptionInfo').then(list => new Map(list.map(x => [x.policyId, x])));
-
-        pageResult.dataList = pageResult.dataList.map(item => {
-            const model = item.toObject();
-            model.policyInfo = policyMap.get(model.policyId) ?? {};
-            return model;
-        });
         ctx.success(pageResult);
     }
 
@@ -103,6 +95,7 @@ export class ContractController {
         const licenseeIdentityType = ctx.checkQuery('licenseeIdentityType').optional().toInt().in([IdentityType.Resource, IdentityType.Node, IdentityType.ClientUser]).value;
         const licensorId = ctx.checkQuery('licensorId').optional().value; // 甲方
         const licenseeId = ctx.checkQuery('licenseeId').optional().value; // 乙方
+        const isLoadPolicyInfo = ctx.checkQuery('isLoadPolicyInfo').optional().toInt().in([0, 1, 2]).default(0).value;
         const projection: string[] = ctx.checkQuery('projection').optional().toSplitArray().default([]).value;
         ctx.validateParams();
 
@@ -129,7 +122,11 @@ export class ContractController {
             condition.subjectType = subjectType;
         }
 
-        await this.contractService.find(condition, projection.join(' ')).then(ctx.success);
+        let dataList = await this.contractService.find(condition, projection.join(' ')).then(ctx.success);
+        if (isLoadPolicyInfo) {
+            dataList = await this.contractService.fillContractPolicyInfo(dataList);
+        }
+        ctx.success(dataList);
     }
 
     /**
@@ -227,10 +224,15 @@ export class ContractController {
     @visitorIdentity(LoginUser | InternalClient)
     async show(ctx) {
         const contractId = ctx.checkParams('contractId').notEmpty().isContractId().value;
+        const isLoadPolicyInfo = ctx.checkQuery('isLoadPolicyInfo').optional().toInt().in([0, 1, 2]).default(0).value;
         const projection = ctx.checkQuery('projection').optional().toSplitArray().default([]).value;
         ctx.validateParams();
 
-        await this.contractService.findById(contractId, projection.join(' ')).then(ctx.success);
+        let contractInfo = await this.contractService.findById(contractId, projection.join(' '));
+        if (contractInfo && isLoadPolicyInfo) {
+            contractInfo = await this.contractService.fillContractPolicyInfo([contractInfo]).then(first);
+        }
+        ctx.success(contractInfo);
     }
 
     @get('/:contractId/isCanExecEvent')

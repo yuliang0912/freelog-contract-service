@@ -1,5 +1,5 @@
 import * as  mongoose from 'mongoose';
-import {isString, pick, first, isEmpty, assign, isNumber} from 'lodash';
+import {isString, pick, chain, first, isArray, isEmpty, assign, isNumber} from 'lodash';
 import {provide, inject} from 'midway';
 import {ArgumentError, ApplicationError, LogicError} from 'egg-freelog-base';
 import {
@@ -219,6 +219,29 @@ export class ContractService implements IContractService {
             });
         }
         return this.contractInfoProvider.updateOne({_id: contract.contractId}, {fsmRunningStatus: ContractFsmRunningStatusEnum.Locked});
+    }
+
+    /**
+     * 给资源填充策略详情信息
+     * @param resources
+     */
+    async fillContractPolicyInfo(contracts: ContractInfo[]): Promise<ContractInfo[]> {
+        if (!isArray(contracts) || isEmpty(contracts)) {
+            return contracts;
+        }
+        const policyIds = chain(contracts).filter(x => isString(x?.policyId)).map(x => x.policyId).uniq().value();
+        if (isEmpty(policyIds)) {
+            return contracts;
+        }
+        const policyMap: Map<string, PolicyInfo> = await this.policyService.findByIds(policyIds, 'policyId policyName policyText fsmDescriptionInfo').then(list => {
+            return new Map(list.map(x => [x.policyId, x]));
+        });
+
+        return contracts.map((item: any) => {
+            const contractInfo = item.toObject ? item.toObject() : item;
+            contractInfo.policyInfo = policyMap.get(contractInfo.policyId) ?? {};
+            return contractInfo;
+        });
     }
 
     /**

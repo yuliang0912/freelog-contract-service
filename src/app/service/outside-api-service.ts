@@ -5,7 +5,7 @@ import {
     IOutsideApiService, LicenseeInfo, NodeInfo, SubjectBaseInfo, UserInfo
 } from '../../interface';
 
-import {differenceWith, isEmpty, first} from 'lodash';
+import {differenceWith, isEmpty, uniq, isArray, first} from 'lodash';
 
 @provide('outsideApiService')
 export class OutsideApiService implements IOutsideApiService {
@@ -57,7 +57,10 @@ export class OutsideApiService implements IOutsideApiService {
         if (!this.subjectWrapMap.has(subjectType)) {
             throw new ApplicationError(`please check code,not support subjectType:${subjectType}.`);
         }
-        return this.subjectWrapMap.get(subjectType).call(this, subjectIds);
+        if (!isArray(subjectIds) || isEmpty(subjectIds)) {
+            return [];
+        }
+        return this.subjectWrapMap.get(subjectType).call(this, uniq(subjectIds));
     }
 
     /**

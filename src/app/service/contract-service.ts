@@ -7,7 +7,7 @@ import {
     BeSignSubjectOptions,
     IContractService,
     IOutsideApiService,
-    IContractEventHandler, IPolicyService, PolicyInfo, PageResult
+    IContractEventHandler, IPolicyService, PolicyInfo, PageResult, SubjectBaseInfo
 } from '../../interface';
 import {
     ContractAuthStatusEnum, ContractEventEnum,
@@ -42,7 +42,7 @@ export class ContractService implements IContractService {
      */
     async batchSignSubjects(subjects: BeSignSubjectOptions[], licenseeId: string | number, licenseeIdentityType: IdentityType, subjectType: SubjectType): Promise<ContractInfo[]> {
 
-        const subjectMap: Map<string, any> = new Map(subjects.map(x => [x.subjectId, {policyId: x.policyId}]));
+        // console.log('参数传递待签约标的物数量:' + subjects.map(x => x.policyId).toString());
 
         const reSignCheckResults = await this._checkIsCanReSignContracts(subjects.map(subject => Object({
             subjectType, licenseeId,
@@ -52,23 +52,27 @@ export class ContractService implements IContractService {
         })));
 
         const beSignSubjects = reSignCheckResults.filter(x => x.isCanReSign);
+        // console.log('系统检测需要真实签约的标的物:' + beSignSubjects.map(x => x.policyId).toString());
         // 已经签约并且生效中的合约不允许重签(生效中:未终止的或者系统判定异常的)
         const hasSignedAndEfficientContracts = reSignCheckResults.filter(x => !x.isCanReSign).map(x => x.signedContractInfo);
+        // console.log('系统检测已存在合约的标的物策略:' + hasSignedAndEfficientContracts.map(x => x.policyId).toString());
         if (isEmpty(beSignSubjects)) {
             return hasSignedAndEfficientContracts;
         }
 
         const {licenseeName, licenseeOwnerId, licenseeOwnerName} = await this.outsideApiService.getLicenseeInfo(licenseeId, licenseeIdentityType);
-        const beSignSubjectList = await this.outsideApiService.getSubjectInfos(beSignSubjects.map(x => x.subjectId), subjectType);
+        const beSignSubjectMap: Map<string, SubjectBaseInfo> = await this.outsideApiService.getSubjectInfos(beSignSubjects.map(x => x.subjectId), subjectType).then(list => {
+            return new Map(list.map(x => [x.subjectId, x]));
+        });
         const beSignSubjectPolicyMap: Map<string, PolicyInfo> = await this.policyService.findByIds(beSignSubjects.map(x => x.policyId)).then(list => new Map(list.map(x => [x.policyId, x])));
 
         const invalidPolicyIds = [];
-        const beSignContracts = beSignSubjectList.map(subjectInfo => {
-            const beSignSubject = subjectMap.get(subjectInfo.subjectId);
+        const beSignContracts = beSignSubjects.map(beSignSubject => {
+            const subjectInfo = beSignSubjectMap.get(beSignSubject.subjectId);
             const {licensorId, licensorName, licensorOwnerId, policies, licensorOwnerName, subjectId, subjectName, subjectType} = subjectInfo;
             const subjectPolicyInfo = policies.find(x => x.policyId === beSignSubject.policyId);
             if (!subjectPolicyInfo || subjectPolicyInfo.status !== 1 || !beSignSubjectPolicyMap.has(beSignSubject.policyId)) {
-                invalidPolicyIds.push({subjectId: subjectInfo.subjectId, policyId: beSignSubject.policyId});
+                invalidPolicyIds.push({subjectId: beSignSubject.subjectId, policyId: beSignSubject.policyId});
                 return;
             }
             const contract: ContractInfo = {
@@ -93,7 +97,9 @@ export class ContractService implements IContractService {
             throw new ApplicationError(this.ctx.gettext('subject-policy-check-failed'), invalidPolicyIds);
         }
 
+        // console.log('DB写入参数' + beSignContracts.map(x => x.policyId).toString());
         const latestSignedContracts = await this.contractInfoProvider.insertMany(beSignContracts);
+        // console.log('DB返回数据' + JSON.stringify(latestSignedContracts));
 
         this.contractEventHandler.handle(ContractEventEnum.InitialContractFsmEvent, latestSignedContracts).then();
 

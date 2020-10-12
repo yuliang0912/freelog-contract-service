@@ -8,11 +8,11 @@ import {
     SubjectType
 } from './enum';
 
-export interface PageResult {
+export interface PageResult<T> {
     page: number;
     pageSize: number;
     totalItem: number;
-    dataList: any[];
+    dataList: T[];
 }
 
 export interface ContractInfo {
@@ -60,7 +60,7 @@ export interface SubjectBaseInfo {
     licensorName: string;
     licensorOwnerId: number;
     licensorOwnerName: string;
-    policies: PolicyInfo[];
+    policies: SubjectPolicyInfo[];
     // subjectOriginalInfo: object | any;
 }
 
@@ -76,11 +76,32 @@ export interface UserInfo {
     username: string;
 }
 
+export interface ResourceInfo {
+    resourceId: string;
+    resourceName: string;
+    userId: number;
+    username: string;
+    policies: SubjectPolicyInfo[];
+    status: number;
+}
+
+export interface PresentableInfo {
+    presentableId: string;
+    presentableName: string;
+    policies: SubjectPolicyInfo[];
+    nodeId: number;
+    onlineStatus: number;
+}
+
+export interface SubjectPolicyInfo {
+    policyId: string;
+    policyName: string;
+    status: number;
+}
+
 export interface PolicyInfo {
     policyId: string;
-    policyName?: string;
     policyText: string;
-    status?: number;
     fsmDescriptionInfo?: object;
     subjectType: SubjectType;
 }
@@ -112,7 +133,7 @@ export interface IContractService {
 
     findByIds(contractIds: string[], ...args): Promise<ContractInfo[]>;
 
-    findPageList(condition: object, page: number, pageSize: number, projection: string[], orderBy: object): Promise<PageResult>;
+    findPageList(condition: object, page: number, pageSize: number, projection: string[], orderBy: object): Promise<PageResult<ContractInfo>>;
 
     count(condition: object): Promise<number>;
 
@@ -137,9 +158,11 @@ export interface IContractService {
 
 export interface IPolicyService {
 
-    findOrCreatePolicy(subjectType: SubjectType, policyName: string, policyText: string): Promise<PolicyInfo>;
+    findOrCreatePolicy(subjectType: SubjectType, policyText: string): Promise<PolicyInfo>;
 
-    findPageList(condition: object, page: number, pageSize: number, projection: string[], orderBy: object): Promise<PageResult>;
+    findOrCreatePolicies(subjectType: SubjectType, policyTexts: string[]): Promise<PolicyInfo[]>;
+
+    findPageList(condition: object, page: number, pageSize: number, projection: string[], orderBy: object): Promise<PageResult<PolicyInfo>>;
 
     findOne(condition: object, ...args): Promise<PolicyInfo>;
 
@@ -148,8 +171,6 @@ export interface IPolicyService {
     findByIds(policyIds: string[], ...args): Promise<PolicyInfo[]>;
 
     count(condition: object): Promise<number>;
-
-    updatePolicy(policyInfo: PolicyInfo, policyName: string): Promise<boolean>;
 }
 
 export interface IOutsideApiService {
@@ -200,5 +221,5 @@ export interface IJsonSchemaValidate {
  * 策略编译器
  */
 export interface IPolicyCompiler {
-    compiler(userId: number, subjectType: SubjectType, policyText: string, policyName: string);
+    compiler(subjectType: SubjectType, policyText: string): PolicyInfo;
 }

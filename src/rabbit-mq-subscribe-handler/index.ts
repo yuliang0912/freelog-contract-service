@@ -20,6 +20,11 @@ export class RabbitMqSubscribeHandler {
      * 订阅配置中的队列
      */
     subscribe() {
+
+        if (!(this.rabbitMq?.enable ?? true)) {
+            return;
+        }
+
         const handlerFunc = this.messageHandle.bind(this);
         const subscribeQueues = () => this.rabbitMq.queues.forEach(({name}) => this.rabbitClient.subscribe(name, handlerFunc));
 

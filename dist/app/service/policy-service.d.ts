@@ -11,11 +11,16 @@ export declare class PolicyService implements IPolicyService {
      * @param {string} policyText
      * @returns {Promise<ContractPolicyInfo>}
      */
-    findOrCreatePolicy(subjectType: SubjectType, policyName: string, policyText: string): Promise<PolicyInfo>;
+    findOrCreatePolicy(subjectType: SubjectType, policyText: string): Promise<PolicyInfo>;
+    /**
+     * 创建策略(按顺序返回)
+     * @param subjectType
+     * @param policyTexts
+     */
+    findOrCreatePolicies(subjectType: SubjectType, policyTexts: string[]): Promise<PolicyInfo[]>;
     count(condition: object): Promise<number>;
-    findPageList(condition: object, page: number, pageSize: number, projection: string[], orderBy?: object): Promise<PageResult>;
+    findPageList(condition: object, page: number, pageSize: number, projection: string[], orderBy?: object): Promise<PageResult<PolicyInfo>>;
     findOne(condition: object, ...args: any[]): Promise<PolicyInfo>;
     find(condition: object, ...args: any[]): Promise<PolicyInfo[]>;
     findByIds(policyIds: string[], ...args: any[]): Promise<PolicyInfo[]>;
-    updatePolicy(policyInfo: PolicyInfo, policyName: string): Promise<boolean>;
 }

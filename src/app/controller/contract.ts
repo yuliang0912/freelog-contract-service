@@ -22,6 +22,7 @@ export class ContractController {
     @get('/')
     @visitorIdentity(LoginUser)
     async index(ctx) {
+
         const page = ctx.checkQuery('page').optional().default(1).toInt().gt(0).value;
         const pageSize = ctx.checkQuery('pageSize').optional().default(10).gt(0).lt(101).toInt().value;
         const licensorId = ctx.checkQuery('licensorId').optional().value; // 甲方
@@ -89,6 +90,7 @@ export class ContractController {
     @get('/list')
     @visitorIdentity(LoginUser)
     async list(ctx) {
+
         const contractIds = ctx.checkQuery('contractIds').optional().isSplitMongoObjectId().toSplitArray().len(1, 300).value;
         const subjectIds = ctx.checkQuery('subjectIds').optional().isSplitMongoObjectId().toSplitArray().len(1, 300).value;
         const subjectType = ctx.checkQuery('subjectType').optional().in([SubjectType.Presentable, SubjectType.Resource, SubjectType.UserGroup]).value;
@@ -122,65 +124,17 @@ export class ContractController {
             condition.subjectType = subjectType;
         }
 
-        let dataList = await this.contractService.find(condition, projection.join(' ')).then(ctx.success);
+        let dataList = await this.contractService.find(condition, projection.join(' '));
         if (isLoadPolicyInfo) {
             dataList = await this.contractService.fillContractPolicyInfo(dataList);
         }
         ctx.success(dataList);
     }
 
-    /**
-     * 查询历史合同(可以通过index查询,传入status=ContractStatusEnum.Terminated实现)
-     * @param ctx
-     * @returns {Promise<void>}
-     */
-    // @get('/terminated')
-    // @visitorIdentity(LoginUser)
-    // async terminatedContracts(ctx) {
-    //     const page = ctx.checkQuery('page').optional().default(1).toInt().gt(0).value;
-    //     const pageSize = ctx.checkQuery('pageSize').optional().default(10).gt(0).lt(101).toInt().value;
-    //     const subjectId = ctx.checkQuery('subjectId').exist().value;
-    //     const subjectType = ctx.checkQuery('subjectType').optional().in([SubjectType.Presentable, SubjectType.Resource, SubjectType.UserGroup]).value;
-    //     const identityType = ctx.checkQuery('identityType').exist().toInt().in([1, 2]).value; // 甲方or乙方
-    //     const policyId = ctx.checkQuery('policyId').optional().exist().isMd5().value;
-    //     const licenseeIdentityType = ctx.checkQuery('licenseeIdentityType').optional().toInt().in([IdentityType.Resource, IdentityType.Node, IdentityType.ClientUser]).value;
-    //     const isLoadingPolicyInfo = ctx.checkQuery('isLoadingPolicyInfo').optional().toInt().in([0, 1, 2]).default(0).value;
-    //     const projection: string[] = ctx.checkQuery('projection').optional().toSplitArray().default([]).value;
-    //     ctx.validateParams();
-    //
-    //     const identityField = identityType === 1 ? 'licensorId' : 'licenseeId';
-    //     const condition: any = {
-    //         subjectId, status: ContractStatusEnum.Terminated,
-    //         [identityField]: ctx.request.userId.toString()
-    //     };
-    //     if (policyId) {
-    //         condition.policyId = policyId;
-    //     }
-    //     if (isNumber(licenseeIdentityType)) {
-    //         condition.licenseeIdentityType = licenseeIdentityType;
-    //     }
-    //     if (isNumber(subjectType)) {
-    //         condition.subjectType = subjectType;
-    //     }
-    //
-    //     const pageResult = await this.contractService.findPageList(condition, page, pageSize, projection, {createDate: -1});
-    //
-    //     if (!pageResult.dataList.length || !isLoadingPolicyInfo) {
-    //         return ctx.success(pageResult);
-    //     }
-    //     const policyMap: Map<string, PolicyInfo> = await this.policyService.findByIds(pageResult.dataList.map(x => x.policyId), 'policyId policyName policyText fsmDescriptionInfo').then(list => new Map(list.map(x => [x.policyId, x])));
-    //
-    //     pageResult.dataList = pageResult.dataList.map(item => {
-    //         const model = item.toObject();
-    //         model.policyInfo = policyMap.get(model.policyId) ?? {};
-    //         return model;
-    //     });
-    //     ctx.success(pageResult);
-    // }
-
     @post('/')
     @visitorIdentity(LoginUser)
     async createContract(ctx) {
+
         const subjectId = ctx.checkBody('subjectId').exist().isMongoObjectId().value;
         const subjectType = ctx.checkBody('subjectType').exist().in([SubjectType.Presentable, SubjectType.Resource, SubjectType.UserGroup]).value;
         const policyId = ctx.checkBody('policyId').exist().isMd5().value;
@@ -200,6 +154,7 @@ export class ContractController {
     @post('/batchSign')
     @visitorIdentity(LoginUser)
     async batchCreateContracts(ctx) {
+
         const licenseeId = ctx.checkBody('licenseeId').exist().value;
         const subjectType = ctx.checkBody('subjectType').exist().in([SubjectType.Presentable, SubjectType.Resource, SubjectType.UserGroup]).value;
         const subjects = ctx.checkBody('subjects').exist().isArray().value;
@@ -223,6 +178,7 @@ export class ContractController {
     @get('/:contractId')
     @visitorIdentity(LoginUser | InternalClient)
     async show(ctx) {
+
         const contractId = ctx.checkParams('contractId').notEmpty().isContractId().value;
         const isLoadPolicyInfo = ctx.checkQuery('isLoadPolicyInfo').optional().toInt().in([0, 1, 2]).default(0).value;
         const projection = ctx.checkQuery('projection').optional().toSplitArray().default([]).value;
@@ -238,6 +194,7 @@ export class ContractController {
     @get('/:contractId/isCanExecEvent')
     @visitorIdentity(LoginUser | InternalClient)
     async isCanExecEvent(ctx) {
+
         const eventId = ctx.checkQuery('eventId').isMd5().exist().value;
         const contractId = ctx.checkParams('contractId').notEmpty().isContractId().value;
         ctx.validateParams();

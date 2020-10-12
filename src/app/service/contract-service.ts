@@ -170,7 +170,7 @@ export class ContractService implements IContractService {
         return this.contractInfoProvider.find({_id: {$in: contractIds}}, ...args);
     }
 
-    async findPageList(condition: object, page: number, pageSize: number, projection: string[], orderBy: object): Promise<PageResult> {
+    async findPageList(condition: object, page: number, pageSize: number, projection: string[], orderBy: object): Promise<PageResult<ContractInfo>> {
         let dataList = [];
         const totalItem = await this.count(condition);
         if (totalItem > (page - 1) * pageSize) {

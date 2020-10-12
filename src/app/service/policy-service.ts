@@ -20,30 +20,54 @@ export class PolicyService implements IPolicyService {
      * @param {string} policyText
      * @returns {Promise<ContractPolicyInfo>}
      */
-    async findOrCreatePolicy(subjectType: SubjectType, policyName: string, policyText: string): Promise<PolicyInfo> {
+    async findOrCreatePolicy(subjectType: SubjectType, policyText: string): Promise<PolicyInfo> {
 
-        const userId = this.ctx.userId;
-        const policyInfo = this.policyCompiler.compiler(userId, subjectType, policyText, policyName);
-
+        const policyInfo = this.policyCompiler.compiler(subjectType, policyText);
         const existingPolicy = await this.policyInfoProvider.findOne({policyId: policyInfo.policyId});
         if (existingPolicy) {
             return existingPolicy;
         }
 
         return this.policyInfoProvider.create({
-            subjectType, userId,
+            subjectType,
             policyId: policyInfo.policyId,
-            policyName: policyInfo.policyName,
             policyText: policyInfo.policyText,
             fsmDescriptionInfo: policyInfo.fsmDescriptionInfo
         });
+    }
+
+    /**
+     * 创建策略(按顺序返回)
+     * @param subjectType
+     * @param policyTexts
+     */
+    async findOrCreatePolicies(subjectType: SubjectType, policyTexts: string[]): Promise<PolicyInfo[]> {
+
+        const policyList = policyTexts.map(policyText => this.policyCompiler.compiler(subjectType, policyText));
+        const policyIds = policyList.map(x => x.policyId);
+        const existingPolicyMap = await this.find({policyId: {$in: policyIds}}).then(list => {
+            return new Map(list.map(x => [x.policyId, x]));
+        });
+        const batchWriteObjects = [];
+        for (const policyInfo of policyList) {
+            if (!existingPolicyMap.has(policyInfo.policyId)) {
+                batchWriteObjects.push({
+                    subjectType,
+                    policyId: policyInfo.policyId,
+                    policyText: policyInfo.policyText,
+                    fsmDescriptionInfo: policyInfo.fsmDescriptionInfo
+                });
+            }
+        }
+        await this.policyInfoProvider.insertMany(batchWriteObjects);
+        return policyList;
     }
 
     async count(condition: object): Promise<number> {
         return this.policyInfoProvider.count(condition);
     }
 
-    async findPageList(condition: object, page: number, pageSize: number, projection: string[], orderBy?: object): Promise<PageResult> {
+    async findPageList(condition: object, page: number, pageSize: number, projection: string[], orderBy?: object): Promise<PageResult<PolicyInfo>> {
         let dataList = [];
         const totalItem = await this.count(condition);
         if (totalItem > (page - 1) * pageSize) {
@@ -62,11 +86,5 @@ export class PolicyService implements IPolicyService {
 
     async findByIds(policyIds: string[], ...args): Promise<PolicyInfo[]> {
         return this.policyInfoProvider.find({policyId: {$in: policyIds}}, ...args);
-    }
-
-    async updatePolicy(policyInfo: PolicyInfo, policyName: string): Promise<boolean> {
-        return this.policyInfoProvider.updateOne({
-            policyId: policyInfo.policyId
-        }, {policyName}).then(data => Boolean(data.ok));
     }
 }

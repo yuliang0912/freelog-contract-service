@@ -1,10 +1,10 @@
 import { ValidatorResult } from 'jsonschema';
 import { ContractEventEnum, ContractFsmEventEnum, ContractStatusEnum, IdentityType, OutsideServiceEventEnum, SubjectType } from './enum';
-export interface PageResult {
+export interface PageResult<T> {
     page: number;
     pageSize: number;
     totalItem: number;
-    dataList: any[];
+    dataList: T[];
 }
 export interface ContractInfo {
     contractId: string;
@@ -40,7 +40,7 @@ export interface SubjectBaseInfo {
     licensorName: string;
     licensorOwnerId: number;
     licensorOwnerName: string;
-    policies: PolicyInfo[];
+    policies: SubjectPolicyInfo[];
 }
 export interface NodeInfo {
     nodeId: number;
@@ -52,11 +52,29 @@ export interface UserInfo {
     userId: number;
     username: string;
 }
+export interface ResourceInfo {
+    resourceId: string;
+    resourceName: string;
+    userId: number;
+    username: string;
+    policies: SubjectPolicyInfo[];
+    status: number;
+}
+export interface PresentableInfo {
+    presentableId: string;
+    presentableName: string;
+    policies: SubjectPolicyInfo[];
+    nodeId: number;
+    onlineStatus: number;
+}
+export interface SubjectPolicyInfo {
+    policyId: string;
+    policyName: string;
+    status: number;
+}
 export interface PolicyInfo {
     policyId: string;
-    policyName?: string;
     policyText: string;
-    status?: number;
     fsmDescriptionInfo?: object;
     subjectType: SubjectType;
 }
@@ -79,7 +97,7 @@ export interface IContractService {
     findById(contractId: string, ...args: any[]): Promise<ContractInfo>;
     find(condition: object, ...args: any[]): Promise<ContractInfo[]>;
     findByIds(contractIds: string[], ...args: any[]): Promise<ContractInfo[]>;
-    findPageList(condition: object, page: number, pageSize: number, projection: string[], orderBy: object): Promise<PageResult>;
+    findPageList(condition: object, page: number, pageSize: number, projection: string[], orderBy: object): Promise<PageResult<ContractInfo>>;
     count(condition: object): Promise<number>;
     setDefaultExecContract(contract: ContractInfo): Promise<boolean>;
     updateContractInfo(contract: ContractInfo, options: any): Promise<boolean>;
@@ -96,13 +114,13 @@ export interface IContractService {
     fillContractPolicyInfo(contracts: ContractInfo[]): Promise<ContractInfo[]>;
 }
 export interface IPolicyService {
-    findOrCreatePolicy(subjectType: SubjectType, policyName: string, policyText: string): Promise<PolicyInfo>;
-    findPageList(condition: object, page: number, pageSize: number, projection: string[], orderBy: object): Promise<PageResult>;
+    findOrCreatePolicy(subjectType: SubjectType, policyText: string): Promise<PolicyInfo>;
+    findOrCreatePolicies(subjectType: SubjectType, policyTexts: string[]): Promise<PolicyInfo[]>;
+    findPageList(condition: object, page: number, pageSize: number, projection: string[], orderBy: object): Promise<PageResult<PolicyInfo>>;
     findOne(condition: object, ...args: any[]): Promise<PolicyInfo>;
     find(condition: object, ...args: any[]): Promise<PolicyInfo[]>;
     findByIds(policyIds: string[], ...args: any[]): Promise<PolicyInfo[]>;
     count(condition: object): Promise<number>;
-    updatePolicy(policyInfo: PolicyInfo, policyName: string): Promise<boolean>;
 }
 export interface IOutsideApiService {
     getUserInfo(userId: number): Promise<UserInfo>;
@@ -138,5 +156,5 @@ export interface IJsonSchemaValidate {
  * 策略编译器
  */
 export interface IPolicyCompiler {
-    compiler(userId: number, subjectType: SubjectType, policyText: string, policyName: string): any;
+    compiler(subjectType: SubjectType, policyText: string): PolicyInfo;
 }

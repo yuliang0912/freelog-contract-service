@@ -13,11 +13,9 @@ export class PolicyInfoModel extends MongooseModelBase implements IMongooseModel
          * 整个平台相同的策略会根据一定的算法计算.仅保留一份.
          */
         const contractPolicyInfoScheme = new this.mongoose.Schema({
-            userId: {type: Number, required: true},
             policyId: {type: String, required: true},
-            policyName: {type: String, required: true},
             policyText: {type: String, required: true},
-            subjectType: {type: String, required: true},
+            subjectType: {type: Number, required: true},
             fsmDescriptionInfo: {type: this.mongoose.Schema.Types.Mixed, required: true},
             status: {type: Number, default: 0, required: true},
         }, {

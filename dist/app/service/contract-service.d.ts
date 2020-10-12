@@ -33,7 +33,7 @@ export declare class ContractService implements IContractService {
     findById(contractId: string, ...args: any[]): Promise<ContractInfo>;
     find(condition: object, ...args: any[]): Promise<ContractInfo[]>;
     findByIds(contractIds: string[], ...args: any[]): Promise<ContractInfo[]>;
-    findPageList(condition: object, page: number, pageSize: number, projection: string[], orderBy: object): Promise<PageResult>;
+    findPageList(condition: object, page: number, pageSize: number, projection: string[], orderBy: object): Promise<PageResult<ContractInfo>>;
     count(condition: object): Promise<number>;
     addContractChangedHistory(contract: ContractInfo, fromState: string, toState: string, event: string, triggerDate: Date): Promise<any>;
     addContractChangedHistoryAndLockFsmRunningStatus(contract: ContractInfo, fromState: string, toState: string, event: string, triggerDate: Date): Promise<any>;

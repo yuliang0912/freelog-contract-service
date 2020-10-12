@@ -8,6 +8,6 @@ export declare class PolicyCompiler implements IPolicyCompiler {
      * @param policyText
      * @param policyName
      */
-    compiler(userId: number, subjectType: SubjectType, policyText: string, policyName: string): PolicyInfo;
+    compiler(subjectType: SubjectType, policyText: string): PolicyInfo;
     initialSubjectPolicyCompiler(): void;
 }

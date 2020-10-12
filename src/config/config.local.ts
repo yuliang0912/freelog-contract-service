@@ -36,6 +36,7 @@ export default () => {
     };
 
     config.rabbitMq = {
+        enable: false,
         connOptions: {
             host: '192.168.164.165',
             port: 5672,

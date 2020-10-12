@@ -4,8 +4,8 @@ import {IPolicyCompiler, PolicyInfo} from '../../interface';
 import {ResourcePolicyCompiler} from './resource-policy-compiler';
 import {ApplicationError} from 'egg-freelog-base';
 
+@provide()
 @scope('Singleton')
-@provide('policyCompiler')
 export class PolicyCompiler implements IPolicyCompiler {
 
     readonly subjectPolicyCompilerMap = new Map<SubjectType, IPolicyCompiler>();
@@ -16,11 +16,11 @@ export class PolicyCompiler implements IPolicyCompiler {
      * @param policyText
      * @param policyName
      */
-    compiler(userId: number, subjectType: SubjectType, policyText: string, policyName: string): PolicyInfo {
+    compiler(subjectType: SubjectType, policyText: string): PolicyInfo {
         if (!this.subjectPolicyCompilerMap.has(subjectType)) {
             throw new ApplicationError(`unsupported subjectType:${subjectType}`);
         }
-        return this.subjectPolicyCompilerMap.get(subjectType).compiler(userId, subjectType, policyText, policyName);
+        return this.subjectPolicyCompilerMap.get(subjectType).compiler(subjectType, policyText);
     }
 
     @init()

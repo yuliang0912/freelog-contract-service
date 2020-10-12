@@ -2,7 +2,7 @@ import {provide, inject, init} from 'midway';
 import {ApplicationError} from 'egg-freelog-base';
 import {SubjectType, IdentityType} from '../../enum';
 import {
-    IOutsideApiService, LicenseeInfo, NodeInfo, SubjectBaseInfo, UserInfo
+    IOutsideApiService, LicenseeInfo, NodeInfo, SubjectBaseInfo, UserInfo, ResourceInfo, PresentableInfo
 } from '../../interface';
 
 import {differenceWith, isEmpty, uniq, isArray, first} from 'lodash';
@@ -83,17 +83,17 @@ export class OutsideApiService implements IOutsideApiService {
      * @private
      */
     async _resourceInfoWrapToSubjectBaseInfo(resourceIds: string[]): Promise<SubjectBaseInfo[]> {
-        const resourceInfos = await this.ctx.curlIntranetApi(`${this.ctx.webApi.resourceInfoV2}/list?resourceIds=${resourceIds.toString()}&projection=resourceName,userId,username,policies,status`);
-        const invalidResourceIds = differenceWith(resourceIds, resourceInfos, (x, y: any) => x === y.resourceId);
+        const resourceInfos: ResourceInfo[] = await this.ctx.curlIntranetApi(`${this.ctx.webApi.resourceInfoV2}/list?resourceIds=${resourceIds.toString()}&projection=resourceId,resourceName,userId,username,policies,status`);
+        const invalidResourceIds = differenceWith(resourceIds, resourceInfos, (x, y) => x === y.resourceId);
         if (!isEmpty(invalidResourceIds)) {
             throw new ApplicationError(this.ctx.gettext('sign-subject-invalid-error', `,resourceId:[${invalidResourceIds.toString()}]`));
         }
-        const offlineResourceIds = resourceInfos.filter((x: any) => x.status !== 1).map(x => x.resourceId);
+        const offlineResourceIds = resourceInfos.filter(x => x.status !== 1).map(x => x.resourceId);
         if (!isEmpty(offlineResourceIds)) {
             throw new ApplicationError(this.ctx.gettext('sign-subject-offline-error', `,resourceId:[${offlineResourceIds.toString()}]`));
         }
 
-        return resourceInfos.map((resourceInfo: any) => {
+        return resourceInfos.map((resourceInfo) => {
             return {
                 subjectId: resourceInfo.resourceId,
                 subjectType: SubjectType.Resource,
@@ -114,12 +114,12 @@ export class OutsideApiService implements IOutsideApiService {
      * @private
      */
     async _presentableWrapToSubjectBaseInfo(presentableIds: string[]): Promise<SubjectBaseInfo[]> {
-        const presentableInfos = await this.ctx.curlIntranetApi(`${this.ctx.webApi.presentableInfo}/list?presentableIds=${presentableIds.toString()}`);
-        const invalidPresentableIds = differenceWith(presentableIds, presentableInfos, (x, y: any) => x === y.presentableId);
+        const presentableInfos: PresentableInfo[] = await this.ctx.curlIntranetApi(`${this.ctx.webApi.presentableInfoV2}/list?presentableIds=${presentableIds.toString()}&projection=presentableId,presentableName,policies,nodeId,onlineStatus`);
+        const invalidPresentableIds = differenceWith(presentableIds, presentableInfos, (x, y) => x === y.presentableId);
         if (!isEmpty(invalidPresentableIds)) {
             throw new ApplicationError(this.ctx.gettext('sign-subject-invalid-error', `,presentableIds:[${invalidPresentableIds.toString()}]`));
         }
-        const offlinePresentableIds = presentableInfos.filter((x: any) => x.isOnline !== 1).map(x => x.presentableId);
+        const offlinePresentableIds = presentableInfos.filter(x => x.onlineStatus !== 1).map(x => x.presentableId);
         if (!isEmpty(offlinePresentableIds)) {
             throw new ApplicationError(this.ctx.gettext('sign-subject-offline-error', `,resourceId:[${offlinePresentableIds.toString()}]`));
         }
@@ -127,7 +127,7 @@ export class OutsideApiService implements IOutsideApiService {
             return new Map(list.map(x => [x.nodeId, x]));
         });
 
-        return presentableInfos.map((presentableInfo: any) => {
+        return presentableInfos.map(presentableInfo => {
             const nodeInfo = nodeInfoMap.get(presentableInfo.nodeId);
             return {
                 subjectId: presentableInfo.presentableId,
@@ -149,7 +149,7 @@ export class OutsideApiService implements IOutsideApiService {
      * @private
      */
     async _resourceInfoWrapToLicenseeInfo(resourceId: string): Promise<LicenseeInfo> {
-        const resourceInfo = await this.ctx.curlIntranetApi(`${this.ctx.webApi.resourceInfoV2}/${resourceId}?projection=resourceName,userId,username,status`);
+        const resourceInfo: ResourceInfo = await this.ctx.curlIntranetApi(`${this.ctx.webApi.resourceInfoV2}/${resourceId}?projection=resourceName,userId,username,status`);
         if (!resourceInfo) {
             throw new ApplicationError(this.ctx.gettext('resource-entity-not-found'));
         }
@@ -194,8 +194,8 @@ export class OutsideApiService implements IOutsideApiService {
      * @private
      */
     async _userInfoWrapToLicenseeInfo(userId: number): Promise<LicenseeInfo> {
-        const {userInfo} = this.ctx.request.identityInfo;
-        if (userInfo.userId !== userId) {
+        const userInfo = this.ctx.request.identityInfo?.userInfo as UserInfo;
+        if (userInfo?.userId !== userId) {
             throw new ApplicationError(this.ctx.gettext('user-authorization-failed'));
         }
         return {

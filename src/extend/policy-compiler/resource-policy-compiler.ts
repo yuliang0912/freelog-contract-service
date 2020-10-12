@@ -6,7 +6,7 @@ const freelogPolicyCompiler = require('@freelog/resource-policy-lang');
 
 export class ResourcePolicyCompiler extends BasePolicyCompiler implements IPolicyCompiler {
 
-    compiler(userId: number, subjectType: SubjectType, policyText: string, policyName: string): PolicyInfo {
+    compiler(subjectType: SubjectType, policyText: string): PolicyInfo {
 
         const {state_machine, errors} = freelogPolicyCompiler.compile(policyText);
         if (errors.length) {
@@ -14,8 +14,8 @@ export class ResourcePolicyCompiler extends BasePolicyCompiler implements IPolic
         }
 
         return {
-            policyId: super.generatePolicyId(userId, subjectType, policyText),
-            policyText, policyName, subjectType,
+            policyId: super.generatePolicyId(subjectType, policyText),
+            policyText, subjectType,
             fsmDescriptionInfo: state_machine.states
         };
     }

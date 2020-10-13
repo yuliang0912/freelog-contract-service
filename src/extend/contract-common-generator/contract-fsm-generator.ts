@@ -29,7 +29,8 @@ export class ContractFsmGenerator {
                 .setInitialState(contractInfo.fsmCurrentState)
                 .build();
         } catch (e) {
-            throw e;
+            console.log(e);
+            // throw e;
         }
     }
 

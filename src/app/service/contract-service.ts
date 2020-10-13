@@ -64,8 +64,8 @@ export class ContractService implements IContractService {
         const beSignSubjectMap: Map<string, SubjectBaseInfo> = await this.outsideApiService.getSubjectInfos(beSignSubjects.map(x => x.subjectId), subjectType).then(list => {
             return new Map(list.map(x => [x.subjectId, x]));
         });
-        const beSignSubjectPolicyMap: Map<string, PolicyInfo> = await this.policyService.findByIds(beSignSubjects.map(x => x.policyId)).then(list => new Map(list.map(x => [x.policyId, x])));
 
+        const beSignSubjectPolicyMap: Map<string, PolicyInfo> = await this.policyService.findByIds(beSignSubjects.map(x => x.policyId)).then(list => new Map(list.map(x => [x.policyId, x])));
         const invalidPolicyIds = [];
         const beSignContracts = beSignSubjects.map(beSignSubject => {
             const subjectInfo = beSignSubjectMap.get(beSignSubject.subjectId);

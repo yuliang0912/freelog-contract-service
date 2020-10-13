@@ -30,6 +30,10 @@ export default () => {
         url: 'mongodb://127.0.0.1:27017/contracts'
     };
 
+    // config.mongoose = {
+    //     url: 'mongodb://39.108.77.211:30772/contracts'
+    // };
+
     config.localIdentity = {
         userId: 50021,
         username: 'yuliang'

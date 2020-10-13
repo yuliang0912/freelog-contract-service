@@ -31,7 +31,7 @@ export class UninitializedContractHandleJob implements CommonSchedule {
         return {
             cron: '0 */5 * * * *',
             type: 'worker',
-            immediate: false, // 启动时是否立即执行一次
+            immediate: true, // 启动时是否立即执行一次
             disable: false
         };
     }

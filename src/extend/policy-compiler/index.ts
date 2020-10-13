@@ -2,6 +2,7 @@ import {SubjectType} from '../../enum';
 import {init, provide, scope} from 'midway';
 import {IPolicyCompiler, PolicyInfo} from '../../interface';
 import {ResourcePolicyCompiler} from './resource-policy-compiler';
+import {PresentablePolicyCompiler} from './presentable-policy-compiler';
 import {ApplicationError} from 'egg-freelog-base';
 
 @provide()
@@ -26,5 +27,6 @@ export class PolicyCompiler implements IPolicyCompiler {
     @init()
     initialSubjectPolicyCompiler() {
         this.subjectPolicyCompilerMap.set(SubjectType.Resource, new ResourcePolicyCompiler());
+        this.subjectPolicyCompilerMap.set(SubjectType.Presentable, new PresentablePolicyCompiler());
     }
 }

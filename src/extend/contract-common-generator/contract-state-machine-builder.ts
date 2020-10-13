@@ -117,6 +117,9 @@ export class ContractStateMachineBuilder {
         forIn(this.fsmDescriptionInfo, (stateDescription, stateName) => {
             forIn(stateDescription.transition, (eventInfo, nextStateName) => {
                 if (eventInfo) {
+                    if (!eventInfo.eventId) {
+                        throw new Error('策略对象存在异常,不存在事件ID');
+                    }
                     fsmTransitions.push({name: eventInfo.eventId, from: stateName, to: nextStateName});
                 }
             });

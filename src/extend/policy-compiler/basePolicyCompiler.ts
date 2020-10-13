@@ -18,7 +18,7 @@ export class BasePolicyCompiler implements IPolicyCompiler {
      * @param policyText
      */
     generatePolicyId(subjectType: SubjectType, policyText: string) {
-        return md5(`$FREELOG_POLICY_TEXT_${policyText.trim()}_SUBJECT_TYPE_${SubjectType}`);
+        return md5(`$FREELOG_POLICY_TEXT_${policyText.trim()}_SUBJECT_TYPE_${subjectType}`);
         // return md5(policyText.replace(/\s{2,}/g, '') + '_subjectType:' + subjectType);
     }
 }

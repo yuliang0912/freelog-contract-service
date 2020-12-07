@@ -1,15 +1,16 @@
 import * as StateMachine from 'javascript-state-machine';
+import { FsmDescriptionInfo, PolicyEventInfo } from '../../interface';
 export declare class ContractStateMachineBuilder {
     methods: any;
     initialState: string;
     attachData: object;
-    fsmDescriptionInfo: any;
+    fsmDescriptionInfo: FsmDescriptionInfo;
     isExecutedEvent: boolean;
     /**
      * 构建状态机
      */
     build(): StateMachine;
-    execEvent(this: any, event: any, ...otherArgs: any[]): Promise<boolean>;
+    execEvent(this: any, event: PolicyEventInfo, ...otherArgs: any[]): Promise<boolean>;
     /**
      * 设置合约描述信息
      * @param fsmDescriptionInfo

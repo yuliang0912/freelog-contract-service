@@ -26,7 +26,7 @@ describe('test/app/contract', () => {
             policyId: '8cefe2f1dcc6dd0bdaadac946cb63dbc',
             fsmCurrentState: null,
             fsmRunningStatus: ContractFsmRunningStatusEnum.Uninitialized,
-            authStatus: ContractAuthStatusEnum.Unknown,
+            authStatus: ContractAuthStatusEnum.Unauthorized,
         };
 
         await contractEventHandler.handle(ContractEventEnum.InitialContractFsmEvent, [contractInfo]);

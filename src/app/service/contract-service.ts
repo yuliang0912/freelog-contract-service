@@ -250,6 +250,20 @@ export class ContractService implements IContractService {
         });
     }
 
+    async findLicenseeSignCounts(licenseeOwnerIds: number[], licenseeIdentityType: IdentityType): Promise<Array<{ licensorOwnerId: number, count: number }>> {
+        return this.contractInfoProvider.aggregate([
+            {
+                $match: {licensorOwnerId: {$in: licenseeOwnerIds}, licenseeIdentityType}
+            },
+            {
+                $group: {_id: '$licenseeOwnerId', count: {$sum: 1}}
+            },
+            {
+                $project: {_id: 0, licensorOwnerId: '$_id', count: '$count'}
+            }
+        ]);
+    }
+
     /**
      * 检查合同是否可以重签
      * @param baseInfos

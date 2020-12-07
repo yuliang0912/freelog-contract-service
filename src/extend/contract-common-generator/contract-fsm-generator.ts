@@ -48,6 +48,8 @@ export class ContractFsmGenerator {
         return this.contractWarpToFsm(contractInfo, contractPolicyInfo).can(eventId);
     }
 
+    // isCanExecEvent()
+
     _onEnterStateEventHandle(fsmDescriptionInfo: object): (lifeCycle, ...args) => void {
         return (lifeCycle, ...args) => {
             const {fsm, from, to} = lifeCycle;

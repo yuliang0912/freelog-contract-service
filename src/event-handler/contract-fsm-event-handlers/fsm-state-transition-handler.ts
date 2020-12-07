@@ -1,5 +1,5 @@
 import {inject, provide, scope} from 'midway';
-import {ContractFsmRunningStatusEnum} from '../../enum';
+import {ContractAuthStatusEnum, ContractFsmRunningStatusEnum} from '../../enum';
 import {ContractInfo, IContractService, IEventHandler} from '../../interface';
 
 /**
@@ -35,7 +35,9 @@ export class ContractFsmStateTransitionHandler implements IEventHandler {
         await this._registerAndUnregisterContractEvents(contractInfo, fsmDescriptionInfo);
         await this.contractService.addContractChangedHistory(contractInfo, fromState, toState, eventId, new Date());
         await this.contractService.updateContractInfo(contractInfo, {
-            fsmCurrentState: toState, fsmRunningStatus: this._getContractFsmRunningStatus()
+            fsmCurrentState: toState,
+            fsmRunningStatus: this._getContractFsmRunningStatus(),
+            authStatus: this._getContractAuthStatus(fsmDescriptionInfo, toState)
         });
     }
 
@@ -62,5 +64,24 @@ export class ContractFsmStateTransitionHandler implements IEventHandler {
      */
     _getContractFsmRunningStatus(): ContractFsmRunningStatusEnum {
         return ContractFsmRunningStatusEnum.Running;
+    }
+
+    /**
+     * 获取合同当前授权状态
+     * @param fsmDescriptionInfo
+     * @param toState
+     * @private
+     */
+    _getContractAuthStatus(fsmDescriptionInfo: object, toState: string): number {
+        const currentStateFsmDescriptionInfo = fsmDescriptionInfo[toState];
+        if (currentStateFsmDescriptionInfo?.isAuth && currentStateFsmDescriptionInfo?.isTestAuth) {
+            return ContractAuthStatusEnum.Authorized | ContractAuthStatusEnum.TestNodeAuthorized;
+        } else if (currentStateFsmDescriptionInfo?.isAuth) {
+            return ContractAuthStatusEnum.Authorized;
+        } else if (currentStateFsmDescriptionInfo?.isTestAuth) {
+            return ContractAuthStatusEnum.TestNodeAuthorized;
+        } else {
+            return ContractAuthStatusEnum.Unauthorized;
+        }
     }
 }

@@ -1,9 +1,9 @@
-import {controller, get, inject, post, provide, put} from 'midway';
-import {IContractService, IJsonSchemaValidate, IPolicyService} from '../../interface';
-import {visitorIdentity} from '../../extend/vistorIdentityDecorator';
-import {ArgumentError, AuthorizationError, ApplicationError, InternalClient, LoginUser} from 'egg-freelog-base';
-import {ContractStatusEnum, IdentityType, IdentityTypeEnum, SubjectType} from '../../enum';
 import {first, isEmpty, isString, isUndefined} from 'lodash';
+import {controller, get, inject, post, provide, put} from 'midway';
+import {IContractService, IJsonSchemaValidate, IMongoConditionBuilder, IPolicyService} from '../../interface';
+import {visitorIdentity} from '../../extend/vistorIdentityDecorator';
+import {ApplicationError, ArgumentError, AuthorizationError, InternalClient, LoginUser} from 'egg-freelog-base';
+import {ContractStatusEnum, IdentityType, IdentityTypeEnum, SubjectType} from '../../enum';
 import {mongoObjectId} from 'egg-freelog-base/app/extend/helper/common_regex';
 
 @provide()
@@ -18,6 +18,8 @@ export class ContractController {
     contractService: IContractService;
     @inject()
     batchSignSubjectValidator: IJsonSchemaValidate;
+    @inject()
+    mongoConditionBuilder: IMongoConditionBuilder;
 
     @get('/')
     @visitorIdentity(LoginUser)
@@ -29,10 +31,10 @@ export class ContractController {
         const licenseeId = ctx.checkQuery('licenseeId').optional().value; // 乙方
         const identityType = ctx.checkQuery('identityType').exist().toInt().in([IdentityTypeEnum.Licensor, IdentityTypeEnum.Licensee]).value; // 当前登录用户是作为甲方or乙方
         const subjectIds = ctx.checkQuery('subjectIds').optional().isSplitMongoObjectId().toSplitArray().default([]).value;
-        const subjectType = ctx.checkQuery('subjectType').optional().in([SubjectType.Presentable, SubjectType.Resource, SubjectType.UserGroup]).value;
+        const subjectType = ctx.checkQuery('subjectType').optional().toInt().in([SubjectType.Presentable, SubjectType.Resource, SubjectType.UserGroup]).value;
         const isDefault = ctx.checkQuery('isDefault').optional().toInt().in([0, 1]).value;
         const keywords = ctx.checkQuery('keywords').optional().decodeURIComponent().toLowercase().value;
-        const status = ctx.checkQuery('status').optional().in([ContractStatusEnum.Terminated, ContractStatusEnum.Executed, ContractStatusEnum.Exception]).value;
+        const status = ctx.checkQuery('status').optional().toInt().in([ContractStatusEnum.Terminated, ContractStatusEnum.Executed, ContractStatusEnum.Exception]).value;
         const authStatus = ctx.checkQuery('authStatus').optional().toInt().value;
         const isLoadPolicyInfo = ctx.checkQuery('isLoadPolicyInfo').optional().toInt().in([0, 1, 2]).default(0).value;
         const licenseeIdentityType = ctx.checkQuery('licenseeIdentityType').optional().toInt().in([IdentityType.Resource, IdentityType.Node, IdentityType.ClientUser]).value;
@@ -40,47 +42,28 @@ export class ContractController {
         const projection: string[] = ctx.checkQuery('projection').optional().toSplitArray().default([]).value;
         ctx.validateParams();
 
-        const condition: any = {};
-        if (identityType === IdentityTypeEnum.Licensor) {
-            condition.licensorOwnerId = ctx.userId;
-        }
-        if (identityType === IdentityTypeEnum.Licensee) {
-            condition.licenseeOwnerId = ctx.userId;
-        }
-        if (!isUndefined(licenseeIdentityType)) {
-            condition.licenseeIdentityType = licenseeIdentityType;
-        }
-        if (isString(licensorId) && licensorId.length) {
-            condition.licensorId = licensorId;
-        }
-        if (isString(licenseeId) && licenseeId.length) {
-            condition.licenseeId = licenseeId;
-        }
-        if (!isEmpty(subjectIds)) {
-            condition.subjectId = {$in: subjectIds};
-        }
-        if (!isUndefined(subjectType)) {
-            condition.subjectType = subjectType;
-        }
-        if (!isUndefined(isDefault)) {
-            condition.sortId = isDefault ? 1 : 0;
-        }
-        if (!isUndefined(status)) {
-            condition.status = status;
-        }
-        if (!isUndefined(authStatus)) {
-            condition.authStatus = authStatus;
-        }
+        const conditionBuilder = this.mongoConditionBuilder
+            .setNumber('status', status)
+            .setNumber('authStatus', authStatus)
+            .setNumber('subjectType', subjectType)
+            .setString('licensorId', licensorId, {isAllowEmptyString: false})
+            .setString('licenseeId', licenseeId, {isAllowEmptyString: false})
+            .setNumber('licenseeIdentityType', licenseeIdentityType)
+            .setNumber('licensorOwnerId', ctx.userId, {isSetProperty: identityType === IdentityTypeEnum.Licensor})
+            .setNumber('licenseeOwnerId', ctx.userId, {isSetProperty: identityType === IdentityTypeEnum.Licensee})
+            .setArray('subjectId', subjectIds, {isAllowEmptyArray: false, operation: '$in'})
+            .setNumber('sortId', isDefault ? 1 : 0, {isSetProperty: !isUndefined(isDefault)});
+
         if (isString(keywords) && keywords.length) {
             const searchRegExp = new RegExp(keywords, 'i');
             if (mongoObjectId.test(keywords)) {
-                condition.$or = [{subjectId: keywords}, {_id: keywords}];
+                conditionBuilder.setArray('$or', [{subjectId: keywords}, {_id: keywords}]);
             } else {
-                condition.$or = [{contractName: searchRegExp}, {licensorName: searchRegExp}, {licenseeName: searchRegExp}];
+                conditionBuilder.setArray('$or', [{contractName: searchRegExp}, {licensorName: searchRegExp}, {licenseeName: searchRegExp}]);
             }
         }
 
-        const pageResult = await this.contractService.findPageList(condition, page, pageSize, projection, {createDate: order === 'asc' ? 1 : -1});
+        const pageResult = await this.contractService.findPageList(conditionBuilder.value(), page, pageSize, projection, {createDate: order === 'asc' ? 1 : -1});
         if (isLoadPolicyInfo) {
             pageResult.dataList = await this.contractService.fillContractPolicyInfo(pageResult.dataList);
         }
@@ -93,7 +76,7 @@ export class ContractController {
 
         const contractIds = ctx.checkQuery('contractIds').optional().isSplitMongoObjectId().toSplitArray().len(1, 300).value;
         const subjectIds = ctx.checkQuery('subjectIds').optional().isSplitMongoObjectId().toSplitArray().len(1, 300).value;
-        const subjectType = ctx.checkQuery('subjectType').optional().in([SubjectType.Presentable, SubjectType.Resource, SubjectType.UserGroup]).value;
+        const subjectType = ctx.checkQuery('subjectType').optional().toInt().in([SubjectType.Presentable, SubjectType.Resource, SubjectType.UserGroup]).value;
         const licenseeIdentityType = ctx.checkQuery('licenseeIdentityType').optional().toInt().in([IdentityType.Resource, IdentityType.Node, IdentityType.ClientUser]).value;
         const licensorId = ctx.checkQuery('licensorId').optional().value; // 甲方
         const licenseeId = ctx.checkQuery('licenseeId').optional().value; // 乙方
@@ -101,28 +84,18 @@ export class ContractController {
         const projection: string[] = ctx.checkQuery('projection').optional().toSplitArray().default([]).value;
         ctx.validateParams();
 
-        const condition: any = {};
         if ([contractIds, subjectIds].every(isUndefined)) {
             throw new ArgumentError(ctx.gettext('params-required-validate-failed', 'contractIds,subjectIds'));
         }
-        if (!isEmpty(contractIds)) {
-            condition._id = {$in: contractIds};
-        }
-        if (!isEmpty(subjectIds)) {
-            condition.subjectId = {$in: subjectIds};
-        }
-        if (isString(licensorId) && licensorId.length) {
-            condition.licensorId = licensorId;
-        }
-        if (isString(licenseeId) && licenseeId.length) {
-            condition.licenseeId = licenseeId;
-        }
-        if (!isUndefined(licenseeIdentityType)) {
-            condition.licenseeIdentityType = licenseeIdentityType;
-        }
-        if (!isUndefined(subjectType)) {
-            condition.subjectType = subjectType;
-        }
+
+        const condition = this.mongoConditionBuilder
+            .setArray('_id', contractIds, {isAllowEmptyArray: false, operation: '$in'})
+            .setArray('subjectId', subjectIds, {isAllowEmptyArray: false, operation: '$in'})
+            .setString('licenseeId', licenseeId, {isAllowEmptyString: false})
+            .setString('licensorId', licensorId, {isAllowEmptyString: false})
+            .setNumber('licenseeIdentityType', licenseeIdentityType)
+            .setNumber('subjectType', subjectType)
+            .value();
 
         let dataList = await this.contractService.find(condition, projection.join(' '));
         if (isLoadPolicyInfo) {
@@ -175,6 +148,21 @@ export class ContractController {
         await this.contractService.batchSignSubjects(subjects, licenseeId, licenseeIdentityType, subjectType).then(ctx.success);
     }
 
+    @get('/count')
+    @visitorIdentity(LoginUser | InternalClient)
+    async count(ctx) {
+
+        const userIds = ctx.checkQuery('userIds').exist().isSplitNumber().toSplitArray().len(1, 100).value;
+        const licenseeIdentityType = ctx.checkQuery('licenseeIdentityType').optional().toInt().default(3).in([1, 2, 3]).value;
+        ctx.validateParams();
+
+        const list = await this.contractService.findLicenseeSignCounts(userIds.map(x => parseInt(x, 10)), licenseeIdentityType);
+        ctx.success(userIds.map(userId => {
+            const record = list.find(x => x.licensorOwnerId.toString() === userId);
+            return {userId: parseInt(userId, 10), createdNodeCount: record?.count ?? 0};
+        }));
+    }
+
     @get('/:contractId')
     @visitorIdentity(LoginUser | InternalClient)
     async show(ctx) {
@@ -217,6 +205,7 @@ export class ContractController {
 
         const contractInfo = await this.contractService.findById(contractId);
         ctx.entityNullObjectCheck(contractInfo);
+
         if (contractInfo.licenseeId !== ctx.request.userId.toString()) {
             throw new AuthorizationError(ctx.gettext('user-authorization-failed'));
         }

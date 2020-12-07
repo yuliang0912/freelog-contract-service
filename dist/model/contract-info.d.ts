@@ -1,5 +1,5 @@
-import { MongooseModelBase, IMongooseModelBase } from './mongoose-model-base';
-export declare class ContractInfoModel extends MongooseModelBase implements IMongooseModelBase {
+import { MongooseModelBase } from './mongoose-model-base';
+export declare class ContractInfoModel extends MongooseModelBase {
     buildMongooseModel(): any;
     static get toObjectOptions(): {
         getters: boolean;

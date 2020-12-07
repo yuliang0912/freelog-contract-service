@@ -14,11 +14,11 @@ export class ContractFsmEventAnalysis {
      */
     getContractCanBeRegisteredEvents(fsmDescriptionInfo: object, fsmCurrentState: string) {
         const contractCanBeRegisteredEvents = [];
-        const currentStateFsmDescriptionInf = fsmDescriptionInfo[fsmCurrentState];
-        if (!currentStateFsmDescriptionInf) {
+        const currentStateFsmDescriptionInfo = fsmDescriptionInfo[fsmCurrentState];
+        if (!currentStateFsmDescriptionInfo) {
             throw new LogicError(`please check code! current contract fsm is not exist stateName:[${fsmCurrentState}]`);
         }
-        forIn(currentStateFsmDescriptionInf.transition, (eventInfo, nextState) => {
+        forIn(currentStateFsmDescriptionInfo.transition, (eventInfo, nextState) => {
             if (eventInfo && this.getContractCanBeRegisteredEventCodes.includes(eventInfo.code)) {
                 contractCanBeRegisteredEvents.push(eventInfo);
             }

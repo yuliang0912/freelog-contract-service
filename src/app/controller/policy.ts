@@ -1,6 +1,5 @@
-import {isNumber} from 'lodash';
 import {SubjectType} from '../../enum';
-import {IPolicyService} from '../../interface';
+import {IMongoConditionBuilder, IPolicyService} from '../../interface';
 import {LoginUser, InternalClient} from 'egg-freelog-base';
 import {visitorIdentity} from '../../extend/vistorIdentityDecorator';
 import {controller, get, post, inject, provide} from 'midway';
@@ -11,6 +10,8 @@ export class PolicyController {
 
     @inject()
     policyService: IPolicyService;
+    @inject()
+    mongoConditionBuilder: IMongoConditionBuilder;
 
     @get('/list')
     @visitorIdentity(LoginUser)
@@ -21,10 +22,10 @@ export class PolicyController {
         const projection: string[] = ctx.checkQuery('projection').optional().toSplitArray().default([]).value;
         ctx.validateParams();
 
-        const condition: any = {policyId: {$in: policyIds}};
-        if (isNumber(subjectType)) {
-            condition.subjectType = subjectType;
-        }
+        const condition = this.mongoConditionBuilder
+            .setArray('policyId', policyIds)
+            .setNumber('subjectType', subjectType).value();
+
         await this.policyService.find(condition, projection.join(' ')).then(ctx.success);
     }
 

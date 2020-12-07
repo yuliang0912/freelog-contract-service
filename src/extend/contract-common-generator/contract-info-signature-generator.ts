@@ -29,7 +29,7 @@ export class ContractInfoSignatureProvider {
      * @returns {boolean}
      */
     contractBaseInfoSignatureVerify(contract: ContractInfo): boolean {
-        if (!contract.signature) {
+        if (!contract?.signature) {
             return false;
         }
         return this.contractBaseInfoSignature(contract) === contract.signature;

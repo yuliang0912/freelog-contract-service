@@ -13,6 +13,7 @@ export class UninitializedContractHandleJob implements CommonSchedule {
     contractEventHandler: IContractEventHandler;
 
     async exec(ctx) {
+
         const expirationDate = new Date();
         expirationDate.setMinutes(expirationDate.getMinutes() - 3);
 
@@ -25,11 +26,12 @@ export class UninitializedContractHandleJob implements CommonSchedule {
         if (!isEmpty(uninitializedContracts)) {
             await this.contractEventHandler.handle(ContractEventEnum.InitialContractFsmEvent, uninitializedContracts);
         }
+        return;
     }
 
     static get scheduleOptions() {
         return {
-            cron: '0 */5 * * * *',
+            cron: '*/5 * * * * *',
             type: 'worker',
             immediate: true, // 启动时是否立即执行一次
             disable: false

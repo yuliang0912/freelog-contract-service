@@ -1,11 +1,11 @@
 import {omit, assign, isNumber} from 'lodash';
 import {scope, provide} from 'midway';
-import {MongooseModelBase, IMongooseModelBase} from './mongoose-model-base';
+import {MongooseModelBase} from './mongoose-model-base';
 import {ContractAuthStatusEnum} from '../enum';
 
 @scope('Singleton')
 @provide('model.ContractInfo')
-export class ContractInfoModel extends MongooseModelBase implements IMongooseModelBase {
+export class ContractInfoModel extends MongooseModelBase {
 
     buildMongooseModel() {
         /**

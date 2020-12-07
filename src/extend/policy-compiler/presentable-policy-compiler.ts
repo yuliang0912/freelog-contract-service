@@ -4,6 +4,7 @@ import {SubjectType} from '../../enum';
 
 const freelogPolicyCompiler = require('@freelog/resource-policy-lang');
 
+// 展品策略编译
 export class PresentablePolicyCompiler extends BasePolicyCompiler implements IPolicyCompiler {
 
     compiler(subjectType: SubjectType, policyText: string): PolicyInfo {
@@ -15,7 +16,7 @@ export class PresentablePolicyCompiler extends BasePolicyCompiler implements IPo
         return {
             policyId: super.generatePolicyId(subjectType, policyText),
             policyText, subjectType,
-            fsmDescriptionInfo: state_machine.states
+            fsmDescriptionInfo: super.setFsmDescriptionInfoProperty(state_machine.states)
         };
     }
 }

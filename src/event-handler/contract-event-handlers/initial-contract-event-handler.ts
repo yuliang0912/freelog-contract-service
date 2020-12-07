@@ -2,6 +2,7 @@ import * as queue from 'async/queue';
 import {provide, scope, inject} from 'midway';
 import {ContractInfo, PolicyInfo, IEventHandler, IPolicyService, IContractService} from '../../interface';
 import {ContractFsmRunningStatusEnum} from '../../enum';
+import {isString, first} from 'lodash';
 
 @scope('Singleton')
 @provide('initialContractEventHandler')
@@ -30,28 +31,33 @@ export class InitialContractEventHandler implements IEventHandler {
      * TODO: 后续服务需要提供定时JOB,用于扫描状态为Uninitialized或InitializedError的合约.然后对其初始化,防止部分合约初始化失败.
      */
     async handle(contractInfos: ContractInfo[]) {
-        const contractPolicyMap: Map<string, PolicyInfo> = await this.policyService.findByIds(contractInfos.map(x => x.policyId))
+
+        const contractPolicyMap = await this.policyService.findByIds(contractInfos.map(x => x.policyId))
             .then(list => new Map(list.map(x => [x.policyId, x])));
-        contractInfos.forEach(contractInfo => {
+
+        for (const contractInfo of contractInfos) {
             if (!contractInfo.contractId || ![ContractFsmRunningStatusEnum.Uninitialized, ContractFsmRunningStatusEnum.InitializedError].includes(contractInfo.fsmRunningStatus)) {
-                return;
+                continue;
             }
             const callback = this._callback.bind({contractInfo, contractService: this.contractService});
             if (!contractPolicyMap.has(contractInfo.policyId)) {
                 callback(new Error(`policy [id:${contractInfo.policyId}] is invalid`));
-                return;
+                continue;
             }
             this.taskQueue.push({
-                contractInfo,
-                policyInfo: contractPolicyMap.get(contractInfo.policyId)
+                contractInfo, policyInfo: contractPolicyMap.get(contractInfo.policyId)
             }, callback);
-        });
+        }
     }
 
     async _initialContract(contract: { contractInfo: ContractInfo, policyInfo: PolicyInfo }) {
         const {contractInfo, policyInfo} = contract;
         // 目前初始态的状态名固定为init或initial (后续规则也可能修改为第一个)
         contractInfo.fsmCurrentState = Object.keys(policyInfo.fsmDescriptionInfo).find(x => /^(init|initial)$/i.test(x));
+        if (!isString(contractInfo.fsmCurrentState)) {
+            // 兼容模式:正常初始化的状态为固定的名称,目前解析parser貌似没有做验证,所以如果没有init或initial状态时,默认使用第一个状态作为初始态
+            contractInfo.fsmCurrentState = first(Object.keys(policyInfo.fsmDescriptionInfo));
+        }
         this.contractFsmGenerator.contractWarpToFsm(contractInfo, policyInfo);
     }
 

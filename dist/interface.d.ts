@@ -75,8 +75,25 @@ export interface SubjectPolicyInfo {
 export interface PolicyInfo {
     policyId: string;
     policyText: string;
-    fsmDescriptionInfo?: object;
+    fsmDescriptionInfo?: FsmDescriptionInfo;
     subjectType: SubjectType;
+}
+export interface PolicyEventInfo {
+    code: string;
+    eventId: string;
+    params?: {
+        [paramName: string]: any;
+    };
+}
+export interface FsmDescriptionInfo {
+    [stateName: string]: FsmStateDescriptionInfo;
+}
+export interface FsmStateDescriptionInfo {
+    isAuth: boolean;
+    isTestAuth: boolean;
+    transition: {
+        [nextStateName: string]: PolicyEventInfo | null;
+    };
 }
 export interface LicenseeInfo {
     licenseeId: string | number;
@@ -112,6 +129,10 @@ export interface IContractService {
      */
     batchSignSubjects(subjects: BeSignSubjectOptions[], licenseeId: string | number, identityType: IdentityType, subjectType: SubjectType): Promise<ContractInfo[]>;
     fillContractPolicyInfo(contracts: ContractInfo[]): Promise<ContractInfo[]>;
+    findLicenseeSignCounts(licenseeOwnerIds: number[], licenseeIdentityType: IdentityType): Promise<Array<{
+        licensorOwnerId: number;
+        count: number;
+    }>>;
 }
 export interface IPolicyService {
     findOrCreatePolicy(subjectType: SubjectType, policyText: string): Promise<PolicyInfo>;
@@ -157,4 +178,24 @@ export interface IJsonSchemaValidate {
  */
 export interface IPolicyCompiler {
     compiler(subjectType: SubjectType, policyText: string): PolicyInfo;
+}
+export interface IMongoConditionBuildOptions {
+    operation?: string | undefined;
+    isAllowEmptyArray?: boolean;
+    isAllowEmptyString?: boolean;
+    isSetProperty?: boolean;
+}
+export interface IMongoConditionBuilder {
+    setString(field: string, value: string, options?: IMongoConditionBuildOptions): IMongoConditionBuilder;
+    setNumber(field: string, value: number, options?: IMongoConditionBuildOptions): IMongoConditionBuilder;
+    setArray(field: string, value: any[], options?: IMongoConditionBuildOptions): IMongoConditionBuilder;
+    setRegex(field: string, value: RegExp, options?: IMongoConditionBuildOptions): IMongoConditionBuilder;
+    setObject(field: string, value: object, options?: IMongoConditionBuildOptions): IMongoConditionBuilder;
+    setAnyProperty(field: string, value: any, options?: IMongoConditionBuildOptions): IMongoConditionBuilder;
+    verify(tips?: string | Error): IMongoConditionBuilder;
+    print(): IMongoConditionBuilder;
+    value(): object;
+    build(): object;
+}
+export interface Interface {
 }

@@ -13,7 +13,6 @@ export class InitialErrorContractHandleJob implements CommonSchedule {
     contractEventHandler: IContractEventHandler;
 
     async exec(ctx) {
-
         const initialErrorContracts = await this.contractInfoProvider.find({
             status: ContractStatusEnum.Executed,
             fsmRunningStatus: ContractFsmRunningStatusEnum.InitializedError
@@ -26,7 +25,7 @@ export class InitialErrorContractHandleJob implements CommonSchedule {
 
     static get scheduleOptions() {
         return {
-            cron: '0 */5 * * * *',
+            cron: '*/5 * * * * *',
             type: 'worker',
             immediate: true, // 启动时是否立即执行一次
             disable: false

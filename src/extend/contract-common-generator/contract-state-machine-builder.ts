@@ -3,6 +3,7 @@ import * as StateMachine from 'javascript-state-machine';
 import {scope, provide} from 'midway';
 import {ApplicationError} from 'egg-freelog-base';
 import * as StateMachineHistory from 'javascript-state-machine/lib/history';
+import {FsmDescriptionInfo, PolicyEventInfo} from '../../interface';
 
 @scope('Prototype') // 每次都重新获取新实例
 @provide('contractStateMachineBuilder')
@@ -11,7 +12,7 @@ export class ContractStateMachineBuilder {
     methods: any = {};
     initialState: string;
     attachData: object = {};
-    fsmDescriptionInfo;
+    fsmDescriptionInfo: FsmDescriptionInfo;
     isExecutedEvent = false; // freelog系统合约特性.每次事件单独创建一个状态机.不存在连续执行两次事件的情况
 
     /**
@@ -35,10 +36,10 @@ export class ContractStateMachineBuilder {
         return stateMachine;
     }
 
-    async execEvent(this: any, event, ...otherArgs) {
-        const {eventId} = event;
+    async execEvent(this: any, event: PolicyEventInfo, ...otherArgs) {
+        const eventId = event.eventId;
         if (this.isExecutedEvent) {
-            throw new ApplicationError(`无效的事件,${eventId},状态机只支持执行1次事件`);
+            throw new ApplicationError(`无效的事件,${eventId},状态机只支持执行1次事件,请重新同步最新数据初始化`);
         }
         if (!Reflect.has(this, eventId)) {
             throw new ApplicationError(`无效的事件,${eventId}`);

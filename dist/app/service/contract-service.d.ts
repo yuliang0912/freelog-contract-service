@@ -42,6 +42,10 @@ export declare class ContractService implements IContractService {
      * @param resources
      */
     fillContractPolicyInfo(contracts: ContractInfo[]): Promise<ContractInfo[]>;
+    findLicenseeSignCounts(licenseeOwnerIds: number[], licenseeIdentityType: IdentityType): Promise<Array<{
+        licensorOwnerId: number;
+        count: number;
+    }>>;
     /**
      * 检查合同是否可以重签
      * @param baseInfos

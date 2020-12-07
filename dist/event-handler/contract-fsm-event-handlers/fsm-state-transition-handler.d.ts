@@ -32,4 +32,11 @@ export declare class ContractFsmStateTransitionHandler implements IEventHandler 
      * @private
      */
     _getContractFsmRunningStatus(): ContractFsmRunningStatusEnum;
+    /**
+     * 获取合同当前授权状态
+     * @param fsmDescriptionInfo
+     * @param toState
+     * @private
+     */
+    _getContractAuthStatus(fsmDescriptionInfo: object, toState: string): number;
 }

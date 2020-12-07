@@ -50,14 +50,15 @@ export class PolicyService implements IPolicyService {
         });
         const batchWriteObjects = [];
         for (const policyInfo of policyList) {
-            if (!existingPolicyMap.has(policyInfo.policyId)) {
-                batchWriteObjects.push({
-                    subjectType,
-                    policyId: policyInfo.policyId,
-                    policyText: policyInfo.policyText,
-                    fsmDescriptionInfo: policyInfo.fsmDescriptionInfo
-                });
+            if (existingPolicyMap.has(policyInfo.policyId)) {
+                continue;
             }
+            batchWriteObjects.push({
+                subjectType,
+                policyId: policyInfo.policyId,
+                policyText: policyInfo.policyText,
+                fsmDescriptionInfo: policyInfo.fsmDescriptionInfo
+            });
         }
         await this.policyInfoProvider.insertMany(batchWriteObjects);
         return policyList;

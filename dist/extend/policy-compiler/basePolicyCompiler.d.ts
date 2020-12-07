@@ -1,4 +1,4 @@
-import { IPolicyCompiler, PolicyInfo } from '../../interface';
+import { IPolicyCompiler, PolicyInfo, FsmDescriptionInfo } from '../../interface';
 import { SubjectType } from '../../enum';
 export declare class BasePolicyCompiler implements IPolicyCompiler {
     compiler(subjectType: SubjectType, policyText: string): PolicyInfo;
@@ -8,4 +8,9 @@ export declare class BasePolicyCompiler implements IPolicyCompiler {
      * @param policyText
      */
     generatePolicyId(subjectType: SubjectType, policyText: string): any;
+    /**
+     * 生成事件ID
+     * @param fsmDescriptionInfo
+     */
+    setFsmDescriptionInfoProperty(fsmDescriptionInfo: FsmDescriptionInfo): FsmDescriptionInfo;
 }

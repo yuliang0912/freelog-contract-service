@@ -159,7 +159,7 @@ export class ContractController {
         const list = await this.contractService.findLicenseeSignCounts(userIds.map(x => parseInt(x, 10)), licenseeIdentityType);
         ctx.success(userIds.map(userId => {
             const record = list.find(x => x.licensorOwnerId.toString() === userId);
-            return {userId: parseInt(userId, 10), createdNodeCount: record?.count ?? 0};
+            return {userId: parseInt(userId, 10), signedContractCount: record?.count ?? 0};
         }));
     }
 

@@ -17,7 +17,7 @@ export default (appInfo: EggAppInfo) => {
         enable: true,
         defaultLocale: 'zh-CN'
     };
-    
+
     config.middleware = ['errorAutoSnapHandler', 'gatewayIdentityInfoHandler'];
 
     config.static = {
@@ -50,6 +50,7 @@ export default (appInfo: EggAppInfo) => {
     config.contractSignKey = 'T0RZM01UUTFZV1l4Wm1SalpqRTBOamN5TldRMVkyTTBZVGt3WmpaaE0ySm1aSE5oWm1SellXWmtjMkZtWkhOaE5ETXlORE15TkRZMU16STJOVFF6';
 
     config.rabbitMq = {
+        enable: false,
         connOptions: {
             authMechanism: 'AMQPLAIN',
             heartbeat: 60  // 每2分钟保持一次连接

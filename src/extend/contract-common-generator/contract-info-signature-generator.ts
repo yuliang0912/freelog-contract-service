@@ -1,9 +1,7 @@
 import {scope, config, provide} from 'midway';
 import {ContractInfo} from '../../interface';
-import {hmacSha1} from 'egg-freelog-base/app/extend/helper/crypto_helper';
 import {pick} from 'lodash';
-import {ArgumentError} from 'egg-freelog-base';
-import {SubjectType, ContractStatusEnum} from '../../enum';
+import {ArgumentError, SubjectTypeEnum, ContractStatusEnum, CryptoHelper} from 'egg-freelog-base';
 
 @scope('Singleton')
 @provide('contractInfoSignatureProvider')
@@ -40,7 +38,7 @@ export class ContractInfoSignatureProvider {
      * @param {ContractInfo} contract
      * @returns {string}
      */
-    contractBaseInfoUniqueKeyGenerate(contract: ContractInfo | { subjectId: string, subjectType: SubjectType, licenseeId: string | number, policyId: string, status: number, contractId?: string }): string {
+    contractBaseInfoUniqueKeyGenerate(contract: ContractInfo | { subjectId: string, subjectType: SubjectTypeEnum, licenseeId: string | number, policyId: string, status: number, contractId?: string }): string {
         // 只有正常终结的合同允许重签,其他状态的合约(正常或者异常等)不允许重签.
         contract['statusValue'] = contract.status === ContractStatusEnum.Terminated ? contract.contractId : 'refuseSignContract';
         return this._contractSignature(contract, this.contractUniqueKeySignFields, this.contractSignKey);
@@ -48,11 +46,9 @@ export class ContractInfoSignatureProvider {
 
     /**
      * object字段签名
-     * @param {ContractInfo} object
-     * @param {string[]} signFields
-     * @param {string} signKey
-     * @returns {string}
-     * @private
+     * @param contract
+     * @param signFields
+     * @param signKey
      */
     _contractSignature(contract, signFields: string[], signKey: string): string {
 
@@ -62,6 +58,6 @@ export class ContractInfoSignatureProvider {
             throw new ArgumentError('contract is invalid, signature failed');
         }
         const signText = signContractObjectKeys.map(key => signContractObject[key].toString()).join('-');
-        return hmacSha1(signText, signKey);
+        return CryptoHelper.hmacSha1(signText, signKey);
     }
 }

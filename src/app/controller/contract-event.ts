@@ -1,23 +1,28 @@
 import {controller, inject, post, provide} from 'midway';
-import {visitorIdentity} from '../../extend/vistorIdentityDecorator';
 import {IContractService, IPolicyService, PolicyEventInfo} from '../../interface';
-import {LoginUser, ArgumentError, ApplicationError, AuthorizationError} from 'egg-freelog-base';
+import {
+    IdentityTypeEnum, visitorIdentityValidator, ArgumentError,
+    ApplicationError, AuthorizationError, FreelogContext
+} from 'egg-freelog-base';
 
 @provide()
 @controller('/v2/contracts')
 export class ContractEventController {
 
     @inject()
+    ctx: FreelogContext;
+    @inject()
     policyService: IPolicyService;
     @inject()
     contractService: IContractService;
 
-    @visitorIdentity(LoginUser)
+    @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
     @post('/:contractId/execEvent')
-    async execContractEvent(ctx) {
+    async execContractEvent() {
 
+        const {ctx} = this;
         const contractId = ctx.checkParams('contractId').isContractId().value;
-        const eventId = ctx.checkBody('eventId').exist().isEventId().value;
+        const eventId = ctx.checkBody('eventId').exist().isMd5().value;
         ctx.validateParams();
 
         const contractInfo = await this.contractService.findById(contractId);
@@ -43,6 +48,6 @@ export class ContractEventController {
         }
 
         // 根据合同当前的状态描述,然后找出对应的事件信息,然后根据事件类型去做不同的参数校验以及细分的执行权限校验
-        ctx.success(currentEventInfo, eventId);
+        ctx.success({currentEventInfo, eventId});
     }
 }

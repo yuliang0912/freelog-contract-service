@@ -1,16 +1,19 @@
-import { IContractService, IJsonSchemaValidate, IMongoConditionBuilder, IPolicyService } from '../../interface';
+import { IContractService, IMongoConditionBuilder, IPolicyService } from '../../interface';
+import { FreelogContext, IJsonSchemaValidate } from 'egg-freelog-base';
+import { ContractFsmGenerator } from '../../extend/contract-common-generator/contract-fsm-generator';
 export declare class ContractController {
-    contractFsmGenerator: any;
+    ctx: FreelogContext;
+    contractFsmGenerator: ContractFsmGenerator;
     policyService: IPolicyService;
     contractService: IContractService;
     batchSignSubjectValidator: IJsonSchemaValidate;
     mongoConditionBuilder: IMongoConditionBuilder;
-    index(ctx: any): Promise<void>;
-    list(ctx: any): Promise<void>;
-    createContract(ctx: any): Promise<void>;
-    batchCreateContracts(ctx: any): Promise<void>;
-    count(ctx: any): Promise<void>;
-    show(ctx: any): Promise<void>;
-    isCanExecEvent(ctx: any): Promise<void>;
-    setDefault(ctx: any): Promise<void>;
+    index(): Promise<void>;
+    list(): Promise<void>;
+    createContract(): Promise<void>;
+    batchCreateContracts(): Promise<void>;
+    count(): Promise<void>;
+    show(): Promise<void>;
+    isCanExecEvent(): Promise<void>;
+    setDefault(): Promise<void>;
 }

@@ -1,5 +1,5 @@
 import { ContractInfo } from '../../interface';
-import { SubjectType } from '../../enum';
+import { SubjectTypeEnum } from 'egg-freelog-base';
 export declare class ContractInfoSignatureProvider {
     contractSignKey: string;
     readonly contractUniqueKeySignFields: string[];
@@ -23,7 +23,7 @@ export declare class ContractInfoSignatureProvider {
      */
     contractBaseInfoUniqueKeyGenerate(contract: ContractInfo | {
         subjectId: string;
-        subjectType: SubjectType;
+        subjectType: SubjectTypeEnum;
         licenseeId: string | number;
         policyId: string;
         status: number;
@@ -31,11 +31,9 @@ export declare class ContractInfoSignatureProvider {
     }): string;
     /**
      * object字段签名
-     * @param {ContractInfo} object
-     * @param {string[]} signFields
-     * @param {string} signKey
-     * @returns {string}
-     * @private
+     * @param contract
+     * @param signFields
+     * @param signKey
      */
     _contractSignature(contract: any, signFields: string[], signKey: string): string;
 }

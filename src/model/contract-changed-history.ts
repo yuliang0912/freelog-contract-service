@@ -1,10 +1,14 @@
 import {omit, assign} from 'lodash';
-import {scope, provide} from 'midway';
-import {MongooseModelBase, IMongooseModelBase} from './mongoose-model-base';
+import {scope, provide, plugin} from 'midway';
+import {MongooseModelBase} from 'egg-freelog-base/database/mongoose-model-base';
 
 @scope('Singleton')
 @provide('model.ContractChangedHistory')
-export class ContractChangedHistoryModel extends MongooseModelBase implements IMongooseModelBase {
+export class ContractChangedHistoryModel extends MongooseModelBase {
+
+    constructor(@plugin('mongoose') mongoose) {
+        super(mongoose);
+    }
 
     buildMongooseModel() {
 
@@ -18,10 +22,6 @@ export class ContractChangedHistoryModel extends MongooseModelBase implements IM
             toJSON: ContractChangedHistoryModel.toObjectOptions,
             toObject: ContractChangedHistoryModel.toObjectOptions
         });
-
-        // contractChangedHistoryScheme.virtual('contractId').get(function (this: any) {
-        //     return this.id;
-        // });
 
         return this.mongoose.model('contract-changed-histories', contractChangedHistoryScheme);
     }

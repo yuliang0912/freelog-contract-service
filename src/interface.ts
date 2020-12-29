@@ -1,20 +1,9 @@
-import {ValidatorResult} from 'jsonschema';
-import {
-    ContractEventEnum,
-    ContractFsmEventEnum,
-    ContractStatusEnum,
-    IdentityType,
-    OutsideServiceEventEnum,
-    SubjectType
-} from './enum';
+import {ContractAuthStatusEnum, ContractEventEnum, ContractFsmEventEnum, OutsideServiceEventEnum} from './enum';
+import {PageResult, SubjectTypeEnum, ContractStatusEnum, ContractLicenseeIdentityTypeEnum} from 'egg-freelog-base';
 
-export interface PageResult<T> {
-    page: number;
-    pageSize: number;
-    totalItem: number;
-    dataList: T[];
-}
-
+/**
+ * 合约信息
+ */
 export interface ContractInfo {
     contractId: string;
     contractName: string;
@@ -30,12 +19,12 @@ export interface ContractInfo {
     licenseeName: string;
     licenseeOwnerId: number;
     licenseeOwnerName: string;
-    licenseeIdentityType: IdentityType;
+    licenseeIdentityType: ContractLicenseeIdentityTypeEnum;
 
     // 标的物相关信息
     subjectId: string;
     subjectName: string;
-    subjectType: SubjectType;
+    subjectType: SubjectTypeEnum;
 
     // 合同状态机部分
     fsmCurrentState?: string | null;
@@ -47,14 +36,14 @@ export interface ContractInfo {
     sortId?: number;
     signature?: string;
     status?: ContractStatusEnum;
-    authStatus: number;
+    authStatus: ContractAuthStatusEnum;
     uniqueKey?: string;
     createDate?: Date;
 }
 
 export interface SubjectBaseInfo {
     subjectId: string;
-    subjectType: SubjectType;
+    subjectType: SubjectTypeEnum;
     subjectName: string;
     licensorId: string | number;
     licensorName: string;
@@ -69,6 +58,7 @@ export interface NodeInfo {
     nodeName: string;
     nodeDomain: string;
     ownerUserId: number;
+    ownerUserName: string;
 }
 
 export interface UserInfo {
@@ -103,7 +93,7 @@ export interface PolicyInfo {
     policyId: string;
     policyText: string;
     fsmDescriptionInfo?: FsmDescriptionInfo;
-    subjectType: SubjectType;
+    subjectType: SubjectTypeEnum;
 }
 
 export interface PolicyEventInfo {
@@ -151,7 +141,7 @@ export interface IContractService {
 
     findByIds(contractIds: string[], ...args): Promise<ContractInfo[]>;
 
-    findPageList(condition: object, page: number, pageSize: number, projection: string[], orderBy: object): Promise<PageResult<ContractInfo>>;
+    findIntervalList(condition: object, skip?: number, limit?: number, projection?: string[], sort?: object): Promise<PageResult<ContractInfo>>;
 
     count(condition: object): Promise<number>;
 
@@ -163,26 +153,23 @@ export interface IContractService {
 
     /**
      * 批量签约标的物
-     * @param {BeSignSubjectOptions[]} subjects
-     * @param {string | number} licenseeId
-     * @param {identityType} IdentityType
-     * @param {SubjectType} subjectType
-     * @returns {Promise<ContractInfo[]>}
+     * @param subjects
+     * @param licenseeId
+     * @param identityType
+     * @param subjectType
      */
-    batchSignSubjects(subjects: BeSignSubjectOptions[], licenseeId: string | number, identityType: IdentityType, subjectType: SubjectType): Promise<ContractInfo[]>;
+    batchSignSubjects(subjects: BeSignSubjectOptions[], licenseeId: string | number, identityType: ContractLicenseeIdentityTypeEnum, subjectType: SubjectTypeEnum): Promise<ContractInfo[]>;
 
     fillContractPolicyInfo(contracts: ContractInfo[]): Promise<ContractInfo[]>;
 
-    findLicenseeSignCounts(licenseeOwnerIds: number[], licenseeIdentityType: IdentityType): Promise<Array<{ licensorOwnerId: number, count: number }>>;
+    findLicenseeSignCounts(licenseeOwnerIds: number[], licenseeIdentityType: ContractLicenseeIdentityTypeEnum): Promise<Array<{ licensorOwnerId: number, count: number }>>;
 }
 
 export interface IPolicyService {
 
-    findOrCreatePolicy(subjectType: SubjectType, policyText: string): Promise<PolicyInfo>;
+    findOrCreatePolicy(subjectType: SubjectTypeEnum, policyText: string): Promise<PolicyInfo>;
 
-    findOrCreatePolicies(subjectType: SubjectType, policyTexts: string[]): Promise<PolicyInfo[]>;
-
-    findPageList(condition: object, page: number, pageSize: number, projection: string[], orderBy: object): Promise<PageResult<PolicyInfo>>;
+    findOrCreatePolicies(subjectType: SubjectTypeEnum, policyTexts: string[]): Promise<PolicyInfo[]>;
 
     findOne(condition: object, ...args): Promise<PolicyInfo>;
 
@@ -199,11 +186,11 @@ export interface IOutsideApiService {
 
     getNodeInfo(nodeId: number): Promise<NodeInfo>;
 
-    getSubjectInfo(subjectId: string, subjectType: SubjectType): Promise<SubjectBaseInfo>;
+    getSubjectInfo(subjectId: string, subjectType: SubjectTypeEnum): Promise<SubjectBaseInfo>;
 
-    getSubjectInfos(subjectIds: string[], subjectType: SubjectType): Promise<SubjectBaseInfo[]>;
+    getSubjectInfos(subjectIds: string[], subjectType: SubjectTypeEnum): Promise<SubjectBaseInfo[]>;
 
-    getLicenseeInfo(licenseeId: string | number, identityType: IdentityType): Promise<LicenseeInfo>;
+    getLicenseeInfo(licenseeId: string | number, identityType: ContractLicenseeIdentityTypeEnum): Promise<LicenseeInfo>;
 }
 
 export interface IEventHandler {
@@ -231,17 +218,10 @@ export interface ICommonEventHandler {
 }
 
 /**
- * 针对object做校验的基础接口
- */
-export interface IJsonSchemaValidate {
-    validate(instance: object[] | object, ...args): ValidatorResult;
-}
-
-/**
  * 策略编译器
  */
 export interface IPolicyCompiler {
-    compiler(subjectType: SubjectType, policyText: string): PolicyInfo;
+    compiler(subjectType: SubjectTypeEnum, policyText: string): PolicyInfo;
 }
 
 export interface IMongoConditionBuildOptions {
@@ -272,8 +252,4 @@ export interface IMongoConditionBuilder {
     value(): object;
 
     build(): object;
-}
-
-export interface Interface {
-
 }

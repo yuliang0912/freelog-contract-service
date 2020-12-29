@@ -1,10 +1,11 @@
-import { ContractInfo, BeSignSubjectOptions, IContractService, IOutsideApiService, IContractEventHandler, IPolicyService, PageResult } from '../../interface';
-import { IdentityType, SubjectType } from '../../enum';
+import { ContractInfo, BeSignSubjectOptions, IContractService, IOutsideApiService, IContractEventHandler, IPolicyService } from '../../interface';
+import { FreelogContext, ContractLicenseeIdentityTypeEnum, SubjectTypeEnum, PageResult, IMongodbOperation } from 'egg-freelog-base';
 export declare class ContractService implements IContractService {
-    ctx: any;
-    contractInfoProvider: any;
+    mongoose: any;
+    ctx: FreelogContext;
+    contractInfoProvider: IMongodbOperation<ContractInfo>;
     policyService: IPolicyService;
-    contractChangedHistoryProvider: any;
+    contractChangedHistoryProvider: IMongodbOperation<any>;
     contractInfoSignatureProvider: any;
     outsideApiService: IOutsideApiService;
     contractEventHandler: IContractEventHandler;
@@ -15,7 +16,7 @@ export declare class ContractService implements IContractService {
      * @param licenseeIdentityType
      * @param subjectType
      */
-    batchSignSubjects(subjects: BeSignSubjectOptions[], licenseeId: string | number, licenseeIdentityType: IdentityType, subjectType: SubjectType): Promise<ContractInfo[]>;
+    batchSignSubjects(subjects: BeSignSubjectOptions[], licenseeId: string | number, licenseeIdentityType: ContractLicenseeIdentityTypeEnum, subjectType: SubjectTypeEnum): Promise<ContractInfo[]>;
     /**
      * 更新合同基础信息
      * @param {ContractInfo} contract
@@ -33,16 +34,25 @@ export declare class ContractService implements IContractService {
     findById(contractId: string, ...args: any[]): Promise<ContractInfo>;
     find(condition: object, ...args: any[]): Promise<ContractInfo[]>;
     findByIds(contractIds: string[], ...args: any[]): Promise<ContractInfo[]>;
-    findPageList(condition: object, page: number, pageSize: number, projection: string[], orderBy: object): Promise<PageResult<ContractInfo>>;
+    findIntervalList(condition: object, skip?: number, limit?: number, projection?: string[], sort?: object): Promise<PageResult<ContractInfo>>;
     count(condition: object): Promise<number>;
     addContractChangedHistory(contract: ContractInfo, fromState: string, toState: string, event: string, triggerDate: Date): Promise<any>;
-    addContractChangedHistoryAndLockFsmRunningStatus(contract: ContractInfo, fromState: string, toState: string, event: string, triggerDate: Date): Promise<any>;
+    addContractChangedHistoryAndLockFsmRunningStatus(contract: ContractInfo, fromState: string, toState: string, event: string, triggerDate: Date): Promise<{
+        n: number;
+        nModified: number;
+        ok: number;
+    }>;
     /**
      * 给资源填充策略详情信息
      * @param resources
      */
     fillContractPolicyInfo(contracts: ContractInfo[]): Promise<ContractInfo[]>;
-    findLicenseeSignCounts(licenseeOwnerIds: number[], licenseeIdentityType: IdentityType): Promise<Array<{
+    /**
+     * 获取签约数量
+     * @param licenseeOwnerIds
+     * @param licenseeIdentityType
+     */
+    findLicenseeSignCounts(licenseeOwnerIds: number[], licenseeIdentityType: ContractLicenseeIdentityTypeEnum): Promise<Array<{
         licensorOwnerId: number;
         count: number;
     }>>;
@@ -53,7 +63,7 @@ export declare class ContractService implements IContractService {
      */
     _checkIsCanReSignContracts(baseInfos: Array<{
         subjectId: string;
-        subjectType: SubjectType;
+        subjectType: SubjectTypeEnum;
         licenseeId: string | number;
         policyId: string;
         status: number;

@@ -1,7 +1,8 @@
 import {isEmpty} from 'lodash';
 import {IContractEventHandler} from '../interface';
 import {provide, schedule, CommonSchedule, inject} from 'midway';
-import {ContractEventEnum, ContractFsmRunningStatusEnum, ContractStatusEnum} from '../enum';
+import {ContractEventEnum, ContractFsmRunningStatusEnum} from '../enum';
+import {ContractStatusEnum} from 'egg-freelog-base';
 
 @provide()
 @schedule(InitialErrorContractHandleJob.scheduleOptions)

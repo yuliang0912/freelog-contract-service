@@ -5,6 +5,10 @@ export default class AppBootHook {
         this.app = app;
     }
 
+    configWillLoad() {
+     
+    }
+
     async willReady() {
         const rabbitMqSubscribeHandler = this.app.applicationContext.get('rabbitMqSubscribeHandler');
         rabbitMqSubscribeHandler.subscribe();

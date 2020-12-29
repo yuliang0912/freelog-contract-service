@@ -1,5 +1,6 @@
-import { MongooseModelBase, IMongooseModelBase } from './mongoose-model-base';
-export declare class ContractChangedHistoryModel extends MongooseModelBase implements IMongooseModelBase {
+import { MongooseModelBase } from 'egg-freelog-base/database/mongoose-model-base';
+export declare class ContractChangedHistoryModel extends MongooseModelBase {
+    constructor(mongoose: any);
     buildMongooseModel(): any;
     static get toObjectOptions(): {
         transform(doc: any, ret: any): {

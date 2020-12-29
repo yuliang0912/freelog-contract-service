@@ -1,15 +1,14 @@
-import {SubjectType} from '../../enum';
 import {init, provide, scope} from 'midway';
 import {IPolicyCompiler, PolicyInfo} from '../../interface';
 import {ResourcePolicyCompiler} from './resource-policy-compiler';
 import {PresentablePolicyCompiler} from './presentable-policy-compiler';
-import {ApplicationError} from 'egg-freelog-base';
+import {ApplicationError, SubjectTypeEnum} from 'egg-freelog-base';
 
 @provide()
 @scope('Singleton')
 export class PolicyCompiler implements IPolicyCompiler {
 
-    readonly subjectPolicyCompilerMap = new Map<SubjectType, IPolicyCompiler>();
+    readonly subjectPolicyCompilerMap = new Map<SubjectTypeEnum, IPolicyCompiler>();
 
     /**
      * 根据标的物类型编译策略文本
@@ -17,7 +16,7 @@ export class PolicyCompiler implements IPolicyCompiler {
      * @param policyText
      * @param policyName
      */
-    compiler(subjectType: SubjectType, policyText: string): PolicyInfo {
+    compiler(subjectType: SubjectTypeEnum, policyText: string): PolicyInfo {
         if (!this.subjectPolicyCompilerMap.has(subjectType)) {
             throw new ApplicationError(`unsupported subjectType:${subjectType}`);
         }
@@ -26,7 +25,7 @@ export class PolicyCompiler implements IPolicyCompiler {
 
     @init()
     initialSubjectPolicyCompiler() {
-        this.subjectPolicyCompilerMap.set(SubjectType.Resource, new ResourcePolicyCompiler());
-        this.subjectPolicyCompilerMap.set(SubjectType.Presentable, new PresentablePolicyCompiler());
+        this.subjectPolicyCompilerMap.set(SubjectTypeEnum.Resource, new ResourcePolicyCompiler());
+        this.subjectPolicyCompilerMap.set(SubjectTypeEnum.Presentable, new PresentablePolicyCompiler());
     }
 }

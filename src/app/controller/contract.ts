@@ -1,17 +1,21 @@
 import {first, isEmpty, isString, isUndefined} from 'lodash';
 import {controller, get, inject, post, provide, put} from 'midway';
-import {IContractService, IJsonSchemaValidate, IMongoConditionBuilder, IPolicyService} from '../../interface';
-import {visitorIdentity} from '../../extend/vistorIdentityDecorator';
-import {ApplicationError, ArgumentError, AuthorizationError, InternalClient, LoginUser} from 'egg-freelog-base';
-import {ContractStatusEnum, IdentityType, IdentityTypeEnum, SubjectType} from '../../enum';
-import {mongoObjectId} from 'egg-freelog-base/app/extend/helper/common_regex';
+import {IContractService, IMongoConditionBuilder, IPolicyService} from '../../interface';
+import {
+    ApplicationError, ArgumentError, AuthorizationError, CommonRegex,
+    FreelogContext, IdentityTypeEnum, visitorIdentityValidator,
+    SubjectTypeEnum, ContractLicenseeIdentityTypeEnum, ContractStatusEnum, IJsonSchemaValidate
+} from 'egg-freelog-base';
+import {ContractFsmGenerator} from '../../extend/contract-common-generator/contract-fsm-generator';
 
 @provide()
 @controller('/v2/contracts')
 export class ContractController {
 
     @inject()
-    contractFsmGenerator;
+    ctx: FreelogContext;
+    @inject()
+    contractFsmGenerator: ContractFsmGenerator;
     @inject()
     policyService: IPolicyService;
     @inject()
@@ -22,23 +26,24 @@ export class ContractController {
     mongoConditionBuilder: IMongoConditionBuilder;
 
     @get('/')
-    @visitorIdentity(LoginUser)
-    async index(ctx) {
+    @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
+    async index() {
+        const {ctx} = this;
 
-        const page = ctx.checkQuery('page').optional().default(1).toInt().gt(0).value;
-        const pageSize = ctx.checkQuery('pageSize').optional().default(10).gt(0).lt(101).toInt().value;
+        const skip = ctx.checkQuery('skip').optional().toInt().default(0).ge(0).value;
+        const limit = ctx.checkQuery('limit').optional().toInt().default(10).gt(0).lt(101).value;
+        const sort = ctx.checkQuery('sort').ignoreParamWhenEmpty().toSortObject().value;
         const licensorId = ctx.checkQuery('licensorId').optional().value; // 甲方
         const licenseeId = ctx.checkQuery('licenseeId').optional().value; // 乙方
-        const identityType = ctx.checkQuery('identityType').exist().toInt().in([IdentityTypeEnum.Licensor, IdentityTypeEnum.Licensee]).value; // 当前登录用户是作为甲方or乙方
+        const identityType = ctx.checkQuery('identityType').exist().toInt().in([1, 2]).value; // 当前登录用户是作为甲方or乙方
         const subjectIds = ctx.checkQuery('subjectIds').optional().isSplitMongoObjectId().toSplitArray().default([]).value;
-        const subjectType = ctx.checkQuery('subjectType').optional().toInt().in([SubjectType.Presentable, SubjectType.Resource, SubjectType.UserGroup]).value;
+        const subjectType = ctx.checkQuery('subjectType').optional().toInt().in([SubjectTypeEnum.Presentable, SubjectTypeEnum.Resource, SubjectTypeEnum.UserGroup]).value;
         const isDefault = ctx.checkQuery('isDefault').optional().toInt().in([0, 1]).value;
         const keywords = ctx.checkQuery('keywords').optional().decodeURIComponent().toLowercase().value;
         const status = ctx.checkQuery('status').optional().toInt().in([ContractStatusEnum.Terminated, ContractStatusEnum.Executed, ContractStatusEnum.Exception]).value;
         const authStatus = ctx.checkQuery('authStatus').optional().toInt().value;
         const isLoadPolicyInfo = ctx.checkQuery('isLoadPolicyInfo').optional().toInt().in([0, 1, 2]).default(0).value;
-        const licenseeIdentityType = ctx.checkQuery('licenseeIdentityType').optional().toInt().in([IdentityType.Resource, IdentityType.Node, IdentityType.ClientUser]).value;
-        const order = ctx.checkQuery('order').optional().in(['asc', 'desc']).default('desc').value;
+        const licenseeIdentityType = ctx.checkQuery('licenseeIdentityType').optional().toInt().in([ContractLicenseeIdentityTypeEnum.Resource, ContractLicenseeIdentityTypeEnum.Node, ContractLicenseeIdentityTypeEnum.ClientUser]).value;
         const projection: string[] = ctx.checkQuery('projection').optional().toSplitArray().default([]).value;
         ctx.validateParams();
 
@@ -49,21 +54,21 @@ export class ContractController {
             .setString('licensorId', licensorId, {isAllowEmptyString: false})
             .setString('licenseeId', licenseeId, {isAllowEmptyString: false})
             .setNumber('licenseeIdentityType', licenseeIdentityType)
-            .setNumber('licensorOwnerId', ctx.userId, {isSetProperty: identityType === IdentityTypeEnum.Licensor})
-            .setNumber('licenseeOwnerId', ctx.userId, {isSetProperty: identityType === IdentityTypeEnum.Licensee})
+            .setNumber('licensorOwnerId', ctx.userId, {isSetProperty: identityType === 1})
+            .setNumber('licenseeOwnerId', ctx.userId, {isSetProperty: identityType === 2})
             .setArray('subjectId', subjectIds, {isAllowEmptyArray: false, operation: '$in'})
             .setNumber('sortId', isDefault ? 1 : 0, {isSetProperty: !isUndefined(isDefault)});
 
         if (isString(keywords) && keywords.length) {
             const searchRegExp = new RegExp(keywords, 'i');
-            if (mongoObjectId.test(keywords)) {
+            if (CommonRegex.mongoObjectId.test(keywords)) {
                 conditionBuilder.setArray('$or', [{subjectId: keywords}, {_id: keywords}]);
             } else {
                 conditionBuilder.setArray('$or', [{contractName: searchRegExp}, {licensorName: searchRegExp}, {licenseeName: searchRegExp}]);
             }
         }
 
-        const pageResult = await this.contractService.findPageList(conditionBuilder.value(), page, pageSize, projection, {createDate: order === 'asc' ? 1 : -1});
+        const pageResult = await this.contractService.findIntervalList(conditionBuilder.value(), skip, limit, projection, sort ?? {createDate: -1});
         if (isLoadPolicyInfo) {
             pageResult.dataList = await this.contractService.fillContractPolicyInfo(pageResult.dataList);
         }
@@ -71,13 +76,14 @@ export class ContractController {
     }
 
     @get('/list')
-    @visitorIdentity(LoginUser)
-    async list(ctx) {
+    @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
+    async list() {
+        const {ctx} = this;
 
         const contractIds = ctx.checkQuery('contractIds').optional().isSplitMongoObjectId().toSplitArray().len(1, 300).value;
         const subjectIds = ctx.checkQuery('subjectIds').optional().isSplitMongoObjectId().toSplitArray().len(1, 300).value;
-        const subjectType = ctx.checkQuery('subjectType').optional().toInt().in([SubjectType.Presentable, SubjectType.Resource, SubjectType.UserGroup]).value;
-        const licenseeIdentityType = ctx.checkQuery('licenseeIdentityType').optional().toInt().in([IdentityType.Resource, IdentityType.Node, IdentityType.ClientUser]).value;
+        const subjectType = ctx.checkQuery('subjectType').optional().toInt().in([SubjectTypeEnum.Presentable, SubjectTypeEnum.Resource, SubjectTypeEnum.UserGroup]).value;
+        const licenseeIdentityType = ctx.checkQuery('licenseeIdentityType').optional().toInt().in([ContractLicenseeIdentityTypeEnum.Resource, ContractLicenseeIdentityTypeEnum.Node, ContractLicenseeIdentityTypeEnum.ClientUser]).value;
         const licensorId = ctx.checkQuery('licensorId').optional().value; // 甲方
         const licenseeId = ctx.checkQuery('licenseeId').optional().value; // 乙方
         const isLoadPolicyInfo = ctx.checkQuery('isLoadPolicyInfo').optional().toInt().in([0, 1, 2]).default(0).value;
@@ -105,17 +111,18 @@ export class ContractController {
     }
 
     @post('/')
-    @visitorIdentity(LoginUser)
-    async createContract(ctx) {
+    @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
+    async createContract() {
+        const {ctx} = this;
 
         const subjectId = ctx.checkBody('subjectId').exist().isMongoObjectId().value;
-        const subjectType = ctx.checkBody('subjectType').exist().in([SubjectType.Presentable, SubjectType.Resource, SubjectType.UserGroup]).value;
+        const subjectType = ctx.checkBody('subjectType').exist().in([SubjectTypeEnum.Presentable, SubjectTypeEnum.Resource, SubjectTypeEnum.UserGroup]).value;
         const policyId = ctx.checkBody('policyId').exist().isMd5().value;
         const licenseeId = ctx.checkBody('licenseeId').exist().value;
-        const licenseeIdentityType = ctx.checkBody('licenseeIdentityType').exist().toInt().in([IdentityType.Resource, IdentityType.Node, IdentityType.ClientUser]).value;
+        const licenseeIdentityType = ctx.checkBody('licenseeIdentityType').exist().toInt().in([ContractLicenseeIdentityTypeEnum.Resource, ContractLicenseeIdentityTypeEnum.Node, ContractLicenseeIdentityTypeEnum.ClientUser]).value;
         ctx.validateParams();
 
-        if (licenseeIdentityType === IdentityType.ClientUser && licenseeId !== ctx.userId.toString()) {
+        if (licenseeIdentityType === ContractLicenseeIdentityTypeEnum.ClientUser && licenseeId !== ctx.userId.toString()) {
             throw new ArgumentError(ctx.gettext('params-required-validate-failed', 'licenseeId'));
         }
 
@@ -125,13 +132,14 @@ export class ContractController {
     }
 
     @post('/batchSign')
-    @visitorIdentity(LoginUser)
-    async batchCreateContracts(ctx) {
+    @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
+    async batchCreateContracts() {
+        const {ctx} = this;
 
         const licenseeId = ctx.checkBody('licenseeId').exist().value;
-        const subjectType = ctx.checkBody('subjectType').exist().in([SubjectType.Presentable, SubjectType.Resource, SubjectType.UserGroup]).value;
+        const subjectType = ctx.checkBody('subjectType').exist().in([SubjectTypeEnum.Presentable, SubjectTypeEnum.Resource, SubjectTypeEnum.UserGroup]).value;
         const subjects = ctx.checkBody('subjects').exist().isArray().value;
-        const licenseeIdentityType = ctx.checkBody('licenseeIdentityType').optional().toInt().in([IdentityType.Resource, IdentityType.Node, IdentityType.ClientUser]).value;
+        const licenseeIdentityType = ctx.checkBody('licenseeIdentityType').optional().toInt().in([ContractLicenseeIdentityTypeEnum.Resource, ContractLicenseeIdentityTypeEnum.Node, ContractLicenseeIdentityTypeEnum.ClientUser]).value;
         ctx.validateParams();
 
         const subjectValidateResult = this.batchSignSubjectValidator.validate(subjects);
@@ -141,7 +149,7 @@ export class ContractController {
             });
         }
 
-        if (licenseeIdentityType === IdentityType.ClientUser && licenseeId !== ctx.userId.toString()) {
+        if (licenseeIdentityType === ContractLicenseeIdentityTypeEnum.ClientUser && licenseeId !== ctx.userId.toString()) {
             throw new ArgumentError(ctx.gettext('params-required-validate-failed', 'licenseeId'));
         }
 
@@ -149,8 +157,9 @@ export class ContractController {
     }
 
     @get('/count')
-    @visitorIdentity(LoginUser | InternalClient)
-    async count(ctx) {
+    @visitorIdentityValidator(IdentityTypeEnum.LoginUser | IdentityTypeEnum.InternalClient)
+    async count() {
+        const {ctx} = this;
 
         const userIds = ctx.checkQuery('userIds').exist().isSplitNumber().toSplitArray().len(1, 100).value;
         const licenseeIdentityType = ctx.checkQuery('licenseeIdentityType').optional().toInt().default(3).in([1, 2, 3]).value;
@@ -164,8 +173,9 @@ export class ContractController {
     }
 
     @get('/:contractId')
-    @visitorIdentity(LoginUser | InternalClient)
-    async show(ctx) {
+    @visitorIdentityValidator(IdentityTypeEnum.LoginUser | IdentityTypeEnum.InternalClient)
+    async show() {
+        const {ctx} = this;
 
         const contractId = ctx.checkParams('contractId').notEmpty().isContractId().value;
         const isLoadPolicyInfo = ctx.checkQuery('isLoadPolicyInfo').optional().toInt().in([0, 1, 2]).default(0).value;
@@ -180,8 +190,9 @@ export class ContractController {
     }
 
     @get('/:contractId/isCanExecEvent')
-    @visitorIdentity(LoginUser | InternalClient)
-    async isCanExecEvent(ctx) {
+    @visitorIdentityValidator(IdentityTypeEnum.LoginUser | IdentityTypeEnum.InternalClient)
+    async isCanExecEvent() {
+        const {ctx} = this;
 
         const eventId = ctx.checkQuery('eventId').isMd5().exist().value;
         const contractId = ctx.checkParams('contractId').notEmpty().isContractId().value;
@@ -197,8 +208,9 @@ export class ContractController {
     }
 
     @put('/:contractId/setDefault')
-    @visitorIdentity(LoginUser | InternalClient)
-    async setDefault(ctx) {
+    @visitorIdentityValidator(IdentityTypeEnum.LoginUser | IdentityTypeEnum.InternalClient)
+    async setDefault() {
+        const {ctx} = this;
 
         const contractId = ctx.checkParams('contractId').notEmpty().isContractId().value;
         ctx.validateParams();
@@ -206,10 +218,10 @@ export class ContractController {
         const contractInfo = await this.contractService.findById(contractId);
         ctx.entityNullObjectCheck(contractInfo);
 
-        if (contractInfo.licenseeId !== ctx.request.userId.toString()) {
+        if (contractInfo.licenseeId !== ctx.userId.toString()) {
             throw new AuthorizationError(ctx.gettext('user-authorization-failed'));
         }
-        if (contractInfo.licenseeIdentityType !== IdentityType.ClientUser) {
+        if (contractInfo.licenseeIdentityType !== ContractLicenseeIdentityTypeEnum.ClientUser) {
             throw new ApplicationError('current contract type not support');
         }
 

@@ -13,8 +13,8 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const midway_1 = require("midway");
-const MongoBaseOperation = require("egg-freelog-base/lib/database/mongo-base-operation");
-let PolicyInfoProvider = class PolicyInfoProvider extends MongoBaseOperation {
+const egg_freelog_base_1 = require("egg-freelog-base");
+let PolicyInfoProvider = class PolicyInfoProvider extends egg_freelog_base_1.MongodbOperation {
     constructor(model) {
         super(model);
     }
@@ -26,4 +26,4 @@ PolicyInfoProvider = __decorate([
     __metadata("design:paramtypes", [Object])
 ], PolicyInfoProvider);
 exports.default = PolicyInfoProvider;
-//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoicG9saWN5LWluZm8tcHJvdmlkZXIuanMiLCJzb3VyY2VSb290IjoiIiwic291cmNlcyI6WyIuLi8uLi8uLi9zcmMvYXBwL2RhdGEtcHJvdmlkZXIvcG9saWN5LWluZm8tcHJvdmlkZXIudHMiXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6Ijs7Ozs7Ozs7Ozs7Ozs7QUFBQSxtQ0FBOEM7QUFDOUMseUZBQXlGO0FBSXpGLElBQXFCLGtCQUFrQixHQUF2QyxNQUFxQixrQkFBbUIsU0FBUSxrQkFBa0I7SUFDOUQsWUFBd0MsS0FBSztRQUN6QyxLQUFLLENBQUMsS0FBSyxDQUFDLENBQUM7SUFDakIsQ0FBQztDQUNKLENBQUE7QUFKb0Isa0JBQWtCO0lBRnRDLGdCQUFPLEVBQUU7SUFDVCxjQUFLLENBQUMsV0FBVyxDQUFDO0lBRUYsV0FBQSxlQUFNLENBQUMsa0JBQWtCLENBQUMsQ0FBQTs7R0FEdEIsa0JBQWtCLENBSXRDO2tCQUpvQixrQkFBa0IifQ==
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoicG9saWN5LWluZm8tcHJvdmlkZXIuanMiLCJzb3VyY2VSb290IjoiIiwic291cmNlcyI6WyIuLi8uLi8uLi9zcmMvYXBwL2RhdGEtcHJvdmlkZXIvcG9saWN5LWluZm8tcHJvdmlkZXIudHMiXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6Ijs7Ozs7Ozs7Ozs7Ozs7QUFBQSxtQ0FBOEM7QUFDOUMsdURBQWtEO0FBS2xELElBQXFCLGtCQUFrQixHQUF2QyxNQUFxQixrQkFBbUIsU0FBUSxtQ0FBNEI7SUFDeEUsWUFBd0MsS0FBSztRQUN6QyxLQUFLLENBQUMsS0FBSyxDQUFDLENBQUM7SUFDakIsQ0FBQztDQUNKLENBQUE7QUFKb0Isa0JBQWtCO0lBRnRDLGdCQUFPLEVBQUU7SUFDVCxjQUFLLENBQUMsV0FBVyxDQUFDO0lBRUYsV0FBQSxlQUFNLENBQUMsa0JBQWtCLENBQUMsQ0FBQTs7R0FEdEIsa0JBQWtCLENBSXRDO2tCQUpvQixrQkFBa0IifQ==

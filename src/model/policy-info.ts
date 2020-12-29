@@ -1,13 +1,16 @@
-import {scope, provide} from 'midway';
+import {scope, provide, plugin} from 'midway';
 import {omit} from 'lodash';
-import {MongooseModelBase, IMongooseModelBase} from './mongoose-model-base';
+import {MongooseModelBase} from 'egg-freelog-base/database/mongoose-model-base';
 
 @scope('Singleton')
 @provide('model.PolicyInfo')
-export class PolicyInfoModel extends MongooseModelBase implements IMongooseModelBase {
+export class PolicyInfoModel extends MongooseModelBase {
+
+    constructor(@plugin('mongoose') mongoose) {
+        super(mongoose);
+    }
 
     buildMongooseModel() {
-
         /**
          * 合同服务同时负责保存整个平台的策略信息.对于策略中存在多样性的策略名称,是否启动等信息,则直接由具体的标的物服务自行保存
          * 整个平台相同的策略会根据一定的算法计算.仅保留一份.

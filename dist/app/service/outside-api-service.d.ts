@@ -1,9 +1,9 @@
-import { SubjectType, IdentityType } from '../../enum';
+import { ContractLicenseeIdentityTypeEnum, FreelogContext, SubjectTypeEnum } from 'egg-freelog-base';
 import { IOutsideApiService, LicenseeInfo, NodeInfo, SubjectBaseInfo, UserInfo } from '../../interface';
 export declare class OutsideApiService implements IOutsideApiService {
-    readonly subjectWrapMap: Map<SubjectType, (subjectIds: string[]) => Promise<SubjectBaseInfo[]>>;
+    readonly subjectWrapMap: Map<SubjectTypeEnum, (subjectIds: string[]) => Promise<SubjectBaseInfo[]>>;
     readonly licenseeWrapMap: Map<number, (licenseeId: string | number) => Promise<LicenseeInfo>>;
-    ctx: any;
+    ctx: FreelogContext;
     /**
      * 获取用户信息
      * @param {number} userId
@@ -18,24 +18,22 @@ export declare class OutsideApiService implements IOutsideApiService {
     getNodeInfo(nodeId: number): Promise<NodeInfo>;
     /**
      * 获取标的物信息
-     * @param {string} subjectId 标的物ID
-     * @param {SubjectType} subjectType 标的物类型
-     * @returns {Promise<SubjectBaseInfo>}
+     * @param subjectId
+     * @param subjectType
      */
-    getSubjectInfo(subjectId: string, subjectType: SubjectType): Promise<SubjectBaseInfo>;
+    getSubjectInfo(subjectId: string, subjectType: SubjectTypeEnum): Promise<SubjectBaseInfo>;
     /**
      * 批量获取标的物信息
      * @param subjectIds
      * @param subjectType
      */
-    getSubjectInfos(subjectIds: string[], subjectType: SubjectType): Promise<SubjectBaseInfo[]>;
+    getSubjectInfos(subjectIds: string[], subjectType: SubjectTypeEnum): Promise<SubjectBaseInfo[]>;
     /**
      * 获取乙方信息
-     * @param {string | number} licenseeId
-     * @param {IdentityType} identityType
-     * @returns {Promise<LicenseeInfo>}
+     * @param licenseeId
+     * @param identityType
      */
-    getLicenseeInfo(licenseeId: string | number, identityType: IdentityType): Promise<LicenseeInfo>;
+    getLicenseeInfo(licenseeId: string | number, identityType: ContractLicenseeIdentityTypeEnum): Promise<LicenseeInfo>;
     /**
      * 资源信息转换为标的物基础信息
      * @param {string[]} resourceIds

@@ -93,7 +93,7 @@ export class ContractStateMachineBuilder {
      */
     setOnEnterStateEventHandle(handle: (lifeCycle, ...args) => void) {
         this.methods.onEnterState = function (lifeCycle, ...args) {
-            handle.call(this, lifeCycle, ...args);
+            return handle.call(this, lifeCycle, ...args);
         };
         return this;
     }

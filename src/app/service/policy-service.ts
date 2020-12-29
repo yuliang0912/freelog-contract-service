@@ -1,13 +1,12 @@
 import {provide, inject} from 'midway';
-// import {ArgumentError} from 'egg-freelog-base';
-import {IPolicyCompiler, IPolicyService, PageResult, PolicyInfo} from '../../interface';
-import {SubjectType} from '../../enum';
+import {IPolicyCompiler, IPolicyService, PolicyInfo} from '../../interface';
+import {FreelogContext, SubjectTypeEnum} from 'egg-freelog-base';
 
 @provide('policyService')
 export class PolicyService implements IPolicyService {
 
     @inject()
-    ctx;
+    ctx: FreelogContext;
     @inject()
     policyCompiler: IPolicyCompiler;
     @inject()
@@ -15,12 +14,10 @@ export class PolicyService implements IPolicyService {
 
     /**
      * 查找或者创建策略
-     * @param {SubjectType} subjectType
-     * @param {string} policyName
-     * @param {string} policyText
-     * @returns {Promise<ContractPolicyInfo>}
+     * @param subjectType
+     * @param policyText
      */
-    async findOrCreatePolicy(subjectType: SubjectType, policyText: string): Promise<PolicyInfo> {
+    async findOrCreatePolicy(subjectType: SubjectTypeEnum, policyText: string): Promise<PolicyInfo> {
 
         const policyInfo = this.policyCompiler.compiler(subjectType, policyText);
         const existingPolicy = await this.policyInfoProvider.findOne({policyId: policyInfo.policyId});
@@ -41,7 +38,7 @@ export class PolicyService implements IPolicyService {
      * @param subjectType
      * @param policyTexts
      */
-    async findOrCreatePolicies(subjectType: SubjectType, policyTexts: string[]): Promise<PolicyInfo[]> {
+    async findOrCreatePolicies(subjectType: SubjectTypeEnum, policyTexts: string[]): Promise<PolicyInfo[]> {
 
         const policyList = policyTexts.map(policyText => this.policyCompiler.compiler(subjectType, policyText));
         const policyIds = policyList.map(x => x.policyId);
@@ -66,15 +63,6 @@ export class PolicyService implements IPolicyService {
 
     async count(condition: object): Promise<number> {
         return this.policyInfoProvider.count(condition);
-    }
-
-    async findPageList(condition: object, page: number, pageSize: number, projection: string[], orderBy?: object): Promise<PageResult<PolicyInfo>> {
-        let dataList = [];
-        const totalItem = await this.count(condition);
-        if (totalItem > (page - 1) * pageSize) {
-            dataList = await this.policyInfoProvider.findPageList(condition, page, pageSize, projection.join(' '), orderBy);
-        }
-        return {page, pageSize, totalItem, dataList};
     }
 
     async findOne(condition: object, ...args): Promise<PolicyInfo> {

@@ -13,9 +13,8 @@ export class ContractFsmGenerator {
 
     /**
      * 合同转换为可执行的状态机
-     * @param {ContractInfo} contractInfo
-     * @param {ContractPolicyInfo} contractPolicyInfo
-     * @returns {any}
+     * @param contractInfo
+     * @param contractPolicyInfo
      */
     contractWarpToFsm(contractInfo: ContractInfo, contractPolicyInfo: PolicyInfo) {
         if (!contractPolicyInfo) {
@@ -36,10 +35,9 @@ export class ContractFsmGenerator {
 
     /**
      * 是否可以执行指定的事件
-     * @param {ContractInfo} contractInfo
-     * @param {ContractPolicyInfo} contractPolicyInfo
-     * @param {string} eventId
-     * @returns {boolean}
+     * @param contractInfo
+     * @param contractPolicyInfo
+     * @param eventId
      */
     isCanExecEvent(contractInfo: ContractInfo, contractPolicyInfo: PolicyInfo, eventId: string): boolean {
         if (contractInfo.fsmRunningStatus === ContractFsmRunningStatusEnum.Locked) {

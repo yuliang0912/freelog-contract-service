@@ -22,9 +22,7 @@ export default () => {
         }
     };
 
-    config.middleware = [
-        'errorHandler', 'localUserIdentity'
-    ];
+    config.middleware = ['errorAutoSnapHandler', 'gatewayIdentityInfoHandler', 'localIdentityInfoHandler'];
 
     config.mongoose = {
         url: 'mongodb://127.0.0.1:27017/contracts'

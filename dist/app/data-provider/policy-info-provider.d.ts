@@ -1,4 +1,5 @@
-import * as MongoBaseOperation from 'egg-freelog-base/lib/database/mongo-base-operation';
-export default class PolicyInfoProvider extends MongoBaseOperation {
+import { MongodbOperation } from 'egg-freelog-base';
+import { PolicyInfo } from '../../interface';
+export default class PolicyInfoProvider extends MongodbOperation<PolicyInfo> {
     constructor(model: any);
 }

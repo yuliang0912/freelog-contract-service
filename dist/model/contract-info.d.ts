@@ -1,5 +1,6 @@
-import { MongooseModelBase } from './mongoose-model-base';
+import { MongooseModelBase } from 'egg-freelog-base/database/mongoose-model-base';
 export declare class ContractInfoModel extends MongooseModelBase {
+    constructor(mongoose: any);
     buildMongooseModel(): any;
     static get toObjectOptions(): {
         getters: boolean;

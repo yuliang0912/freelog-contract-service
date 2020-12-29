@@ -1,20 +1,18 @@
 import {provide, inject, init} from 'midway';
-import {ApplicationError} from 'egg-freelog-base';
-import {SubjectType, IdentityType} from '../../enum';
+import {ApplicationError, ContractLicenseeIdentityTypeEnum, FreelogContext, SubjectTypeEnum} from 'egg-freelog-base';
 import {
     IOutsideApiService, LicenseeInfo, NodeInfo, SubjectBaseInfo, UserInfo, ResourceInfo, PresentableInfo
 } from '../../interface';
-
 import {differenceWith, isEmpty, uniq, isArray, first} from 'lodash';
 
 @provide('outsideApiService')
 export class OutsideApiService implements IOutsideApiService {
 
-    readonly subjectWrapMap: Map<SubjectType, (subjectIds: string[]) => Promise<SubjectBaseInfo[]>> = new Map();
+    readonly subjectWrapMap: Map<SubjectTypeEnum, (subjectIds: string[]) => Promise<SubjectBaseInfo[]>> = new Map();
     readonly licenseeWrapMap: Map<number, (licenseeId: string | number) => Promise<LicenseeInfo>> = new Map();
 
     @inject()
-    ctx;
+    ctx: FreelogContext;
 
     /**
      * 获取用户信息
@@ -36,11 +34,10 @@ export class OutsideApiService implements IOutsideApiService {
 
     /**
      * 获取标的物信息
-     * @param {string} subjectId 标的物ID
-     * @param {SubjectType} subjectType 标的物类型
-     * @returns {Promise<SubjectBaseInfo>}
+     * @param subjectId
+     * @param subjectType
      */
-    async getSubjectInfo(subjectId: string, subjectType: SubjectType): Promise<SubjectBaseInfo> {
+    async getSubjectInfo(subjectId: string, subjectType: SubjectTypeEnum): Promise<SubjectBaseInfo> {
         if (!this.subjectWrapMap.has(subjectType)) {
             throw new ApplicationError(`please check code,not support subjectType:${subjectType}.`);
         }
@@ -53,7 +50,7 @@ export class OutsideApiService implements IOutsideApiService {
      * @param subjectIds
      * @param subjectType
      */
-    async getSubjectInfos(subjectIds: string[], subjectType: SubjectType): Promise<SubjectBaseInfo[]> {
+    async getSubjectInfos(subjectIds: string[], subjectType: SubjectTypeEnum): Promise<SubjectBaseInfo[]> {
         if (!this.subjectWrapMap.has(subjectType)) {
             throw new ApplicationError(`please check code,not support subjectType:${subjectType}.`);
         }
@@ -65,11 +62,10 @@ export class OutsideApiService implements IOutsideApiService {
 
     /**
      * 获取乙方信息
-     * @param {string | number} licenseeId
-     * @param {IdentityType} identityType
-     * @returns {Promise<LicenseeInfo>}
+     * @param licenseeId
+     * @param identityType
      */
-    async getLicenseeInfo(licenseeId: string | number, identityType: IdentityType): Promise<LicenseeInfo> {
+    async getLicenseeInfo(licenseeId: string | number, identityType: ContractLicenseeIdentityTypeEnum): Promise<LicenseeInfo> {
         if (!this.licenseeWrapMap.has(identityType)) {
             throw new ApplicationError(`please check code,not support identityType:${identityType}.`);
         }
@@ -96,7 +92,7 @@ export class OutsideApiService implements IOutsideApiService {
         return resourceInfos.map((resourceInfo) => {
             return {
                 subjectId: resourceInfo.resourceId,
-                subjectType: SubjectType.Resource,
+                subjectType: SubjectTypeEnum.Resource,
                 subjectName: resourceInfo.resourceName,
                 licensorId: resourceInfo.resourceId,
                 licensorName: resourceInfo.resourceName,
@@ -123,7 +119,7 @@ export class OutsideApiService implements IOutsideApiService {
         if (!isEmpty(offlinePresentableIds)) {
             throw new ApplicationError(this.ctx.gettext('sign-subject-offline-error', `,resourceId:[${offlinePresentableIds.toString()}]`));
         }
-        const nodeInfoMap = await this.ctx.curlIntranetApi(`${this.ctx.webApi.nodeInfoV2}/list?nodeId=${presentableInfos.map(x => x.nodeId).toString()}`).then(list => {
+        const nodeInfoMap: Map<number, NodeInfo> = await this.ctx.curlIntranetApi(`${this.ctx.webApi.nodeInfoV2}/list?nodeId=${presentableInfos.map(x => x.nodeId).toString()}`).then(list => {
             return new Map(list.map(x => [x.nodeId, x]));
         });
 
@@ -131,7 +127,7 @@ export class OutsideApiService implements IOutsideApiService {
             const nodeInfo = nodeInfoMap.get(presentableInfo.nodeId);
             return {
                 subjectId: presentableInfo.presentableId,
-                subjectType: SubjectType.Presentable,
+                subjectType: SubjectTypeEnum.Presentable,
                 subjectName: presentableInfo.presentableName,
                 licensorId: nodeInfo.nodeId,
                 licensorName: nodeInfo.nodeName,
@@ -153,7 +149,7 @@ export class OutsideApiService implements IOutsideApiService {
         if (!resourceInfo) {
             throw new ApplicationError(this.ctx.gettext('resource-entity-not-found'));
         }
-        if (resourceInfo.userId !== this.ctx.request.userId) {
+        if (resourceInfo.userId !== this.ctx.userId) {
             throw new ApplicationError(this.ctx.gettext('user-authorization-failed'));
         }
         return {
@@ -175,7 +171,7 @@ export class OutsideApiService implements IOutsideApiService {
         if (!nodeInfo) {
             throw new ApplicationError(this.ctx.gettext('node-entity-not-found'));
         }
-        const {userInfo} = this.ctx.request.identityInfo;
+        const {userInfo} = this.ctx.identityInfo;
         if (nodeInfo.ownerUserId !== userInfo.userId) {
             throw new ApplicationError(this.ctx.gettext('user-authorization-failed'));
         }
@@ -194,7 +190,7 @@ export class OutsideApiService implements IOutsideApiService {
      * @private
      */
     async _userInfoWrapToLicenseeInfo(userId: number): Promise<LicenseeInfo> {
-        const userInfo = this.ctx.request.identityInfo?.userInfo as UserInfo;
+        const userInfo = this.ctx.identityInfo?.userInfo as UserInfo;
         if (userInfo?.userId !== userId) {
             throw new ApplicationError(this.ctx.gettext('user-authorization-failed'));
         }
@@ -208,11 +204,11 @@ export class OutsideApiService implements IOutsideApiService {
 
     @init()
     _initial() {
-        this.subjectWrapMap.set(SubjectType.Resource, this._resourceInfoWrapToSubjectBaseInfo);
-        this.subjectWrapMap.set(SubjectType.Presentable, this._presentableWrapToSubjectBaseInfo);
+        this.subjectWrapMap.set(SubjectTypeEnum.Resource, this._resourceInfoWrapToSubjectBaseInfo);
+        this.subjectWrapMap.set(SubjectTypeEnum.Presentable, this._presentableWrapToSubjectBaseInfo);
 
-        this.licenseeWrapMap.set(IdentityType.ClientUser, this._userInfoWrapToLicenseeInfo);
-        this.licenseeWrapMap.set(IdentityType.Node, this._nodeInfoWrapToLicenseeInfo);
-        this.licenseeWrapMap.set(IdentityType.Resource, this._resourceInfoWrapToLicenseeInfo);
+        this.licenseeWrapMap.set(ContractLicenseeIdentityTypeEnum.ClientUser, this._userInfoWrapToLicenseeInfo);
+        this.licenseeWrapMap.set(ContractLicenseeIdentityTypeEnum.Node, this._nodeInfoWrapToLicenseeInfo);
+        this.licenseeWrapMap.set(ContractLicenseeIdentityTypeEnum.Resource, this._resourceInfoWrapToLicenseeInfo);
     }
 }

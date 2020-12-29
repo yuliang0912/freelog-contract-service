@@ -13,8 +13,8 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const midway_1 = require("midway");
-const MongoBaseOperation = require("egg-freelog-base/lib/database/mongo-base-operation");
-let ContractInfoProvider = class ContractInfoProvider extends MongoBaseOperation {
+const egg_freelog_base_1 = require("egg-freelog-base");
+let ContractInfoProvider = class ContractInfoProvider extends egg_freelog_base_1.MongodbOperation {
     constructor(model) {
         super(model);
     }
@@ -26,4 +26,4 @@ ContractInfoProvider = __decorate([
     __metadata("design:paramtypes", [Object])
 ], ContractInfoProvider);
 exports.default = ContractInfoProvider;
-//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiY29udHJhY3QtaW5mby1wcm92aWRlci5qcyIsInNvdXJjZVJvb3QiOiIiLCJzb3VyY2VzIjpbIi4uLy4uLy4uL3NyYy9hcHAvZGF0YS1wcm92aWRlci9jb250cmFjdC1pbmZvLXByb3ZpZGVyLnRzIl0sIm5hbWVzIjpbXSwibWFwcGluZ3MiOiI7Ozs7Ozs7Ozs7Ozs7O0FBQUEsbUNBQThDO0FBQzlDLHlGQUF5RjtBQUl6RixJQUFxQixvQkFBb0IsR0FBekMsTUFBcUIsb0JBQXFCLFNBQVEsa0JBQWtCO0lBQ2hFLFlBQTBDLEtBQUs7UUFDM0MsS0FBSyxDQUFDLEtBQUssQ0FBQyxDQUFDO0lBQ2pCLENBQUM7Q0FDSixDQUFBO0FBSm9CLG9CQUFvQjtJQUZ4QyxnQkFBTyxFQUFFO0lBQ1QsY0FBSyxDQUFDLFdBQVcsQ0FBQztJQUVGLFdBQUEsZUFBTSxDQUFDLG9CQUFvQixDQUFDLENBQUE7O0dBRHhCLG9CQUFvQixDQUl4QztrQkFKb0Isb0JBQW9CIn0=
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiY29udHJhY3QtaW5mby1wcm92aWRlci5qcyIsInNvdXJjZVJvb3QiOiIiLCJzb3VyY2VzIjpbIi4uLy4uLy4uL3NyYy9hcHAvZGF0YS1wcm92aWRlci9jb250cmFjdC1pbmZvLXByb3ZpZGVyLnRzIl0sIm5hbWVzIjpbXSwibWFwcGluZ3MiOiI7Ozs7Ozs7Ozs7Ozs7O0FBQUEsbUNBQThDO0FBQzlDLHVEQUFrRDtBQUtsRCxJQUFxQixvQkFBb0IsR0FBekMsTUFBcUIsb0JBQXFCLFNBQVEsbUNBQThCO0lBQzVFLFlBQTBDLEtBQUs7UUFDM0MsS0FBSyxDQUFDLEtBQUssQ0FBQyxDQUFDO0lBQ2pCLENBQUM7Q0FDSixDQUFBO0FBSm9CLG9CQUFvQjtJQUZ4QyxnQkFBTyxFQUFFO0lBQ1QsY0FBSyxDQUFDLFdBQVcsQ0FBQztJQUVGLFdBQUEsZUFBTSxDQUFDLG9CQUFvQixDQUFDLENBQUE7O0dBRHhCLG9CQUFvQixDQUl4QztrQkFKb0Isb0JBQW9CIn0=

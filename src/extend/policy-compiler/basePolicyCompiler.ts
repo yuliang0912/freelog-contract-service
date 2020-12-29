@@ -1,12 +1,10 @@
 import {IPolicyCompiler, PolicyInfo, FsmDescriptionInfo} from '../../interface';
-import {md5} from 'egg-freelog-base/app/extend/helper/crypto_helper';
-import {SubjectType} from '../../enum';
-import {ApplicationError} from 'egg-freelog-base';
+import {ApplicationError, SubjectTypeEnum, CryptoHelper} from 'egg-freelog-base';
 import {v4} from 'uuid';
 
 export class BasePolicyCompiler implements IPolicyCompiler {
 
-    compiler(subjectType: SubjectType, policyText: string): PolicyInfo {
+    compiler(subjectType: SubjectTypeEnum, policyText: string): PolicyInfo {
         throw new ApplicationError('compiler not implemented');
     }
 
@@ -18,8 +16,8 @@ export class BasePolicyCompiler implements IPolicyCompiler {
      * 生成策略Id
      * @param policyText
      */
-    generatePolicyId(subjectType: SubjectType, policyText: string) {
-        return md5(`$FREELOG_POLICY_TEXT_${policyText.trim()}_SUBJECT_TYPE_${subjectType}`);
+    generatePolicyId(subjectType: SubjectTypeEnum, policyText: string) {
+        return CryptoHelper.md5(`$FREELOG_POLICY_TEXT_${policyText.trim()}_SUBJECT_TYPE_${subjectType}`);
         // return md5(policyText.replace(/\s{2,}/g, '') + '_subjectType:' + subjectType);
     }
 

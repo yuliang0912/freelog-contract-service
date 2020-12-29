@@ -1,11 +1,15 @@
 import {omit, assign, isNumber} from 'lodash';
-import {scope, provide} from 'midway';
-import {MongooseModelBase} from './mongoose-model-base';
+import {scope, provide, plugin} from 'midway';
+import {MongooseModelBase} from 'egg-freelog-base/database/mongoose-model-base';
 import {ContractAuthStatusEnum} from '../enum';
 
 @scope('Singleton')
 @provide('model.ContractInfo')
 export class ContractInfoModel extends MongooseModelBase {
+
+    constructor(@plugin('mongoose') mongoose) {
+        super(mongoose);
+    }
 
     buildMongooseModel() {
         /**

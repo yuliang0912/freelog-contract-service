@@ -1,31 +1,28 @@
-import * as  mongoose from 'mongoose';
 import {isString, pick, chain, first, isArray, isEmpty, assign, isNumber} from 'lodash';
-import {provide, inject} from 'midway';
-import {ArgumentError, ApplicationError, LogicError} from 'egg-freelog-base';
+import {provide, inject, plugin} from 'midway';
 import {
-    ContractInfo,
-    BeSignSubjectOptions,
-    IContractService,
-    IOutsideApiService,
-    IContractEventHandler, IPolicyService, PolicyInfo, PageResult, SubjectBaseInfo
+    ContractInfo, BeSignSubjectOptions, IContractService, IOutsideApiService,
+    IContractEventHandler, IPolicyService, PolicyInfo, SubjectBaseInfo
 } from '../../interface';
+import {ContractAuthStatusEnum, ContractEventEnum, ContractFsmRunningStatusEnum} from '../../enum';
 import {
-    ContractAuthStatusEnum, ContractEventEnum,
-    ContractFsmRunningStatusEnum, ContractStatusEnum,
-    IdentityType, SubjectType
-} from '../../enum';
+    FreelogContext, ContractStatusEnum, ContractLicenseeIdentityTypeEnum, SubjectTypeEnum,
+    PageResult, ArgumentError, ApplicationError, LogicError, IMongodbOperation
+} from 'egg-freelog-base';
 
 @provide('contractService')
 export class ContractService implements IContractService {
 
+    @plugin()
+    mongoose;
     @inject()
-    ctx;
+    ctx: FreelogContext;
     @inject()
-    contractInfoProvider;
+    contractInfoProvider: IMongodbOperation<ContractInfo>;
     @inject()
     policyService: IPolicyService;
     @inject()
-    contractChangedHistoryProvider;
+    contractChangedHistoryProvider: IMongodbOperation<any>;
     @inject()
     contractInfoSignatureProvider;
     @inject()
@@ -40,7 +37,7 @@ export class ContractService implements IContractService {
      * @param licenseeIdentityType
      * @param subjectType
      */
-    async batchSignSubjects(subjects: BeSignSubjectOptions[], licenseeId: string | number, licenseeIdentityType: IdentityType, subjectType: SubjectType): Promise<ContractInfo[]> {
+    async batchSignSubjects(subjects: BeSignSubjectOptions[], licenseeId: string | number, licenseeIdentityType: ContractLicenseeIdentityTypeEnum, subjectType: SubjectTypeEnum): Promise<ContractInfo[]> {
 
         // console.log('参数传递待签约标的物数量:' + subjects.map(x => x.policyId).toString());
 
@@ -79,7 +76,7 @@ export class ContractService implements IContractService {
                 licensorId, licensorName, licensorOwnerId, licensorOwnerName,
                 licenseeId, licenseeName, licenseeOwnerId, licenseeOwnerName, licenseeIdentityType,
                 subjectId, subjectName, subjectType,
-                contractId: mongoose.Types.ObjectId,
+                contractId: this.mongoose.getNewObjectId(),
                 contractName: subjectPolicyInfo.policyName,
                 policyId: subjectPolicyInfo.policyId,
                 fsmCurrentState: '',
@@ -145,7 +142,7 @@ export class ContractService implements IContractService {
      */
     async setDefaultExecContract(contract: ContractInfo): Promise<boolean> {
 
-        if (contract.licenseeIdentityType !== IdentityType.ClientUser) {
+        if (contract.licenseeIdentityType !== ContractLicenseeIdentityTypeEnum.ClientUser) {
             throw new LogicError('please check contractType');
         }
 
@@ -170,13 +167,8 @@ export class ContractService implements IContractService {
         return this.contractInfoProvider.find({_id: {$in: contractIds}}, ...args);
     }
 
-    async findPageList(condition: object, page: number, pageSize: number, projection: string[], orderBy: object): Promise<PageResult<ContractInfo>> {
-        let dataList = [];
-        const totalItem = await this.count(condition);
-        if (totalItem > (page - 1) * pageSize) {
-            dataList = await this.contractInfoProvider.findPageList(condition, page, pageSize, projection.join(' '), orderBy);
-        }
-        return {page, pageSize, totalItem, dataList};
+    async findIntervalList(condition: object, skip?: number, limit?: number, projection?: string[], sort?: object): Promise<PageResult<ContractInfo>> {
+        return this.contractInfoProvider.findIntervalList(condition, skip, limit, projection?.toString(), sort);
     }
 
     async count(condition: object): Promise<number> {
@@ -206,7 +198,7 @@ export class ContractService implements IContractService {
         const fsmStateTransitionInfo = {
             fromState, toState, event, triggerDate
         };
-        const existingHistoryInfo = await this.contractChangedHistoryProvider.findOne({contractId: contract.contractId}, {histories: {$slice: -1}});
+        const existingHistoryInfo = await this.contractChangedHistoryProvider.findOne({contractId: contract.contractId}, {histories: {$slice: -1}} as any);
         if (existingHistoryInfo && !isEmpty(existingHistoryInfo.histories)) {
             const latestEventRecord: any = first(existingHistoryInfo.histories);
             // 逻辑上事件历史记录必须能够按状态机的事件接受顺序串联起来
@@ -250,7 +242,12 @@ export class ContractService implements IContractService {
         });
     }
 
-    async findLicenseeSignCounts(licenseeOwnerIds: number[], licenseeIdentityType: IdentityType): Promise<Array<{ licensorOwnerId: number, count: number }>> {
+    /**
+     * 获取签约数量
+     * @param licenseeOwnerIds
+     * @param licenseeIdentityType
+     */
+    async findLicenseeSignCounts(licenseeOwnerIds: number[], licenseeIdentityType: ContractLicenseeIdentityTypeEnum): Promise<Array<{ licensorOwnerId: number, count: number }>> {
         return this.contractInfoProvider.aggregate([
             {
                 $match: {licensorOwnerId: {$in: licenseeOwnerIds}, licenseeIdentityType}
@@ -269,7 +266,7 @@ export class ContractService implements IContractService {
      * @param baseInfos
      * @private
      */
-    async _checkIsCanReSignContracts(baseInfos: Array<{ subjectId: string, subjectType: SubjectType, licenseeId: string | number, policyId: string, status: number, contractId?: string }>): Promise<any[]> {
+    async _checkIsCanReSignContracts(baseInfos: Array<{ subjectId: string, subjectType: SubjectTypeEnum, licenseeId: string | number, policyId: string, status: number, contractId?: string }>): Promise<any[]> {
 
         const contractUniqueKeys = baseInfos.map(baseInfo => {
             baseInfo['uniqueKey'] = this.contractInfoSignatureProvider.contractBaseInfoUniqueKeyGenerate(baseInfo);

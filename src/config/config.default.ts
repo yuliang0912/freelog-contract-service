@@ -17,10 +17,8 @@ export default (appInfo: EggAppInfo) => {
         enable: true,
         defaultLocale: 'zh-CN'
     };
-
-    config.middleware = [
-        'errorHandler', 'identityAuthentication'
-    ];
+    
+    config.middleware = ['errorAutoSnapHandler', 'gatewayIdentityInfoHandler'];
 
     config.static = {
         enable: false
@@ -29,7 +27,7 @@ export default (appInfo: EggAppInfo) => {
     config.onerror = {
         all(err, ctx) {
             ctx.type = 'application/json';
-            ctx.body = JSON.stringify({ret: -1, msg: err.toString(), data: null});
+            ctx.body = JSON.stringify({ret: 0, retCode: 1, msg: err.toString(), data: null});
             ctx.status = 500;
         }
     };

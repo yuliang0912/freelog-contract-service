@@ -1,24 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ContractCanBeRegisteredEventEnum = exports.IdentityTypeEnum = exports.ContractStatusEnum = exports.ContractAuthStatusEnum = exports.ContractFsmRunningStatusEnum = exports.OutsideServiceEventEnum = exports.ContractFsmEventEnum = exports.ContractEventEnum = exports.IdentityType = exports.SubjectType = void 0;
-/**
- * 标的物类型
- */
-var SubjectType;
-(function (SubjectType) {
-    SubjectType[SubjectType["Resource"] = 1] = "Resource";
-    SubjectType[SubjectType["Presentable"] = 2] = "Presentable";
-    SubjectType[SubjectType["UserGroup"] = 3] = "UserGroup";
-})(SubjectType = exports.SubjectType || (exports.SubjectType = {}));
-/**
- * 身份类型
- */
-var IdentityType;
-(function (IdentityType) {
-    IdentityType[IdentityType["Resource"] = 1] = "Resource";
-    IdentityType[IdentityType["Node"] = 2] = "Node";
-    IdentityType[IdentityType["ClientUser"] = 3] = "ClientUser";
-})(IdentityType = exports.IdentityType || (exports.IdentityType = {}));
+exports.ContractCanBeRegisteredEventEnum = exports.ContractAuthStatusEnum = exports.ContractFsmRunningStatusEnum = exports.OutsideServiceEventEnum = exports.ContractFsmEventEnum = exports.ContractEventEnum = void 0;
 /**
  * 合同服务自身事件
  */
@@ -114,35 +96,20 @@ var ContractAuthStatusEnum;
      */
     ContractAuthStatusEnum[ContractAuthStatusEnum["Unauthorized"] = 128] = "Unauthorized";
 })(ContractAuthStatusEnum = exports.ContractAuthStatusEnum || (exports.ContractAuthStatusEnum = {}));
-var ContractStatusEnum;
-(function (ContractStatusEnum) {
-    /**
-     * 正常生效中
-     */
-    ContractStatusEnum[ContractStatusEnum["Executed"] = 0] = "Executed";
-    /**
-     * 合同已终止(未授权,并且不再接受新事件)
-     * @type {number}
-     */
-    ContractStatusEnum[ContractStatusEnum["Terminated"] = 1] = "Terminated";
-    /**
-     * 异常的,例如签名不对,冻结等.
-     * @type {number}
-     */
-    ContractStatusEnum[ContractStatusEnum["Exception"] = 2] = "Exception";
-})(ContractStatusEnum = exports.ContractStatusEnum || (exports.ContractStatusEnum = {}));
-var IdentityTypeEnum;
-(function (IdentityTypeEnum) {
-    /**
-     * 甲方
-     */
-    IdentityTypeEnum[IdentityTypeEnum["Licensor"] = 1] = "Licensor";
-    /**
-     * 乙方
-     * @type {number}
-     */
-    IdentityTypeEnum[IdentityTypeEnum["Licensee"] = 2] = "Licensee";
-})(IdentityTypeEnum = exports.IdentityTypeEnum || (exports.IdentityTypeEnum = {}));
+//
+// export enum IdentityTypeEnum {
+//
+//     /**
+//      * 甲方
+//      */
+//     Licensor = 1,
+//
+//     /**
+//      * 乙方
+//      * @type {number}
+//      */
+//     Licensee = 2
+// }
 var ContractCanBeRegisteredEventEnum;
 (function (ContractCanBeRegisteredEventEnum) {
     /**
@@ -160,4 +127,4 @@ var ContractCanBeRegisteredEventEnum;
      */
     ContractCanBeRegisteredEventEnum["RelativeTimeEvent"] = "A103";
 })(ContractCanBeRegisteredEventEnum = exports.ContractCanBeRegisteredEventEnum || (exports.ContractCanBeRegisteredEventEnum = {}));
-//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiZW51bS5qcyIsInNvdXJjZVJvb3QiOiIiLCJzb3VyY2VzIjpbIi4uL3NyYy9lbnVtLnRzIl0sIm5hbWVzIjpbXSwibWFwcGluZ3MiOiI7OztBQUFBOztHQUVHO0FBQ0gsSUFBWSxXQUlYO0FBSkQsV0FBWSxXQUFXO0lBQ25CLHFEQUFZLENBQUE7SUFDWiwyREFBZSxDQUFBO0lBQ2YsdURBQWEsQ0FBQTtBQUNqQixDQUFDLEVBSlcsV0FBVyxHQUFYLG1CQUFXLEtBQVgsbUJBQVcsUUFJdEI7QUFFRDs7R0FFRztBQUNILElBQVksWUFJWDtBQUpELFdBQVksWUFBWTtJQUNwQix1REFBWSxDQUFBO0lBQ1osK0NBQUksQ0FBQTtJQUNKLDJEQUFVLENBQUE7QUFDZCxDQUFDLEVBSlcsWUFBWSxHQUFaLG9CQUFZLEtBQVosb0JBQVksUUFJdkI7QUFFRDs7R0FFRztBQUNILElBQVksaUJBTVg7QUFORCxXQUFZLGlCQUFpQjtJQUN6Qjs7O09BR0c7SUFDSCx3RUFBbUQsQ0FBQTtBQUN2RCxDQUFDLEVBTlcsaUJBQWlCLEdBQWpCLHlCQUFpQixLQUFqQix5QkFBaUIsUUFNNUI7QUFFRDs7R0FFRztBQUNILElBQVksb0JBSVg7QUFKRCxXQUFZLG9CQUFvQjtJQUU1QixpRUFBeUMsQ0FBQTtBQUU3QyxDQUFDLEVBSlcsb0JBQW9CLEdBQXBCLDRCQUFvQixLQUFwQiw0QkFBb0IsUUFJL0I7QUFFRDs7R0FFRztBQUNILElBQVksdUJBK0JYO0FBL0JELFdBQVksdUJBQXVCO0lBRS9COztPQUVHO0lBQ0gsaUdBQXNFLENBQUE7SUFFdEU7O09BRUc7SUFDSCwrR0FBb0YsQ0FBQTtJQUVwRjs7T0FFRztJQUNILDJGQUFnRSxDQUFBO0lBRWhFOztPQUVHO0lBQ0gsMkVBQWdELENBQUE7SUFFaEQ7O09BRUc7SUFDSCw2RUFBa0QsQ0FBQTtJQUVsRDs7T0FFRztJQUNILGlGQUFzRCxDQUFBO0FBQzFELENBQUMsRUEvQlcsdUJBQXVCLEdBQXZCLCtCQUF1QixLQUF2QiwrQkFBdUIsUUErQmxDO0FBRUQsSUFBWSw0QkE2Qlg7QUE3QkQsV0FBWSw0QkFBNEI7SUFDcEM7O09BRUc7SUFDSCxpR0FBaUIsQ0FBQTtJQUVqQjs7O09BR0c7SUFDSCxtRkFBVSxDQUFBO0lBRVY7OztPQUdHO0lBQ0gscUZBQVcsQ0FBQTtJQUVYOzs7T0FHRztJQUNILDJGQUFjLENBQUE7SUFFZDs7O09BR0c7SUFDSCx3R0FBcUIsQ0FBQTtBQUN6QixDQUFDLEVBN0JXLDRCQUE0QixHQUE1QixvQ0FBNEIsS0FBNUIsb0NBQTRCLFFBNkJ2QztBQUVEOztHQUVHO0FBQ0gsSUFBWSxzQkFpQlg7QUFqQkQsV0FBWSxzQkFBc0I7SUFDOUI7OztPQUdHO0lBQ0gsK0VBQWMsQ0FBQTtJQUVkOzs7T0FHRztJQUNILCtGQUFzQixDQUFBO0lBRXRCOztPQUVHO0lBQ0gscUZBQWtCLENBQUE7QUFDdEIsQ0FBQyxFQWpCVyxzQkFBc0IsR0FBdEIsOEJBQXNCLEtBQXRCLDhCQUFzQixRQWlCakM7QUFFRCxJQUFZLGtCQWlCWDtBQWpCRCxXQUFZLGtCQUFrQjtJQUMxQjs7T0FFRztJQUNILG1FQUFZLENBQUE7SUFFWjs7O09BR0c7SUFDSCx1RUFBYyxDQUFBO0lBRWQ7OztPQUdHO0lBQ0gscUVBQWEsQ0FBQTtBQUNqQixDQUFDLEVBakJXLGtCQUFrQixHQUFsQiwwQkFBa0IsS0FBbEIsMEJBQWtCLFFBaUI3QjtBQUVELElBQVksZ0JBWVg7QUFaRCxXQUFZLGdCQUFnQjtJQUV4Qjs7T0FFRztJQUNILCtEQUFZLENBQUE7SUFFWjs7O09BR0c7SUFDSCwrREFBWSxDQUFBO0FBQ2hCLENBQUMsRUFaVyxnQkFBZ0IsR0FBaEIsd0JBQWdCLEtBQWhCLHdCQUFnQixRQVkzQjtBQUVELElBQVksZ0NBa0JYO0FBbEJELFdBQVksZ0NBQWdDO0lBRXhDOztPQUVHO0lBQ0gsNERBQXdCLENBQUE7SUFFeEI7OztPQUdHO0lBQ0gsc0RBQWtCLENBQUE7SUFFbEI7OztPQUdHO0lBQ0gsOERBQTBCLENBQUE7QUFDOUIsQ0FBQyxFQWxCVyxnQ0FBZ0MsR0FBaEMsd0NBQWdDLEtBQWhDLHdDQUFnQyxRQWtCM0MifQ==
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiZW51bS5qcyIsInNvdXJjZVJvb3QiOiIiLCJzb3VyY2VzIjpbIi4uL3NyYy9lbnVtLnRzIl0sIm5hbWVzIjpbXSwibWFwcGluZ3MiOiI7OztBQUFBOztHQUVHO0FBQ0gsSUFBWSxpQkFNWDtBQU5ELFdBQVksaUJBQWlCO0lBQ3pCOzs7T0FHRztJQUNILHdFQUFtRCxDQUFBO0FBQ3ZELENBQUMsRUFOVyxpQkFBaUIsR0FBakIseUJBQWlCLEtBQWpCLHlCQUFpQixRQU01QjtBQUVEOztHQUVHO0FBQ0gsSUFBWSxvQkFJWDtBQUpELFdBQVksb0JBQW9CO0lBRTVCLGlFQUF5QyxDQUFBO0FBRTdDLENBQUMsRUFKVyxvQkFBb0IsR0FBcEIsNEJBQW9CLEtBQXBCLDRCQUFvQixRQUkvQjtBQUVEOztHQUVHO0FBQ0gsSUFBWSx1QkErQlg7QUEvQkQsV0FBWSx1QkFBdUI7SUFFL0I7O09BRUc7SUFDSCxpR0FBc0UsQ0FBQTtJQUV0RTs7T0FFRztJQUNILCtHQUFvRixDQUFBO0lBRXBGOztPQUVHO0lBQ0gsMkZBQWdFLENBQUE7SUFFaEU7O09BRUc7SUFDSCwyRUFBZ0QsQ0FBQTtJQUVoRDs7T0FFRztJQUNILDZFQUFrRCxDQUFBO0lBRWxEOztPQUVHO0lBQ0gsaUZBQXNELENBQUE7QUFDMUQsQ0FBQyxFQS9CVyx1QkFBdUIsR0FBdkIsK0JBQXVCLEtBQXZCLCtCQUF1QixRQStCbEM7QUFFRCxJQUFZLDRCQTZCWDtBQTdCRCxXQUFZLDRCQUE0QjtJQUNwQzs7T0FFRztJQUNILGlHQUFpQixDQUFBO0lBRWpCOzs7T0FHRztJQUNILG1GQUFVLENBQUE7SUFFVjs7O09BR0c7SUFDSCxxRkFBVyxDQUFBO0lBRVg7OztPQUdHO0lBQ0gsMkZBQWMsQ0FBQTtJQUVkOzs7T0FHRztJQUNILHdHQUFxQixDQUFBO0FBQ3pCLENBQUMsRUE3QlcsNEJBQTRCLEdBQTVCLG9DQUE0QixLQUE1QixvQ0FBNEIsUUE2QnZDO0FBRUQ7O0dBRUc7QUFDSCxJQUFZLHNCQWlCWDtBQWpCRCxXQUFZLHNCQUFzQjtJQUM5Qjs7O09BR0c7SUFDSCwrRUFBYyxDQUFBO0lBRWQ7OztPQUdHO0lBQ0gsK0ZBQXNCLENBQUE7SUFFdEI7O09BRUc7SUFDSCxxRkFBa0IsQ0FBQTtBQUN0QixDQUFDLEVBakJXLHNCQUFzQixHQUF0Qiw4QkFBc0IsS0FBdEIsOEJBQXNCLFFBaUJqQztBQUVELEVBQUU7QUFDRixpQ0FBaUM7QUFDakMsRUFBRTtBQUNGLFVBQVU7QUFDVixZQUFZO0FBQ1osVUFBVTtBQUNWLG9CQUFvQjtBQUNwQixFQUFFO0FBQ0YsVUFBVTtBQUNWLFlBQVk7QUFDWix3QkFBd0I7QUFDeEIsVUFBVTtBQUNWLG1CQUFtQjtBQUNuQixJQUFJO0FBRUosSUFBWSxnQ0FrQlg7QUFsQkQsV0FBWSxnQ0FBZ0M7SUFFeEM7O09BRUc7SUFDSCw0REFBd0IsQ0FBQTtJQUV4Qjs7O09BR0c7SUFDSCxzREFBa0IsQ0FBQTtJQUVsQjs7O09BR0c7SUFDSCw4REFBMEIsQ0FBQTtBQUM5QixDQUFDLEVBbEJXLGdDQUFnQyxHQUFoQyx3Q0FBZ0MsS0FBaEMsd0NBQWdDLFFBa0IzQyJ9

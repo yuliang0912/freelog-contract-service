@@ -1,5 +1,5 @@
 import { ContractFsmRunningStatusEnum } from '../../enum';
-import { ContractInfo, IContractService, IEventHandler } from '../../interface';
+import { ContractInfo, FsmDescriptionInfo, IContractService, IEventHandler } from '../../interface';
 /**
  * 合同状态机状态切换时的业务处理
  */
@@ -10,13 +10,13 @@ export declare class ContractFsmStateTransitionHandler implements IEventHandler 
      * TODO: 前期: 1.合同加锁并且记录合同变更历史(需要事务保证原子性) 2.获取环境变量值 3.计算表达式值
      * TODO: 中期: 1.注册事件到注册中心(幂等性支持) 2.等待事件全部注册成功  2.解锁合同
      * TODO: 后期: 1.修改合同各种状态(如果前置步骤失败了,可以通过job继续触发,所以需要保证合同历史记录中有对应的事件信息)
-     * @param {ContractInfo} contractInfo
-     * @param {string} fromState
-     * @param {string} toState
+     * @param contractInfo
+     * @param fsmDescriptionInfo
+     * @param fromState
+     * @param toState
      * @param currEvent
-     * @returns {Promise<void>}
      */
-    handle(contractInfo: ContractInfo, fsmDescriptionInfo: object, fromState: string, toState: string, currEvent: any): Promise<void>;
+    handle(contractInfo: ContractInfo, fsmDescriptionInfo: FsmDescriptionInfo, fromState: string, toState: string, currEvent: any): Promise<void>;
     /**
      * 注册当下新状态下的事件,取消其他状态下的事件
      * 实现逻辑:合同服务批量一次性注册当前运行状态下的所有可注册事件.
@@ -25,7 +25,7 @@ export declare class ContractFsmStateTransitionHandler implements IEventHandler 
      * @returns {Promise<null>}
      * @private
      */
-    _registerAndUnregisterContractEvents(contractInfo: ContractInfo, fsmDescriptionInfo: object): Promise<any>;
+    _registerAndUnregisterContractEvents(contractInfo: ContractInfo, fsmDescriptionInfo: FsmDescriptionInfo): Promise<any>;
     /**
      * 分析合同内容,获取合同状态机运行时的状态
      * @returns {Promise<void>}
@@ -38,5 +38,5 @@ export declare class ContractFsmStateTransitionHandler implements IEventHandler 
      * @param toState
      * @private
      */
-    _getContractAuthStatus(fsmDescriptionInfo: object, toState: string): number;
+    _getContractAuthStatus(fsmDescriptionInfo: FsmDescriptionInfo, toState: string): number;
 }

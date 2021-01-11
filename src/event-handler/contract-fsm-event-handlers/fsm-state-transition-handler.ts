@@ -1,6 +1,6 @@
 import {inject, provide, scope} from 'midway';
 import {ContractAuthStatusEnum, ContractFsmRunningStatusEnum} from '../../enum';
-import {ContractInfo, IContractService, IEventHandler} from '../../interface';
+import {ContractInfo, FsmDescriptionInfo, IContractService, IEventHandler} from '../../interface';
 
 /**
  * 合同状态机状态切换时的业务处理
@@ -18,13 +18,13 @@ export class ContractFsmStateTransitionHandler implements IEventHandler {
      * TODO: 前期: 1.合同加锁并且记录合同变更历史(需要事务保证原子性) 2.获取环境变量值 3.计算表达式值
      * TODO: 中期: 1.注册事件到注册中心(幂等性支持) 2.等待事件全部注册成功  2.解锁合同
      * TODO: 后期: 1.修改合同各种状态(如果前置步骤失败了,可以通过job继续触发,所以需要保证合同历史记录中有对应的事件信息)
-     * @param {ContractInfo} contractInfo
-     * @param {string} fromState
-     * @param {string} toState
+     * @param contractInfo
+     * @param fsmDescriptionInfo
+     * @param fromState
+     * @param toState
      * @param currEvent
-     * @returns {Promise<void>}
      */
-    async handle(contractInfo: ContractInfo, fsmDescriptionInfo: object, fromState: string, toState: string, currEvent: any) {
+    async handle(contractInfo: ContractInfo, fsmDescriptionInfo: FsmDescriptionInfo, fromState: string, toState: string, currEvent: any) {
 
         if (contractInfo.fsmRunningStatus === ContractFsmRunningStatusEnum.Locked) {
             return;
@@ -49,7 +49,7 @@ export class ContractFsmStateTransitionHandler implements IEventHandler {
      * @returns {Promise<null>}
      * @private
      */
-    async _registerAndUnregisterContractEvents(contractInfo: ContractInfo, fsmDescriptionInfo: object) {
+    async _registerAndUnregisterContractEvents(contractInfo: ContractInfo, fsmDescriptionInfo: FsmDescriptionInfo) {
         const contractCanBeRegisteredEvents = this.contractFsmEventAnalysis.getContractCanBeRegisteredEvents(fsmDescriptionInfo, contractInfo.fsmCurrentState);
         if (contractCanBeRegisteredEvents.length) {
             console.log('等待注册的事件数量:' + contractCanBeRegisteredEvents);
@@ -72,7 +72,7 @@ export class ContractFsmStateTransitionHandler implements IEventHandler {
      * @param toState
      * @private
      */
-    _getContractAuthStatus(fsmDescriptionInfo: object, toState: string): number {
+    _getContractAuthStatus(fsmDescriptionInfo: FsmDescriptionInfo, toState: string): number {
         const currentStateFsmDescriptionInfo = fsmDescriptionInfo[toState];
         if (currentStateFsmDescriptionInfo?.isAuth && currentStateFsmDescriptionInfo?.isTestAuth) {
             return ContractAuthStatusEnum.Authorized | ContractAuthStatusEnum.TestNodeAuthorized;

@@ -93,13 +93,16 @@ export interface PolicyInfo {
     policyId: string;
     policyText: string;
     fsmDescriptionInfo?: FsmDescriptionInfo;
+    fsmDeclarationInfo?: any;
     subjectType: SubjectTypeEnum;
 }
 
 export interface PolicyEventInfo {
     code: string;
+    service: string;
+    name: string;
     eventId: string;
-    params?: {
+    args?: {
         [paramName: string]: any;
     };
 }
@@ -111,6 +114,8 @@ export interface FsmDescriptionInfo {
 export interface FsmStateDescriptionInfo {
     isAuth: boolean;
     isTestAuth: boolean;
+    isInitial?: boolean;
+    serviceStates: string[];
     transition: { [nextStateName: string]: PolicyEventInfo | null; };
 }
 
@@ -221,7 +226,7 @@ export interface ICommonEventHandler {
  * 策略编译器
  */
 export interface IPolicyCompiler {
-    compiler(subjectType: SubjectTypeEnum, policyText: string): PolicyInfo;
+    compiler(subjectType: SubjectTypeEnum, policyText: string): Promise<PolicyInfo>;
 }
 
 export interface IMongoConditionBuildOptions {

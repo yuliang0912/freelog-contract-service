@@ -19,6 +19,7 @@ export class PolicyInfoModel extends MongooseModelBase {
             policyId: {type: String, required: true},
             policyText: {type: String, required: true},
             subjectType: {type: Number, required: true},
+            fsmDeclarationInfo: {type: this.mongoose.Schema.Types.Mixed, required: true},
             fsmDescriptionInfo: {type: this.mongoose.Schema.Types.Mixed, required: true},
             status: {type: Number, default: 0, required: true},
         }, {

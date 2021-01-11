@@ -1,4 +1,4 @@
-import { ContractInfo, PolicyInfo, IContractFsmEventHandler } from '../../interface';
+import { ContractInfo, PolicyInfo, IContractFsmEventHandler, FsmDescriptionInfo } from '../../interface';
 export declare class ContractFsmGenerator {
     contractStateMachineBuilder: any;
     contractFsmEventHandler: IContractFsmEventHandler;
@@ -15,5 +15,5 @@ export declare class ContractFsmGenerator {
      * @param eventId
      */
     isCanExecEvent(contractInfo: ContractInfo, contractPolicyInfo: PolicyInfo, eventId: string): boolean;
-    _onEnterStateEventHandle(fsmDescriptionInfo: object): (lifeCycle: any, ...args: any[]) => void;
+    _onEnterStateEventHandle(fsmDescriptionInfo: FsmDescriptionInfo): (lifeCycle: any, ...args: any[]) => void;
 }

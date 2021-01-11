@@ -1,11 +1,11 @@
+import { FsmDescriptionInfo } from '../../interface';
 export declare class ContractFsmEventAnalysis {
     /**
      * 获取合同指定状态下的所有可注册事件
-     * @param {ContractPolicyInfo} contractPolicyInfo
-     * @param {string} fsmCurrentState
-     * @returns {any[]}
+     * @param fsmDescriptionInfo
+     * @param fsmCurrentState
      */
-    getContractCanBeRegisteredEvents(fsmDescriptionInfo: object, fsmCurrentState: string): any[];
+    getContractCanBeRegisteredEvents(fsmDescriptionInfo: FsmDescriptionInfo, fsmCurrentState: string): any[];
     /**
      * 获取合同状态机下的所有可注册事件的编码
      * @returns {string[]}

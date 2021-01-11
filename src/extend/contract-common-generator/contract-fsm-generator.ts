@@ -1,7 +1,7 @@
 import {provide, inject} from 'midway';
 import {ArgumentError} from 'egg-freelog-base';
 import {ContractFsmEventEnum, ContractFsmRunningStatusEnum} from '../../enum';
-import {ContractInfo, PolicyInfo, IContractFsmEventHandler} from '../../interface';
+import {ContractInfo, PolicyInfo, IContractFsmEventHandler, FsmDescriptionInfo} from '../../interface';
 
 @provide('contractFsmGenerator')
 export class ContractFsmGenerator {
@@ -48,7 +48,7 @@ export class ContractFsmGenerator {
 
     // isCanExecEvent()
 
-    _onEnterStateEventHandle(fsmDescriptionInfo: object): (lifeCycle, ...args) => void {
+    _onEnterStateEventHandle(fsmDescriptionInfo: FsmDescriptionInfo): (lifeCycle, ...args) => void {
         return (lifeCycle, ...args) => {
             const {fsm, from, to} = lifeCycle;
             const history = fsm.history as string[];

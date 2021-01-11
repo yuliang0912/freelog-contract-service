@@ -1,31 +1,51 @@
-import {init, provide, scope} from 'midway';
+import {provide, scope} from 'midway';
 import {IPolicyCompiler, PolicyInfo} from '../../interface';
-import {ResourcePolicyCompiler} from './resource-policy-compiler';
-import {PresentablePolicyCompiler} from './presentable-policy-compiler';
-import {ApplicationError, SubjectTypeEnum} from 'egg-freelog-base';
+import {CryptoHelper, SubjectTypeEnum, ContractColorStateTypeEnum} from 'egg-freelog-base';
+import {v4} from 'uuid';
+import {capitalize} from 'lodash';
+import {compile} from '@freelog/resource-policy-lang';
+
 
 @provide()
 @scope('Singleton')
 export class PolicyCompiler implements IPolicyCompiler {
 
-    readonly subjectPolicyCompilerMap = new Map<SubjectTypeEnum, IPolicyCompiler>();
-
     /**
      * 根据标的物类型编译策略文本
      * @param subjectType
      * @param policyText
-     * @param policyName
      */
-    compiler(subjectType: SubjectTypeEnum, policyText: string): PolicyInfo {
-        if (!this.subjectPolicyCompilerMap.has(subjectType)) {
-            throw new ApplicationError(`unsupported subjectType:${subjectType}`);
+    async compiler(subjectType: SubjectTypeEnum, policyText: string): Promise<PolicyInfo> {
+        const {state_machine} = await compile(policyText, SubjectTypeEnum[subjectType]);
+        const serviceStateMap = new Map((state_machine.declarations.serviceStates as any[]).map(x => [x.name, capitalize(x.type)]));
+        for (const [_, fsmStateDescriptionInfo] of Object.entries(state_machine.states)) {
+            fsmStateDescriptionInfo['isAuth'] = fsmStateDescriptionInfo['serviceStates'].some(x => serviceStateMap.get(x) === ContractColorStateTypeEnum[ContractColorStateTypeEnum.Authorization]);
+            fsmStateDescriptionInfo['isTestAuth'] = fsmStateDescriptionInfo['serviceStates'].some(x => serviceStateMap.get(x) === ContractColorStateTypeEnum[ContractColorStateTypeEnum.TestAuthorization]);
+            if (!fsmStateDescriptionInfo['transition']) {
+                fsmStateDescriptionInfo['isTerminate'] = true;
+                continue;
+            }
+            for (const [_, policyEventInfo] of Object.entries(fsmStateDescriptionInfo['transition'])) {
+                if (policyEventInfo && policyEventInfo['event']) {
+                    policyEventInfo['event']['eventId'] = v4().replace(/-/g, '');
+                }
+            }
         }
-        return this.subjectPolicyCompilerMap.get(subjectType).compiler(subjectType, policyText);
+
+        return {
+            policyId: this.generatePolicyId(subjectType, policyText),
+            subjectType, policyText,
+            fsmDeclarationInfo: state_machine.declarations,
+            fsmDescriptionInfo: state_machine.states,
+        };
     }
 
-    @init()
-    initialSubjectPolicyCompiler() {
-        this.subjectPolicyCompilerMap.set(SubjectTypeEnum.Resource, new ResourcePolicyCompiler());
-        this.subjectPolicyCompilerMap.set(SubjectTypeEnum.Presentable, new PresentablePolicyCompiler());
+    /**
+     * 生成策略ID
+     * @param subjectType
+     * @param policyText
+     */
+    generatePolicyId(subjectType: SubjectTypeEnum, policyText: string) {
+        return CryptoHelper.md5(`$FREELOG_POLICY_TEXT_${policyText.trim()}_SUBJECT_TYPE_${subjectType}`);
     }
 }

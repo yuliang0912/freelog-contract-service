@@ -53,9 +53,9 @@ export class InitialContractEventHandler implements IEventHandler {
     async _initialContract(contract: { contractInfo: ContractInfo, policyInfo: PolicyInfo }) {
         const {contractInfo, policyInfo} = contract;
         // 目前初始态的状态名固定为init或initial (后续规则也可能修改为第一个)
-        contractInfo.fsmCurrentState = Object.keys(policyInfo.fsmDescriptionInfo).find(x => /^(init|initial)$/i.test(x));
+        contractInfo.fsmCurrentState = Object.keys(policyInfo.fsmDescriptionInfo).find(x => policyInfo.fsmDescriptionInfo[x].isInitial);
         if (!isString(contractInfo.fsmCurrentState)) {
-            // 兼容模式:正常初始化的状态为固定的名称,目前解析parser貌似没有做验证,所以如果没有init或initial状态时,默认使用第一个状态作为初始态
+            // 兼容模式:默认使用第一个状态作为初始态
             contractInfo.fsmCurrentState = first(Object.keys(policyInfo.fsmDescriptionInfo));
         }
         this.contractFsmGenerator.contractWarpToFsm(contractInfo, policyInfo);

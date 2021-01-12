@@ -67,11 +67,13 @@ export class ContractController {
         //     console.log(error)
         //     this.ctx.error(error)
         // })
-        await this.ctx.curlIntranetApi('/v2/auths/resources/serviceStates').then(data => {
+
+        await this.ctx.curlIntranetApi(`${this.ctx.webApi.authInfoV2}/resources/serviceStates`).then(data => {
             console.log(data)
             this.ctx.success(data)
         }).catch(error => {
             console.log(error)
+            this.ctx.error(error)
         })
     }
 

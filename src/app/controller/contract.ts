@@ -63,7 +63,10 @@ export class ContractController {
                 reject(e);
             });
         });
-        await func.then(this.ctx.success).catch(this.ctx.error)
+        await func.then(this.ctx.success).catch((error) => {
+            console.log(error)
+            this.ctx.error(error)
+        })
     }
 
     @get('/')

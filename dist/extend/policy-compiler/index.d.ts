@@ -1,6 +1,7 @@
 import { IPolicyCompiler, PolicyInfo } from '../../interface';
 import { SubjectTypeEnum } from 'egg-freelog-base';
 export declare class PolicyCompiler implements IPolicyCompiler {
+    gatewayUrl: string;
     /**
      * 根据标的物类型编译策略文本
      * @param subjectType

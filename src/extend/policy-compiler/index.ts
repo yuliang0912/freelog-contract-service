@@ -1,4 +1,4 @@
-import {provide, scope} from 'midway';
+import {config, provide, scope} from 'midway';
 import {IPolicyCompiler, PolicyInfo} from '../../interface';
 import {CryptoHelper, SubjectTypeEnum, ContractColorStateTypeEnum} from 'egg-freelog-base';
 import {v4} from 'uuid';
@@ -10,13 +10,16 @@ import {compile} from '@freelog/resource-policy-lang';
 @scope('Singleton')
 export class PolicyCompiler implements IPolicyCompiler {
 
+    @config()
+    gatewayUrl: string;
+
     /**
      * 根据标的物类型编译策略文本
      * @param subjectType
      * @param policyText
      */
     async compiler(subjectType: SubjectTypeEnum, policyText: string): Promise<PolicyInfo> {
-        const {state_machine} = await compile(policyText, SubjectTypeEnum[subjectType]);
+        const {state_machine} = await compile(policyText, SubjectTypeEnum[subjectType], this.gatewayUrl, '');
         const serviceStateMap = new Map((state_machine.declarations.serviceStates as any[]).map(x => [x.name, capitalize(x.type)]));
         for (const [_, fsmStateDescriptionInfo] of Object.entries(state_machine.states)) {
             fsmStateDescriptionInfo['isAuth'] = fsmStateDescriptionInfo['serviceStates'].some(x => serviceStateMap.get(x) === ContractColorStateTypeEnum[ContractColorStateTypeEnum.Authorization]);

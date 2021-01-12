@@ -8,6 +8,8 @@ import {
 } from 'egg-freelog-base';
 import {ContractFsmGenerator} from '../../extend/contract-common-generator/contract-fsm-generator';
 
+const http = require("http");
+
 @provide()
 @controller('/v2/contracts')
 export class ContractController {
@@ -24,6 +26,45 @@ export class ContractController {
     batchSignSubjectValidator: IJsonSchemaValidate;
     @inject()
     mongoConditionBuilder: IMongoConditionBuilder;
+
+    @get('/test')
+    async test() {
+        const func = new Promise((resolve, reject) => {
+            http.get('http://api.testfreelog.com/v2/auths/resources/serviceStates', (res) => {
+                let buffer = null;
+
+                res.on("data", function (data) {
+                    if (buffer == null) {
+                        buffer = data;
+                    } else {
+                        buffer = buffer + data;
+                    }
+                })
+
+                res.on("end", function () {
+                    try {
+                        let rspo = JSON.parse(buffer);
+                        if (rspo["errCode"] !== 0) {
+                            reject(new Error("取色块定义出错"));
+                            return;
+                        }
+
+                        let data = rspo["data"];
+                        data.map(x => {
+                            delete x.value;
+                            return x;
+                        });
+                        resolve(data);
+                    } catch (e) {
+                        reject(e);
+                    }
+                });
+            }).on("error", (e) => {
+                reject(e);
+            });
+        });
+        await func.then(this.ctx.success).catch(this.ctx.error)
+    }
 
     @get('/')
     @visitorIdentityValidator(IdentityTypeEnum.LoginUser)

@@ -8,6 +8,7 @@ export declare class ContractController {
     contractService: IContractService;
     batchSignSubjectValidator: IJsonSchemaValidate;
     mongoConditionBuilder: IMongoConditionBuilder;
+    test(): Promise<void>;
     index(): Promise<void>;
     list(): Promise<void>;
     createContract(): Promise<void>;

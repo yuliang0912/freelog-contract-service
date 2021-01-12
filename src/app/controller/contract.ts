@@ -67,6 +67,11 @@ export class ContractController {
             console.log(error)
             this.ctx.error(error)
         })
+        await this.ctx.curl('http://api.testfreelog.com/v2/auths/resources/serviceStates').then(data => {
+            console.log(data)
+        }).catch(error => {
+            console.log(error)
+        })
     }
 
     @get('/')

@@ -19,7 +19,7 @@ export class PolicyCompiler implements IPolicyCompiler {
      * @param policyText
      */
     async compiler(subjectType: SubjectTypeEnum, policyText: string): Promise<PolicyInfo> {
-        const {state_machine} = await compile(policyText, SubjectTypeEnum[subjectType], this.gatewayUrl, '');
+        const {state_machine} = await compile(policyText, SubjectTypeEnum[subjectType].toLocaleLowerCase(), this.gatewayUrl, '');
         const serviceStateMap = new Map((state_machine.declarations.serviceStates as any[]).map(x => [x.name, capitalize(x.type)]));
         for (const [_, fsmStateDescriptionInfo] of Object.entries(state_machine.states)) {
             fsmStateDescriptionInfo['isAuth'] = fsmStateDescriptionInfo['serviceStates'].some(x => serviceStateMap.get(x) === ContractColorStateTypeEnum[ContractColorStateTypeEnum.Authorization]);

@@ -15,6 +15,9 @@ export enum ContractEventEnum {
 export enum ContractFsmEventEnum {
 
     FsmStateTransition = 'FsmStateTransition'
+}
+
+export enum ContractPolicyEventEnum {
 
 }
 

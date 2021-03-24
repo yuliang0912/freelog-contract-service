@@ -1,6 +1,7 @@
-import {provide, inject, init} from 'midway';
+import {provide, inject, init, scope} from 'midway';
 import {ContractInfo, PolicyEventInfo, PolicyInfo} from '../../interface';
 
+@scope('Singleton')
 @provide('contractEventExecService')
 export class ContractEventExecService {
 
@@ -10,6 +11,7 @@ export class ContractEventExecService {
     contractFsmGenerator;
 
     eventCodeHandlerMap = new Map<string, (eventInfo: PolicyEventInfo) => Promise<any>>();
+
 
     /**
      * 详细的事件code与定义参考:https://github.com/freelogfe/freelog_event_definition/blob/master/event_def.csv

@@ -1,5 +1,5 @@
 import {app, assert} from 'midway-mock/bootstrap';
-import {ContractEventEnum, ContractFsmRunningStatusEnum, ContractAuthStatusEnum, SubjectType} from '../../../src/enum';
+import {ContractEventEnum, ContractFsmRunningStatusEnum, ContractAuthStatusEnum} from '../../../src/enum';
 import {ContractInfo, IContractEventHandler} from '../../../src/interface';
 
 describe('test/app/contract', () => {
@@ -20,7 +20,7 @@ describe('test/app/contract', () => {
             licenseeIdentityType: 1,
             subjectId: '11111111',
             subjectName: '标的物',
-            subjectType: SubjectType.Presentable,
+            subjectType: 1, //SubjectType.Presentable,
             contractId: '5d2ed69f4ff8021fcc7e8772',
             contractName: '合同名称',
             policyId: '8cefe2f1dcc6dd0bdaadac946cb63dbc',

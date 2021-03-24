@@ -17,7 +17,7 @@ export class ContractInfoModel extends MongooseModelBase {
          * 相比于旧版,此版本的策略减少了身份认证部分.调整成了签约限制.所以目前合约的授权只受状态机影响.
          * 所以合同中设置了合同是否授权的字段.当状态发生改变时,根据当前状态下的颜色集属性,重新计算授权结果.然后保存.
          */
-        const contractInfoScheme = new this.mongoose.Schema({
+        const contractInfoSchema = new this.mongoose.Schema({
             // contractCode: {type: String, required: false}, // 合同编号,目前还不需要此字段.
             contractName: {type: String, required: true},
             licensorId: {type: String, required: true}, // 甲方ID,例如资源ID或者节点ID
@@ -38,7 +38,7 @@ export class ContractInfoModel extends MongooseModelBase {
             uniqueKey: {type: String, required: true}, // 具体加密算法以及字段详见代码:extend/contract-common-generator/contract-info-signature-generator.ts
             fsmCurrentState: {type: String, default: null, required: false}, // 状态机中当前的状态
             fsmDeclarations: {type: this.mongoose.Schema.Types.Mixed, default: {}, required: false}, // 状态机中相关的参数以及声明信息
-            fsmRunningStatus: {type: Number, default: 1, required: true}, // 状态机运行状态 1:未初始化 2:系统锁定状态 4:生效中(已初始化,未终止) 8:已终止
+            fsmRunningStatus: {type: Number, default: 1, required: true}, // 状态机运行状态 1:未初始化 2:等待事件注册 4:生效中(已初始化,未终止) 8:已终止
             authStatus: {type: Number, default: 1, required: true}, // 合同授权状态: 参考ContractAuthStatusEnum
             status: {type: Number, default: 0, required: true}, // 合同状态 0:正常 1:已终止(不接受任何事件,也不给授权,事实上无效的合约) 2:异常
             // remark: {type: String, required: true}, 备注牵扯到甲方备注和乙方备注. 需要具体了解需求,再做设计
@@ -50,25 +50,25 @@ export class ContractInfoModel extends MongooseModelBase {
             toObject: ContractInfoModel.toObjectOptions
         });
 
-        contractInfoScheme.index({licensorId: 1, licensorOwnerId: 1});
-        contractInfoScheme.index({licenseeId: 1, licenseeOwnerId: 1});
-        contractInfoScheme.index({subjectId: 1, subjectType: 1, policyId: 1});
-        contractInfoScheme.index({uniqueKey: 1}, {unique: true});
+        contractInfoSchema.index({licensorId: 1, licensorOwnerId: 1});
+        contractInfoSchema.index({licenseeId: 1, licenseeOwnerId: 1});
+        contractInfoSchema.index({subjectId: 1, subjectType: 1, policyId: 1});
+        contractInfoSchema.index({uniqueKey: 1}, {unique: true});
 
-        contractInfoScheme.virtual('contractId').get(function (this: any) {
+        contractInfoSchema.virtual('contractId').get(function (this: any) {
             return this.id;
         });
-        contractInfoScheme.virtual('isDefault').get(function (this: any) {
+        contractInfoSchema.virtual('isDefault').get(function (this: any) {
             return isNumber(this.sortId) ? this.sortId === 1 : undefined;
         });
-        contractInfoScheme.virtual('isAuth').get(function (this: any) {
+        contractInfoSchema.virtual('isAuth').get(function (this: any) {
             return isNumber(this.authStatus) ? (this.authStatus & ContractAuthStatusEnum.Authorized) === ContractAuthStatusEnum.Authorized : undefined;
         });
-        contractInfoScheme.virtual('isTestAuth').get(function (this: any) {
+        contractInfoSchema.virtual('isTestAuth').get(function (this: any) {
             return isNumber(this.authStatus) ? (this.authStatus & ContractAuthStatusEnum.TestNodeAuthorized) === ContractAuthStatusEnum.TestNodeAuthorized : undefined;
         });
 
-        return this.mongoose.model('contract-infos', contractInfoScheme);
+        return this.mongoose.model('contract-infos', contractInfoSchema);
     }
 
     static get toObjectOptions() {

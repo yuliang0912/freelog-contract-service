@@ -1,12 +1,17 @@
 import {first, isEmpty, isString, isUndefined} from 'lodash';
 import {controller, get, inject, post, provide, put} from 'midway';
-import {IContractService, IMongoConditionBuilder, IPolicyService} from '../../interface';
+import {
+    ContractInfo,
+    IContractService,
+    IContractStateMachine,
+    IMongoConditionBuilder,
+    IPolicyService
+} from '../../interface';
 import {
     ApplicationError, ArgumentError, AuthorizationError, CommonRegex,
     FreelogContext, IdentityTypeEnum, visitorIdentityValidator,
     SubjectTypeEnum, ContractLicenseeIdentityTypeEnum, ContractStatusEnum, IJsonSchemaValidate
 } from 'egg-freelog-base';
-import {ContractFsmGenerator} from '../../extend/contract-common-generator/contract-fsm-generator';
 
 @provide()
 @controller('/v2/contracts')
@@ -15,8 +20,6 @@ export class ContractController {
     @inject()
     ctx: FreelogContext;
     @inject()
-    contractFsmGenerator: ContractFsmGenerator;
-    @inject()
     policyService: IPolicyService;
     @inject()
     contractService: IContractService;
@@ -24,6 +27,8 @@ export class ContractController {
     batchSignSubjectValidator: IJsonSchemaValidate;
     @inject()
     mongoConditionBuilder: IMongoConditionBuilder;
+    @inject()
+    buildContractStateMachine: (contractInfo: ContractInfo) => IContractStateMachine;
 
     @get('/')
     @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
@@ -201,8 +206,10 @@ export class ContractController {
         const contractInfo = await this.contractService.findById(contractId);
         ctx.entityNullObjectCheck(contractInfo);
 
-        const policyInfo = await this.policyService.findOne({policyId: contractInfo.policyId});
-        const isCanExecEvent = this.contractFsmGenerator.isCanExecEvent(contractInfo, policyInfo, eventId);
+        contractInfo.policyInfo = await this.policyService.findOne({policyId: contractInfo.policyId});
+        const contractFsm = this.buildContractStateMachine(contractInfo);
+
+        const isCanExecEvent = contractFsm.isCanExecEvent(eventId);
 
         ctx.success({contractInfo, eventId, isCanExec: isCanExecEvent});
     }

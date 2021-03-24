@@ -21,7 +21,7 @@ export declare class ContractFsmStateTransitionHandler implements IEventHandler 
      * 注册当下新状态下的事件,取消其他状态下的事件
      * 实现逻辑:合同服务批量一次性注册当前运行状态下的所有可注册事件.
      * 注册服务批量接收到所有可注册的事件.然后首先删除当前合约ID下的所有已注册事件.然后重新注册新的事件集
-     * 区别于上一版本,此版本不再明确发送取消注册的事件
+     * 区别于上一版本,此版本不再明确发送取消注册的事件,如果可注册事件数量为0,也需要发送注册事件.这样注册服务才会删除其他状态的事件
      * @returns {Promise<null>}
      * @private
      */

@@ -1,17 +1,23 @@
 import {isEmpty} from 'lodash';
-import {IContractEventHandler} from '../interface';
-import {provide, schedule, CommonSchedule, inject} from 'midway';
-import {ContractEventEnum, ContractFsmRunningStatusEnum} from '../enum';
+import {ContractFsmRunningStatusEnum} from '../enum';
 import {ContractStatusEnum} from 'egg-freelog-base';
+import {provide, schedule, CommonSchedule, inject, plugin} from 'midway';
+import PolicyInfoProvider from '../app/data-provider/policy-info-provider';
+import {ContractInfo, IContractStateMachine} from "../interface";
+import {MongoClient} from 'mongodb';
 
 @provide()
 @schedule(UninitializedContractHandleJob.scheduleOptions)
 export class UninitializedContractHandleJob implements CommonSchedule {
 
+    @plugin()
+    mongoose: MongoClient;
     @inject()
     contractInfoProvider;
     @inject()
-    contractEventHandler: IContractEventHandler;
+    policyInfoProvider: PolicyInfoProvider;
+    @inject()
+    buildContractStateMachine: (contractInfo: ContractInfo) => IContractStateMachine;
 
     async exec(ctx) {
 
@@ -24,15 +30,27 @@ export class UninitializedContractHandleJob implements CommonSchedule {
             createDate: {$lt: expirationDate}
         }, null, {limit: 500, sort: {createDate: 1}});
 
-        if (!isEmpty(uninitializedContracts)) {
-            await this.contractEventHandler.handle(ContractEventEnum.InitialContractFsmEvent, uninitializedContracts);
+        if (isEmpty(uninitializedContracts)) {
+            return;
         }
-        return;
+
+        const policyMap = await this.policyInfoProvider.find({policyId: {$in: uninitializedContracts.map(x => x.policyId)}}).then(list => {
+            return new Map(list.map(x => [x.policyId, x]));
+        });
+        for (const contract of uninitializedContracts) {
+            contract.policyInfo = policyMap.get(contract.policyId);
+            const session = await this.mongoose.startSession();
+            await session.withTransaction(async () => {
+                return this.buildContractStateMachine(contract).initial(session);
+            }).finally(() => {
+                session.endSession();
+            });
+        }
     }
 
     static get scheduleOptions() {
         return {
-            cron: '*/5 * * * * *',
+            cron: '* */3 * * * *',
             type: 'worker',
             immediate: true, // 启动时是否立即执行一次
             disable: false

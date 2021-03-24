@@ -1,5 +1,6 @@
 import {EggAppInfo} from 'midway';
 import {queues} from './rabbit-mq-queue';
+import {logLevel} from "kafkajs";
 
 export default (appInfo: EggAppInfo) => {
     const config: any = {};
@@ -63,6 +64,13 @@ export default (appInfo: EggAppInfo) => {
             name: 'freelog-contract-exchange',
         },
         queues
+    };
+
+    config.kafka = {
+        enable: true,
+        clientId: 'freelog-contract-service',
+        logLevel: logLevel.ERROR,
+        brokers: ['192.168.164.165:9090']
     };
 
     return config;

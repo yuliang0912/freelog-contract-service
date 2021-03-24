@@ -8,7 +8,6 @@ export class BatchSignSubjectValidator extends CommonJsonSchema implements IJson
     /**
      * 解决依赖资源格式校验
      * @param {object[]} operations 解决依赖资源数据
-     * @returns {ValidatorResult}
      */
     validate(operations: object[]) {
         return super.validate(operations, this.schemas['/signSubjectSchema']);

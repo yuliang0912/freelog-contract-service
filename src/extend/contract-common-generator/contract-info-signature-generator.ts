@@ -34,7 +34,7 @@ export class ContractInfoSignatureProvider {
     }
 
     /**
-     * 合同基础信息唯一key生成
+     * 合同基础信息唯一key生成(防止重签,作为数据库unique)
      * @param {ContractInfo} contract
      * @returns {string}
      */

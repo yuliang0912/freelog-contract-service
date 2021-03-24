@@ -70,7 +70,7 @@ export declare enum ContractFsmRunningStatusEnum {
     InitializedError = 16
 }
 /**
- * 授权状态(1:只获得正式授权 2:只获得测试授权 3:获得正式和测试授权 999:未获得授权)
+ * 授权状态(1:只获得正式授权 2:只获得测试授权 3:获得正式和测试授权 128:未获得授权)
  */
 export declare enum ContractAuthStatusEnum {
     /**
@@ -88,6 +88,9 @@ export declare enum ContractAuthStatusEnum {
      */
     Unauthorized = 128
 }
+/**
+ * 合约中可被注册的事件枚举
+ */
 export declare enum ContractCanBeRegisteredEventEnum {
     /**
      * 周期事件

@@ -1,10 +1,15 @@
 import {isString, pick, chain, first, isArray, isEmpty, assign, isNumber} from 'lodash';
 import {provide, inject, plugin} from 'midway';
 import {
-    ContractInfo, BeSignSubjectOptions, IContractService, IOutsideApiService,
-    IContractEventHandler, IPolicyService, PolicyInfo, SubjectBaseInfo
+    ContractInfo,
+    BeSignSubjectOptions,
+    IContractService,
+    IOutsideApiService,
+    IPolicyService,
+    PolicyInfo,
+    SubjectBaseInfo, IContractStateMachine
 } from '../../interface';
-import {ContractAuthStatusEnum, ContractEventEnum, ContractFsmRunningStatusEnum} from '../../enum';
+import {ContractAuthStatusEnum, ContractFsmRunningStatusEnum} from '../../enum';
 import {
     FreelogContext, ContractStatusEnum, ContractLicenseeIdentityTypeEnum, SubjectTypeEnum,
     PageResult, ArgumentError, ApplicationError, LogicError, IMongodbOperation
@@ -28,7 +33,7 @@ export class ContractService implements IContractService {
     @inject()
     outsideApiService: IOutsideApiService;
     @inject()
-    contractEventHandler: IContractEventHandler;
+    buildContractStateMachine: (contractInfo: ContractInfo) => IContractStateMachine;
 
     /**
      * 批量签约标的物
@@ -94,11 +99,9 @@ export class ContractService implements IContractService {
             throw new ApplicationError(this.ctx.gettext('subject-policy-check-failed'), invalidPolicyIds);
         }
 
-        // console.log('DB写入参数' + beSignContracts.map(x => x.policyId).toString());
         const latestSignedContracts = await this.contractInfoProvider.insertMany(beSignContracts);
-        // console.log('DB返回数据' + JSON.stringify(latestSignedContracts));
 
-        this.contractEventHandler.handle(ContractEventEnum.InitialContractFsmEvent, latestSignedContracts).then();
+        this._initialContracts(latestSignedContracts, beSignSubjectPolicyMap).catch();
 
         return [...latestSignedContracts, ...hasSignedAndEfficientContracts];
     }
@@ -216,12 +219,13 @@ export class ContractService implements IContractService {
                 histories: [fsmStateTransitionInfo]
             });
         }
-        return this.contractInfoProvider.updateOne({_id: contract.contractId}, {fsmRunningStatus: ContractFsmRunningStatusEnum.Locked});
+        return true;
+        // return this.contractInfoProvider.updateOne({_id: contract.contractId}, {fsmRunningStatus: ContractFsmRunningStatusEnum.Locked});
     }
 
     /**
      * 给资源填充策略详情信息
-     * @param resources
+     * @param contracts
      */
     async fillContractPolicyInfo(contracts: ContractInfo[]): Promise<ContractInfo[]> {
         if (!isArray(contracts) || isEmpty(contracts)) {
@@ -281,5 +285,29 @@ export class ContractService implements IContractService {
                 signedContractInfo: existingContract
             });
         });
+    }
+
+    /**
+     * 初始化合约
+     * @param contracts
+     * @param subjectPolicyMap
+     */
+    async _initialContracts(contracts: ContractInfo[], subjectPolicyMap: Map<string, PolicyInfo>) {
+        try {
+            if (!contracts?.length) {
+                return;
+            }
+            const session = await this.mongoose.startSession();
+            return session.withTransaction(() => {
+                const tasks = [];
+                for (const contract of contracts) {
+                    contract.policyInfo = subjectPolicyMap.get(contract.policyId);
+                    tasks.push(this.buildContractStateMachine(contract).execInitial(session));
+                }
+                return Promise.all(tasks);
+            }).catch().finally(() => session.endSession());
+        } catch (error) {
+            // 错误不用处理,后续有job会定期检查未初始化的合约
+        }
     }
 }

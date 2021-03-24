@@ -1,5 +1,11 @@
-import {ContractAuthStatusEnum, ContractEventEnum, ContractFsmEventEnum, OutsideServiceEventEnum} from './enum';
+import {
+    ContractAuthStatusEnum, ContractEventEnum, ContractFsmEventEnum,
+    ContractFsmRunningStatusEnum,
+    OutsideServiceEventEnum
+} from './enum';
 import {PageResult, SubjectTypeEnum, ContractStatusEnum, ContractLicenseeIdentityTypeEnum} from 'egg-freelog-base';
+import {EachBatchPayload} from "kafkajs";
+import {ClientSession} from "mongoose";
 
 /**
  * 合约信息
@@ -28,7 +34,7 @@ export interface ContractInfo {
 
     // 合同状态机部分
     fsmCurrentState?: string | null;
-    fsmRunningStatus?: number;
+    fsmRunningStatus?: ContractFsmRunningStatusEnum;
     fsmDeclarations?: object;
 
     // 其他信息
@@ -39,6 +45,8 @@ export interface ContractInfo {
     authStatus: ContractAuthStatusEnum;
     uniqueKey?: string;
     createDate?: Date;
+
+    policyInfo?: PolicyInfo;
 }
 
 export interface SubjectBaseInfo {
@@ -115,6 +123,7 @@ export interface FsmStateDescriptionInfo {
     isAuth: boolean;
     isTestAuth: boolean;
     isInitial?: boolean;
+    isTerminate?: boolean;
     serviceStates: string[];
     transition: { [nextStateName: string]: PolicyEventInfo | null; };
 }
@@ -257,4 +266,35 @@ export interface IMongoConditionBuilder {
     value(): object;
 
     build(): object;
+}
+
+export interface IKafkaSubscribeMessageHandle {
+
+    subscribeTopicName: string;
+
+    consumerGroupId: string;
+
+    messageHandle(payload: EachBatchPayload): Promise<void>;
+}
+
+export interface IContractStateMachine {
+
+    isCanExecEvent(eventId: string): boolean;
+    
+    execInitial(session: ClientSession): Promise<any>;
+
+    execContractEvent(session: ClientSession, eventInfo: IContractTriggerEventMessage, ...args): Promise<any>;
+}
+
+export interface IContractTriggerEventMessage {
+    contractId: string;
+    code: string;
+    service: string;
+    name: string;
+    eventId: string;
+    eventTime: Date;
+    triggerUserId: number;
+    args?: {
+        [paramName: string]: number | string | Date;
+    };
 }

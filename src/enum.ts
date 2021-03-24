@@ -17,8 +17,38 @@ export enum ContractFsmEventEnum {
     FsmStateTransition = 'FsmStateTransition'
 }
 
-export enum ContractPolicyEventEnum {
+/**
+ * A开头的为自然事件,单例执行,例如时间,周期等.
+ * S需要主动触发
+ */
+export enum PolicyEventEnum {
 
+    /**
+     * 初始化事件
+     */
+    InitialEvent = 'init',
+
+    /**
+     * 周期结束事件
+     */
+    EndOfCycleEvent = 'A101',
+
+    /**
+     * 绝对时间事件
+     * @type {string}
+     */
+    AbsolutelyTimeEvent = 'A102',
+
+    /**
+     * 相对时间事件
+     * @type {string}
+     */
+    RelativeTimeEvent = 'A103',
+
+    /**
+     * 交易事件
+     */
+    TransactionEvent = 'S201'
 }
 
 /**
@@ -57,6 +87,9 @@ export enum OutsideServiceEventEnum {
     RegisterCompletedEvent = 'auth#registerCompletedEvent',
 }
 
+/**
+ * 合约状态机运行状态
+ */
 export enum ContractFsmRunningStatusEnum {
     /**
      * 未初始化
@@ -64,10 +97,13 @@ export enum ContractFsmRunningStatusEnum {
     Uninitialized = 1,
 
     /**
-     * 系统锁定中,例如系统需要一定时间来计算合同内部的数据
+     * <del>系统锁定中,例如系统需要一定时间来计算合同内部的数据<del>
+     * 等待事件注册. 合同状态流转之后,会进行事件注册操作.如果注册失败,不影响主流程,但是会记录注册的状态.后续通过job继续注册.
+     * 处于此状态的合约不能接受新的事件.必须等待事件注册成功之后才可以接受新事件.
+     * 合约的锁定改为通过redis分布式锁来实现.主要是考虑到性能以及业务的侵入性以及分布式锁的自动超时等问题.
      * @type {number}
      */
-    Locked = 2,
+    ToBeRegisteredEvents = 2,
 
     /**
      * 合同正常运行中
@@ -89,7 +125,7 @@ export enum ContractFsmRunningStatusEnum {
 }
 
 /**
- * 授权状态(1:只获得正式授权 2:只获得测试授权 3:获得正式和测试授权 999:未获得授权)
+ * 授权状态(1:只获得正式授权 2:只获得测试授权 3:获得正式和测试授权 128:未获得授权)
  */
 export enum ContractAuthStatusEnum {
     /**
@@ -108,39 +144,4 @@ export enum ContractAuthStatusEnum {
      * 未获得任何授权
      */
     Unauthorized = 128,
-}
-
-//
-// export enum IdentityTypeEnum {
-//
-//     /**
-//      * 甲方
-//      */
-//     Licensor = 1,
-//
-//     /**
-//      * 乙方
-//      * @type {number}
-//      */
-//     Licensee = 2
-// }
-
-export enum ContractCanBeRegisteredEventEnum {
-
-    /**
-     * 周期事件
-     */
-    EndOfCycleEvent = 'A101',
-
-    /**
-     * 时间事件
-     * @type {string}
-     */
-    TimeEvent = 'A102',
-
-    /**
-     * 相对时间事件
-     * @type {string}
-     */
-    RelativeTimeEvent = 'A103'
 }

@@ -25,7 +25,7 @@ export default () => {
     config.middleware = ['errorAutoSnapHandler', 'gatewayIdentityInfoHandler', 'localIdentityInfoHandler'];
 
     config.mongoose = {
-        url: 'mongodb://127.0.0.1:27017/contracts'
+        url: `mongodb://contract_service:MTAwZGRhODU0Njc2MTM=@dds-wz9ac40fee5c09441604-pub.mongodb.rds.aliyuncs.com:3717,dds-wz9ac40fee5c09442584-pub.mongodb.rds.aliyuncs.com:3717/local-contracts?replicaSet=mgset-44484047`
     };
 
     // config.mongoose = {
@@ -35,17 +35,6 @@ export default () => {
     config.localIdentity = {
         userId: 50021,
         username: 'yuliang'
-    };
-
-    config.rabbitMq = {
-        enable: false,
-        connOptions: {
-            host: '192.168.164.165',
-            port: 5672,
-            login: 'guest',
-            password: 'guest',
-            authMechanism: 'AMQPLAIN',
-        },
     };
 
     return config;

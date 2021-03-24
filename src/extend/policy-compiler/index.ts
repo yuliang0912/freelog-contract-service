@@ -1,10 +1,9 @@
-import {config, provide, scope} from 'midway';
-import {IPolicyCompiler, PolicyInfo} from '../../interface';
-import {CryptoHelper, SubjectTypeEnum, ContractColorStateTypeEnum} from 'egg-freelog-base';
 import {v4} from 'uuid';
 import {capitalize} from 'lodash';
+import {config, provide, scope} from 'midway';
 import {compile} from '@freelog/resource-policy-lang';
-
+import {IPolicyCompiler, PolicyInfo} from '../../interface';
+import {CryptoHelper, SubjectTypeEnum, ContractColorStateTypeEnum} from 'egg-freelog-base';
 
 @provide()
 @scope('Singleton')
@@ -19,7 +18,8 @@ export class PolicyCompiler implements IPolicyCompiler {
      * @param policyText
      */
     async compiler(subjectType: SubjectTypeEnum, policyText: string): Promise<PolicyInfo> {
-        const {state_machine} = await compile(policyText, SubjectTypeEnum[subjectType].toLocaleLowerCase(), this.gatewayUrl, 'dev');
+
+        const {state_machine} = await compile(policyText, SubjectTypeEnum[subjectType].toLocaleLowerCase(), 'http://api.testfreelog.com', 'dev');
         const serviceStateMap = new Map((state_machine.declarations.serviceStates as any[]).map(x => [x.name, capitalize(x.type)]));
         for (const [_, fsmStateDescriptionInfo] of Object.entries(state_machine.states)) {
             fsmStateDescriptionInfo['isAuth'] = fsmStateDescriptionInfo['serviceStates'].some(x => serviceStateMap.get(x) === ContractColorStateTypeEnum[ContractColorStateTypeEnum.Authorization]);
@@ -29,9 +29,9 @@ export class PolicyCompiler implements IPolicyCompiler {
                 continue;
             }
             for (const [_, policyEventInfo] of Object.entries(fsmStateDescriptionInfo['transition'])) {
-                if (policyEventInfo && policyEventInfo['event']) {
-                    policyEventInfo['event']['eventId'] = v4().replace(/-/g, '');
-                }
+                policyEventInfo['eventId'] = v4().replace(/-/g, '');
+                delete policyEventInfo['description'];
+                delete policyEventInfo['singleton'];
             }
         }
 
@@ -49,6 +49,6 @@ export class PolicyCompiler implements IPolicyCompiler {
      * @param policyText
      */
     generatePolicyId(subjectType: SubjectTypeEnum, policyText: string) {
-        return CryptoHelper.md5(`$FREELOG_POLICY_TEXT_${policyText.trim()}_SUBJECT_TYPE_${subjectType}`);
+        return CryptoHelper.md5(`FREELOG_POLICY_TEXT_${policyText.trim()}_SUBJECT_TYPE_${subjectType}`);
     }
 }

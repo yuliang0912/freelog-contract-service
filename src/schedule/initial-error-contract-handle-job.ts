@@ -1,8 +1,9 @@
 import {isEmpty} from 'lodash';
-import {IContractEventHandler} from '../interface';
 import {provide, schedule, CommonSchedule, inject} from 'midway';
-import {ContractEventEnum, ContractFsmRunningStatusEnum} from '../enum';
-import {ContractStatusEnum} from 'egg-freelog-base';
+import {ContractFsmRunningStatusEnum} from '../enum';
+import {ContractStatusEnum, FreelogContext} from 'egg-freelog-base';
+import PolicyInfoProvider from '../app/data-provider/policy-info-provider';
+import {ContractInfo, IContractStateMachine} from "../interface";
 
 @provide()
 @schedule(InitialErrorContractHandleJob.scheduleOptions)
@@ -11,22 +12,38 @@ export class InitialErrorContractHandleJob implements CommonSchedule {
     @inject()
     contractInfoProvider;
     @inject()
-    contractEventHandler: IContractEventHandler;
+    policyInfoProvider: PolicyInfoProvider;
+    @inject()
+    buildContractStateMachine: (contractInfo: ContractInfo) => IContractStateMachine;
 
-    async exec(ctx) {
+    async exec(ctx: FreelogContext) {
         const initialErrorContracts = await this.contractInfoProvider.find({
             status: ContractStatusEnum.Executed,
             fsmRunningStatus: ContractFsmRunningStatusEnum.InitializedError
         }, null, {limit: 500, sort: {createDate: 1}});
 
-        if (!isEmpty(initialErrorContracts)) {
-            await this.contractEventHandler.handle(ContractEventEnum.InitialContractFsmEvent, initialErrorContracts);
+        if (isEmpty(initialErrorContracts)) {
+            return;
+        }
+
+        const policyMap = await this.policyInfoProvider.find({policyId: {$in: initialErrorContracts.map(x => x.policyId)}}).then(list => {
+            return new Map(list.map(x => [x.policyId, x]));
+        });
+
+        for (const contract of initialErrorContracts) {
+            contract.policyInfo = policyMap.get(contract.policyId);
+            const session = await this.contractInfoProvider.model.startSession();
+            await session.withTransaction(async () => {
+                await this.buildContractStateMachine(contract).execInitial(session);
+            }).finally(() => {
+                session.endSession();
+            });
         }
     }
 
     static get scheduleOptions() {
         return {
-            cron: '*/5 * * * * *',
+            cron: '* */5 * * * *',
             type: 'worker',
             immediate: true, // 启动时是否立即执行一次
             disable: false

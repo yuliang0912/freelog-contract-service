@@ -5,7 +5,7 @@ import {
 } from '../../interface';
 import {differenceWith, isEmpty, uniq, isArray, first} from 'lodash';
 
-@provide('outsideApiService')
+@provide()
 export class OutsideApiService implements IOutsideApiService {
 
     readonly subjectWrapMap: Map<SubjectTypeEnum, (subjectIds: string[]) => Promise<SubjectBaseInfo[]>> = new Map();
@@ -13,6 +13,32 @@ export class OutsideApiService implements IOutsideApiService {
 
     @inject()
     ctx: FreelogContext;
+
+    /**
+     * 合约支付
+     * @param fromAccountId
+     * @param toAccountId
+     * @param transactionAmount
+     * @param contractId
+     * @param contractName
+     * @param eventId
+     * @param password
+     */
+    async contractPayment(fromAccountId: string, toAccountId: string, transactionAmount: number, contractId: string, contractName: string, eventId: string, password: string) {
+        return this.ctx.curlIntranetApi(`${this.ctx.webApi.transactionInfoV2}/contracts/payment`, {
+            method: 'post', contentType: 'json', data: {
+                fromAccountId, toAccountId, transactionAmount, contractId, contractName, eventId, password
+            }
+        });
+    }
+
+    /**
+     * 查询交易记录信息
+     * @param transactionRecordId
+     */
+    async getTransactionRecordInfo(transactionRecordId: string) {
+        return this.ctx.curlIntranetApi(`${this.ctx.webApi.transactionInfoV2}/records/${transactionRecordId}`);
+    }
 
     /**
      * 获取用户信息
@@ -99,6 +125,7 @@ export class OutsideApiService implements IOutsideApiService {
                 licensorOwnerId: resourceInfo.userId,
                 licensorOwnerName: resourceInfo.username,
                 policies: resourceInfo.policies,
+                status: resourceInfo.status === 1 ? 1 : 0, // 上架了才可以用
             };
         });
     }
@@ -134,6 +161,7 @@ export class OutsideApiService implements IOutsideApiService {
                 licensorOwnerId: nodeInfo.ownerUserId,
                 licensorOwnerName: nodeInfo.ownerUserName,
                 policies: presentableInfo.policies,
+                status: presentableInfo.onlineStatus === 1 ? 1 : 0, // 上线了才可用
             };
         });
     }

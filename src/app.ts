@@ -1,8 +1,8 @@
 // import {KafkaStartup} from "./kafka/startup";
 
-import {IBoot} from "midway";
-import {KafkaClient} from "./kafka/client";
-import {FreelogApplication} from "egg-freelog-base";
+import {IBoot} from 'midway';
+import {KafkaClient} from './kafka/client';
+import {FreelogApplication} from 'egg-freelog-base';
 import mongoose from 'egg-freelog-base/database/mongoose';
 
 /**
@@ -19,7 +19,7 @@ export default class AppBootHook implements IBoot {
     async willReady() {
         await mongoose(this.app).then(() => {
             return this.app.applicationContext.getAsync('kafkaStartup');
-        })
+        });
     }
 
     async beforeClose() {

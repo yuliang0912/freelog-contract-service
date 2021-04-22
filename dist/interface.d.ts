@@ -1,5 +1,7 @@
-import { ContractAuthStatusEnum, ContractEventEnum, ContractFsmEventEnum, OutsideServiceEventEnum } from './enum';
+import { ContractAuthStatusEnum, ContractEventEnum, ContractFsmEventEnum, ContractFsmRunningStatusEnum, OutsideServiceEventEnum } from './enum';
 import { PageResult, SubjectTypeEnum, ContractStatusEnum, ContractLicenseeIdentityTypeEnum } from 'egg-freelog-base';
+import { EachBatchPayload } from 'kafkajs';
+import { ClientSession } from 'mongoose';
 /**
  * 合约信息
  */
@@ -19,8 +21,10 @@ export interface ContractInfo {
     subjectName: string;
     subjectType: SubjectTypeEnum;
     fsmCurrentState?: string | null;
-    fsmRunningStatus?: number;
-    fsmDeclarations?: object;
+    fsmRunningStatus?: ContractFsmRunningStatusEnum;
+    fsmDeclarations?: {
+        [key: string]: any;
+    };
     policyId: string;
     sortId?: number;
     signature?: string;
@@ -28,6 +32,7 @@ export interface ContractInfo {
     authStatus: ContractAuthStatusEnum;
     uniqueKey?: string;
     createDate?: Date;
+    policyInfo?: PolicyInfo;
 }
 export interface SubjectBaseInfo {
     subjectId: string;
@@ -38,6 +43,7 @@ export interface SubjectBaseInfo {
     licensorOwnerId: number;
     licensorOwnerName: string;
     policies: SubjectPolicyInfo[];
+    status: number;
 }
 export interface NodeInfo {
     nodeId: number;
@@ -93,6 +99,7 @@ export interface FsmStateDescriptionInfo {
     isAuth: boolean;
     isTestAuth: boolean;
     isInitial?: boolean;
+    isTerminate?: boolean;
     serviceStates: string[];
     transition: {
         [nextStateName: string]: PolicyEventInfo | null;
@@ -121,7 +128,6 @@ export interface IContractService {
     count(condition: object): Promise<number>;
     setDefaultExecContract(contract: ContractInfo): Promise<boolean>;
     updateContractInfo(contract: ContractInfo, options: any): Promise<boolean>;
-    addContractChangedHistory(contract: ContractInfo, fromState: string, toState: string, event: string, triggerDate: Date): any;
     /**
      * 批量签约标的物
      * @param subjects
@@ -191,4 +197,37 @@ export interface IMongoConditionBuilder {
     print(): IMongoConditionBuilder;
     value(): object;
     build(): object;
+}
+export interface IKafkaSubscribeMessageHandle {
+    subscribeTopicName: string;
+    consumerGroupId: string;
+    messageHandle(payload: EachBatchPayload): Promise<void>;
+}
+export interface IContractStateMachine {
+    contractInfo: ContractInfo;
+    getEventInfo(eventId: string): PolicyEventInfo;
+    isCanExecEvent(eventId: string): boolean;
+    execInitial(session: ClientSession): Promise<any>;
+    execContractEvent(session: ClientSession, eventInfo: IContractTriggerEventMessage, ...args: any[]): Promise<any>;
+}
+export interface IContractTriggerEventMessage {
+    contractId: string;
+    code: string;
+    service: string;
+    name: string;
+    eventId: string;
+    eventTime: Date;
+    triggerUserId: number;
+    args?: {
+        [paramName: string]: number | string | Date;
+    };
+}
+export interface ContractTransitionRecord {
+    _id?: string;
+    stateId?: string;
+    contractId: string;
+    eventId: string;
+    fromState: string;
+    toState: string;
+    eventInfo: IContractTriggerEventMessage;
 }

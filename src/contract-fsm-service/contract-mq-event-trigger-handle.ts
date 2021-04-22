@@ -1,8 +1,8 @@
-import {inject, plugin, provide, scope, ScopeEnum} from "midway";
-import {ContractInfo, IContractStateMachine, IKafkaSubscribeMessageHandle, PolicyInfo} from "../interface";
-import {EachBatchPayload} from "kafkajs";
-import {IMongodbOperation} from "egg-freelog-base";
-import {MongoClient} from "mongodb";
+import {inject, plugin, provide, scope, ScopeEnum} from 'midway';
+import {ContractInfo, IContractStateMachine, IKafkaSubscribeMessageHandle, PolicyInfo} from '../interface';
+import {EachBatchPayload} from 'kafkajs';
+import {IMongodbOperation} from 'egg-freelog-base';
+import {MongoClient} from 'mongodb';
 
 @provide()
 @scope(ScopeEnum.Singleton)
@@ -41,22 +41,20 @@ export class ContractMqEventTriggerHandle implements IKafkaSubscribeMessageHandl
         });
         for (let message of batch.messages) {
             const eventInfo = JSON.parse(message.value.toString());
+            console.log('接收到合约事件触发' + JSON.stringify(eventInfo));
             const contractInfo = contractMap.get(eventInfo.contractId);
             if (!contractInfo) {
+                console.log('未找到合约信息', '==========end==============');
                 resolveOffset(message.offset);
                 continue;
             }
+            eventInfo.offset = message.offset;
             contractInfo.policyInfo = policyMap.get(contractInfo.policyId);
-            const contractFsm = this.buildContractStateMachine(contractInfo);
-            if (!contractFsm.isCanExecEvent(eventInfo.eventId)) {
-                resolveOffset(message.offset);
-                continue;
-            }
             const session = await this.mongoose.startSession();
             await session.withTransaction(async () => {
-                return contractFsm.execContractEvent(session, eventInfo);
+                return this.buildContractStateMachine(contractInfo).execContractEvent(session, eventInfo);
             }).then(() => {
-                resolveOffset(message.offset)
+                resolveOffset(message.offset);
             }).finally(() => {
                 session.endSession();
             });

@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ContractCanBeRegisteredEventEnum = exports.ContractAuthStatusEnum = exports.ContractFsmRunningStatusEnum = exports.OutsideServiceEventEnum = exports.ContractFsmEventEnum = exports.ContractEventEnum = void 0;
+exports.ContractAuthStatusEnum = exports.ContractFsmRunningStatusEnum = exports.OutsideServiceEventEnum = exports.PolicyEventEnum = exports.ContractFsmEventEnum = exports.ContractEventEnum = void 0;
 /**
  * 合同服务自身事件
  */
@@ -19,6 +19,36 @@ var ContractFsmEventEnum;
 (function (ContractFsmEventEnum) {
     ContractFsmEventEnum["FsmStateTransition"] = "FsmStateTransition";
 })(ContractFsmEventEnum = exports.ContractFsmEventEnum || (exports.ContractFsmEventEnum = {}));
+/**
+ * A开头的为自然事件,单例执行,例如时间,周期等.
+ * S需要主动触发
+ * 详细的事件code与定义参考:https://github.com/freelogfe/freelog_event_definition/blob/master/event_def.csv
+ */
+var PolicyEventEnum;
+(function (PolicyEventEnum) {
+    /**
+     * 初始化事件
+     */
+    PolicyEventEnum["InitialEvent"] = "init";
+    /**
+     * 周期结束事件
+     */
+    PolicyEventEnum["EndOfCycleEvent"] = "A101";
+    /**
+     * 绝对时间事件
+     * @type {string}
+     */
+    PolicyEventEnum["AbsolutelyTimeEvent"] = "A102";
+    /**
+     * 相对时间事件
+     * @type {string}
+     */
+    PolicyEventEnum["RelativeTimeEvent"] = "A103";
+    /**
+     * 交易事件
+     */
+    PolicyEventEnum["TransactionEvent"] = "S201";
+})(PolicyEventEnum = exports.PolicyEventEnum || (exports.PolicyEventEnum = {}));
 /**
  * 外部其他服务发送的事件
  */
@@ -49,6 +79,9 @@ var OutsideServiceEventEnum;
      */
     OutsideServiceEventEnum["RegisterCompletedEvent"] = "auth#registerCompletedEvent";
 })(OutsideServiceEventEnum = exports.OutsideServiceEventEnum || (exports.OutsideServiceEventEnum = {}));
+/**
+ * 合约状态机运行状态
+ */
 var ContractFsmRunningStatusEnum;
 (function (ContractFsmRunningStatusEnum) {
     /**
@@ -56,10 +89,13 @@ var ContractFsmRunningStatusEnum;
      */
     ContractFsmRunningStatusEnum[ContractFsmRunningStatusEnum["Uninitialized"] = 1] = "Uninitialized";
     /**
-     * 系统锁定中,例如系统需要一定时间来计算合同内部的数据
+     * <del>系统锁定中,例如系统需要一定时间来计算合同内部的数据<del>
+     * 等待事件注册. 合同状态流转之后,会进行事件注册操作.如果注册失败,不影响主流程,但是会记录注册的状态.后续通过job继续注册.
+     * 处于此状态的合约不能接受新的事件.必须等待事件注册成功之后才可以接受新事件.
+     * 合约的锁定改为通过redis分布式锁来实现.主要是考虑到性能以及业务的侵入性以及分布式锁的自动超时等问题.
      * @type {number}
      */
-    ContractFsmRunningStatusEnum[ContractFsmRunningStatusEnum["Locked"] = 2] = "Locked";
+    ContractFsmRunningStatusEnum[ContractFsmRunningStatusEnum["ToBeRegisteredEvents"] = 2] = "ToBeRegisteredEvents";
     /**
      * 合同正常运行中
      * @type {number}
@@ -96,24 +132,4 @@ var ContractAuthStatusEnum;
      */
     ContractAuthStatusEnum[ContractAuthStatusEnum["Unauthorized"] = 128] = "Unauthorized";
 })(ContractAuthStatusEnum = exports.ContractAuthStatusEnum || (exports.ContractAuthStatusEnum = {}));
-/**
- * 合约中可被注册的事件枚举
- */
-var ContractCanBeRegisteredEventEnum;
-(function (ContractCanBeRegisteredEventEnum) {
-    /**
-     * 周期事件
-     */
-    ContractCanBeRegisteredEventEnum["EndOfCycleEvent"] = "A101";
-    /**
-     * 时间事件
-     * @type {string}
-     */
-    ContractCanBeRegisteredEventEnum["TimeEvent"] = "A102";
-    /**
-     * 相对时间事件
-     * @type {string}
-     */
-    ContractCanBeRegisteredEventEnum["RelativeTimeEvent"] = "A103";
-})(ContractCanBeRegisteredEventEnum = exports.ContractCanBeRegisteredEventEnum || (exports.ContractCanBeRegisteredEventEnum = {}));
-//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiZW51bS5qcyIsInNvdXJjZVJvb3QiOiIiLCJzb3VyY2VzIjpbIi4uL3NyYy9lbnVtLnRzIl0sIm5hbWVzIjpbXSwibWFwcGluZ3MiOiI7OztBQUFBOztHQUVHO0FBQ0gsSUFBWSxpQkFNWDtBQU5ELFdBQVksaUJBQWlCO0lBQ3pCOzs7T0FHRztJQUNILHdFQUFtRCxDQUFBO0FBQ3ZELENBQUMsRUFOVyxpQkFBaUIsR0FBakIseUJBQWlCLEtBQWpCLHlCQUFpQixRQU01QjtBQUVEOztHQUVHO0FBQ0gsSUFBWSxvQkFHWDtBQUhELFdBQVksb0JBQW9CO0lBRTVCLGlFQUF5QyxDQUFBO0FBQzdDLENBQUMsRUFIVyxvQkFBb0IsR0FBcEIsNEJBQW9CLEtBQXBCLDRCQUFvQixRQUcvQjtBQUVEOztHQUVHO0FBQ0gsSUFBWSx1QkErQlg7QUEvQkQsV0FBWSx1QkFBdUI7SUFFL0I7O09BRUc7SUFDSCxpR0FBc0UsQ0FBQTtJQUV0RTs7T0FFRztJQUNILCtHQUFvRixDQUFBO0lBRXBGOztPQUVHO0lBQ0gsMkZBQWdFLENBQUE7SUFFaEU7O09BRUc7SUFDSCwyRUFBZ0QsQ0FBQTtJQUVoRDs7T0FFRztJQUNILDZFQUFrRCxDQUFBO0lBRWxEOztPQUVHO0lBQ0gsaUZBQXNELENBQUE7QUFDMUQsQ0FBQyxFQS9CVyx1QkFBdUIsR0FBdkIsK0JBQXVCLEtBQXZCLCtCQUF1QixRQStCbEM7QUFFRCxJQUFZLDRCQTZCWDtBQTdCRCxXQUFZLDRCQUE0QjtJQUNwQzs7T0FFRztJQUNILGlHQUFpQixDQUFBO0lBRWpCOzs7T0FHRztJQUNILG1GQUFVLENBQUE7SUFFVjs7O09BR0c7SUFDSCxxRkFBVyxDQUFBO0lBRVg7OztPQUdHO0lBQ0gsMkZBQWMsQ0FBQTtJQUVkOzs7T0FHRztJQUNILHdHQUFxQixDQUFBO0FBQ3pCLENBQUMsRUE3QlcsNEJBQTRCLEdBQTVCLG9DQUE0QixLQUE1QixvQ0FBNEIsUUE2QnZDO0FBRUQ7O0dBRUc7QUFDSCxJQUFZLHNCQWlCWDtBQWpCRCxXQUFZLHNCQUFzQjtJQUM5Qjs7O09BR0c7SUFDSCwrRUFBYyxDQUFBO0lBRWQ7OztPQUdHO0lBQ0gsK0ZBQXNCLENBQUE7SUFFdEI7O09BRUc7SUFDSCxxRkFBa0IsQ0FBQTtBQUN0QixDQUFDLEVBakJXLHNCQUFzQixHQUF0Qiw4QkFBc0IsS0FBdEIsOEJBQXNCLFFBaUJqQztBQUVEOztHQUVHO0FBQ0gsSUFBWSxnQ0FrQlg7QUFsQkQsV0FBWSxnQ0FBZ0M7SUFFeEM7O09BRUc7SUFDSCw0REFBd0IsQ0FBQTtJQUV4Qjs7O09BR0c7SUFDSCxzREFBa0IsQ0FBQTtJQUVsQjs7O09BR0c7SUFDSCw4REFBMEIsQ0FBQTtBQUM5QixDQUFDLEVBbEJXLGdDQUFnQyxHQUFoQyx3Q0FBZ0MsS0FBaEMsd0NBQWdDLFFBa0IzQyJ9
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiZW51bS5qcyIsInNvdXJjZVJvb3QiOiIiLCJzb3VyY2VzIjpbIi4uL3NyYy9lbnVtLnRzIl0sIm5hbWVzIjpbXSwibWFwcGluZ3MiOiI7OztBQUFBOztHQUVHO0FBQ0gsSUFBWSxpQkFNWDtBQU5ELFdBQVksaUJBQWlCO0lBQ3pCOzs7T0FHRztJQUNILHdFQUFtRCxDQUFBO0FBQ3ZELENBQUMsRUFOVyxpQkFBaUIsR0FBakIseUJBQWlCLEtBQWpCLHlCQUFpQixRQU01QjtBQUVEOztHQUVHO0FBQ0gsSUFBWSxvQkFHWDtBQUhELFdBQVksb0JBQW9CO0lBRTVCLGlFQUF5QyxDQUFBO0FBQzdDLENBQUMsRUFIVyxvQkFBb0IsR0FBcEIsNEJBQW9CLEtBQXBCLDRCQUFvQixRQUcvQjtBQUVEOzs7O0dBSUc7QUFDSCxJQUFZLGVBNEJYO0FBNUJELFdBQVksZUFBZTtJQUV2Qjs7T0FFRztJQUNILHdDQUFxQixDQUFBO0lBRXJCOztPQUVHO0lBQ0gsMkNBQXdCLENBQUE7SUFFeEI7OztPQUdHO0lBQ0gsK0NBQTRCLENBQUE7SUFFNUI7OztPQUdHO0lBQ0gsNkNBQTBCLENBQUE7SUFFMUI7O09BRUc7SUFDSCw0Q0FBeUIsQ0FBQTtBQUM3QixDQUFDLEVBNUJXLGVBQWUsR0FBZix1QkFBZSxLQUFmLHVCQUFlLFFBNEIxQjtBQUVEOztHQUVHO0FBQ0gsSUFBWSx1QkErQlg7QUEvQkQsV0FBWSx1QkFBdUI7SUFFL0I7O09BRUc7SUFDSCxpR0FBc0UsQ0FBQTtJQUV0RTs7T0FFRztJQUNILCtHQUFvRixDQUFBO0lBRXBGOztPQUVHO0lBQ0gsMkZBQWdFLENBQUE7SUFFaEU7O09BRUc7SUFDSCwyRUFBZ0QsQ0FBQTtJQUVoRDs7T0FFRztJQUNILDZFQUFrRCxDQUFBO0lBRWxEOztPQUVHO0lBQ0gsaUZBQXNELENBQUE7QUFDMUQsQ0FBQyxFQS9CVyx1QkFBdUIsR0FBdkIsK0JBQXVCLEtBQXZCLCtCQUF1QixRQStCbEM7QUFFRDs7R0FFRztBQUNILElBQVksNEJBZ0NYO0FBaENELFdBQVksNEJBQTRCO0lBQ3BDOztPQUVHO0lBQ0gsaUdBQWlCLENBQUE7SUFFakI7Ozs7OztPQU1HO0lBQ0gsK0dBQXdCLENBQUE7SUFFeEI7OztPQUdHO0lBQ0gscUZBQVcsQ0FBQTtJQUVYOzs7T0FHRztJQUNILDJGQUFjLENBQUE7SUFFZDs7O09BR0c7SUFDSCx3R0FBcUIsQ0FBQTtBQUN6QixDQUFDLEVBaENXLDRCQUE0QixHQUE1QixvQ0FBNEIsS0FBNUIsb0NBQTRCLFFBZ0N2QztBQUVEOztHQUVHO0FBQ0gsSUFBWSxzQkFpQlg7QUFqQkQsV0FBWSxzQkFBc0I7SUFDOUI7OztPQUdHO0lBQ0gsK0VBQWMsQ0FBQTtJQUVkOzs7T0FHRztJQUNILCtGQUFzQixDQUFBO0lBRXRCOztPQUVHO0lBQ0gscUZBQWtCLENBQUE7QUFDdEIsQ0FBQyxFQWpCVyxzQkFBc0IsR0FBdEIsOEJBQXNCLEtBQXRCLDhCQUFzQixRQWlCakMifQ==

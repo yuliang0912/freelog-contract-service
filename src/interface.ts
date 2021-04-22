@@ -4,8 +4,8 @@ import {
     OutsideServiceEventEnum
 } from './enum';
 import {PageResult, SubjectTypeEnum, ContractStatusEnum, ContractLicenseeIdentityTypeEnum} from 'egg-freelog-base';
-import {EachBatchPayload} from "kafkajs";
-import {ClientSession} from "mongoose";
+import {EachBatchPayload} from 'kafkajs';
+import {ClientSession} from 'mongoose';
 
 /**
  * 合约信息
@@ -35,7 +35,9 @@ export interface ContractInfo {
     // 合同状态机部分
     fsmCurrentState?: string | null;
     fsmRunningStatus?: ContractFsmRunningStatusEnum;
-    fsmDeclarations?: object;
+    fsmDeclarations?: {
+        [key: string]: any;
+    };
 
     // 其他信息
     policyId: string;
@@ -58,6 +60,7 @@ export interface SubjectBaseInfo {
     licensorOwnerId: number;
     licensorOwnerName: string;
     policies: SubjectPolicyInfo[];
+    status: number;
     // subjectOriginalInfo: object | any;
 }
 
@@ -162,8 +165,6 @@ export interface IContractService {
     setDefaultExecContract(contract: ContractInfo): Promise<boolean>;
 
     updateContractInfo(contract: ContractInfo, options: any): Promise<boolean>;
-
-    addContractChangedHistory(contract: ContractInfo, fromState: string, toState: string, event: string, triggerDate: Date);
 
     /**
      * 批量签约标的物
@@ -279,8 +280,12 @@ export interface IKafkaSubscribeMessageHandle {
 
 export interface IContractStateMachine {
 
+    contractInfo: ContractInfo;
+
+    getEventInfo(eventId: string): PolicyEventInfo;
+
     isCanExecEvent(eventId: string): boolean;
-    
+
     execInitial(session: ClientSession): Promise<any>;
 
     execContractEvent(session: ClientSession, eventInfo: IContractTriggerEventMessage, ...args): Promise<any>;
@@ -297,4 +302,14 @@ export interface IContractTriggerEventMessage {
     args?: {
         [paramName: string]: number | string | Date;
     };
+}
+
+export interface ContractTransitionRecord {
+    _id?: string;
+    stateId?: string;
+    contractId: string;
+    eventId: string;
+    fromState: string;
+    toState: string;
+    eventInfo: IContractTriggerEventMessage;
 }

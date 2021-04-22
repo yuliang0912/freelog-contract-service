@@ -1,3 +1,5 @@
+import {logLevel} from 'kafkajs';
+
 export default () => {
     const config: any = {};
 
@@ -18,14 +20,11 @@ export default () => {
         amzS3: {}
     };
 
-    config.rabbitMq = {
-        connOptions: {
-            host: 'rabbitmq-prod.common',
-            port: 5672,
-            login: 'prod_user_auth',
-            password: 'rabbit@freelog',
-            authMechanism: 'AMQPLAIN'
-        },
+    config.kafka = {
+        enable: false,
+        clientId: 'freelog-contract-service',
+        logLevel: logLevel.ERROR,
+        brokers: ['192.168.164.165:9090']
     };
 
     return config;

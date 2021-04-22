@@ -1,8 +1,12 @@
-import { IContractEventHandler } from '../interface';
 import { CommonSchedule } from 'midway';
+import PolicyInfoProvider from '../app/data-provider/policy-info-provider';
+import { ContractInfo, IContractStateMachine } from '../interface';
+import { MongoClient } from 'mongodb';
 export declare class UninitializedContractHandleJob implements CommonSchedule {
+    mongoose: MongoClient;
     contractInfoProvider: any;
-    contractEventHandler: IContractEventHandler;
+    policyInfoProvider: PolicyInfoProvider;
+    buildContractStateMachine: (contractInfo: ContractInfo) => IContractStateMachine;
     exec(ctx: any): Promise<void>;
     static get scheduleOptions(): {
         cron: string;

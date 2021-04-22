@@ -12,6 +12,7 @@ import {
     FreelogContext, IdentityTypeEnum, visitorIdentityValidator,
     SubjectTypeEnum, ContractLicenseeIdentityTypeEnum, ContractStatusEnum, IJsonSchemaValidate
 } from 'egg-freelog-base';
+import {OutsideApiService} from '../service/outside-api-service';
 
 @provide()
 @controller('/v2/contracts')
@@ -29,6 +30,14 @@ export class ContractController {
     mongoConditionBuilder: IMongoConditionBuilder;
     @inject()
     buildContractStateMachine: (contractInfo: ContractInfo) => IContractStateMachine;
+    @inject()
+    outsideApiService: OutsideApiService;
+
+    @get('/test1')
+    @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
+    async test() {
+        await this.outsideApiService.getNodeInfo(80000000).then(this.ctx.success);
+    }
 
     @get('/')
     @visitorIdentityValidator(IdentityTypeEnum.LoginUser)

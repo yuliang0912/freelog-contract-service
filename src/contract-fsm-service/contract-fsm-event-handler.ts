@@ -1,22 +1,22 @@
 import {ContractAuthStatusEnum, ContractFsmRunningStatusEnum, PolicyEventEnum} from '../enum';
-import {ContractInfo, FsmStateDescriptionInfo, IContractTriggerEventMessage} from "../interface";
-import {ContractLicenseeIdentityTypeEnum, IMongodbOperation} from "egg-freelog-base";
-import {inject, provide, scope, ScopeEnum} from 'midway';
-import {KafkaClient} from '../kafka/client';
-import {ClientSession} from "mongoose";
+import {
+    ContractInfo, ContractTransitionRecord,
+    FsmStateDescriptionInfo, IContractTriggerEventMessage
+} from '../interface';
+import {ContractLicenseeIdentityTypeEnum, IMongodbOperation} from 'egg-freelog-base';
+import {inject, plugin, provide, scope, ScopeEnum} from 'midway';
+import {ClientSession} from 'mongoose';
 
-// 单例执行.所以ctx等需要通过参数传递
 @provide()
 @scope(ScopeEnum.Singleton)
 export class ContractFsmEventHandler {
 
-    allowRegisterEvents = ['A101', 'A102', 'A103'];
-    @inject()
-    kafkaClient: KafkaClient;
+    @plugin()
+    mongoose;
     @inject()
     contractInfoProvider: IMongodbOperation<ContractInfo>;
     @inject()
-    contractChangedHistoryProvider: IMongodbOperation<any>;
+    contractTransitionRecordProvider: IMongodbOperation<ContractTransitionRecord>;
 
     /**
      * 同步订单状态,并且记录订单变更历史
@@ -27,36 +27,46 @@ export class ContractFsmEventHandler {
      * @param contractInfo
      * @param session
      * @param eventInfo
+     * @param transition
      * @param fromState
      * @param toState
      */
-    async syncOrderStateAndChangedHistory(contractInfo: ContractInfo, session: ClientSession, eventInfo: IContractTriggerEventMessage, transition: string, fromState: string, toState: string): Promise<void> {
-        const tasks = [];
-        if (transition !== PolicyEventEnum.InitialEvent) {
-            const eventRecordInfo = {
-                fromState,
-                toState,
-                eventId: transition,
-                triggerDate: eventInfo?.eventTime ?? new Date(),
-                createDate: new Date()
-            };
-            tasks.push(this.contractChangedHistoryProvider.findOneAndUpdate({contractId: contractInfo.contractId}, {
-                $addToSet: {histories: eventRecordInfo},
-            }, {new: true, session}).then(changeHistory => {
-                return changeHistory || this.contractChangedHistoryProvider.create({
-                    contractId: contractInfo.contractId, histories: [eventRecordInfo]
-                });
-            }));
-        }
+    async syncOrderStateAndChangedHistory(contractInfo: ContractInfo, session: ClientSession, eventInfo: IContractTriggerEventMessage, transition: string, fromState: string, toState: string): Promise<any> {
         const updateContractModel: Partial<ContractInfo> = {
             fsmCurrentState: toState,
             fsmRunningStatus: ContractFsmEventHandler.GetContractFsmRunningStatus(contractInfo, toState),
             authStatus: ContractFsmEventHandler.GetContractAuthStatus(contractInfo, toState)
         };
-        tasks.push(this.contractInfoProvider.updateOne({_id: contractInfo.contractId}, updateContractModel, {session}));
-        await Promise.all(tasks).then(() => {
-            console.log(`修改合约状态,from:${fromState},to:${toState}`);
+        const transitionRecord: ContractTransitionRecord = {
+            _id: this.mongoose.getNewObjectId(),
+            contractId: contractInfo.contractId,
+            fromState, toState, eventId: transition, eventInfo
+        };
+
+        const task1 = this.contractTransitionRecordProvider.create([transitionRecord], {session});
+        const task2 = this.contractInfoProvider.updateOne({_id: contractInfo.contractId}, updateContractModel, {session});
+
+        await Promise.all([task1, task2]).then(() => {
+            console.log(`修改合约状态,contractId:${contractInfo.contractId},from:${fromState},to:${toState}`);
         });
+        return transitionRecord._id;
+    }
+
+    /**
+     * 合约初始化错误处理
+     * @param contractInfo
+     * @param session
+     * @param eventInfo
+     * @param errorMsg
+     */
+    async contractInitialErrorHandle(contractInfo: ContractInfo, session: ClientSession, eventInfo: IContractTriggerEventMessage, errorMsg: string) {
+        console.log(`合约${contractInfo.contractId}初始化错误,${errorMsg}`);
+        return this.contractInfoProvider.updateOne({
+            _id: contractInfo.contractId,
+            fsmRunningStatus: {$in: [ContractFsmRunningStatusEnum.Uninitialized, ContractFsmRunningStatusEnum.InitializedError]}
+        }, {
+            fsmRunningStatus: ContractFsmRunningStatusEnum.InitializedError
+        }, {session});
     }
 
     /**
@@ -65,22 +75,18 @@ export class ContractFsmEventHandler {
      * @param session
      * @param eventInfo
      */
-    async [`exec${PolicyEventEnum.InitialEvent}Handler`](contractInfo: ContractInfo, session: ClientSession, eventInfo: IContractTriggerEventMessage,): Promise<void> {
+    async [`exec${PolicyEventEnum.InitialEvent}Handle`](contractInfo: ContractInfo, session: ClientSession, eventInfo: IContractTriggerEventMessage): Promise<void> {
         if (![ContractFsmRunningStatusEnum.InitializedError, ContractFsmRunningStatusEnum.Uninitialized].includes(contractInfo.fsmRunningStatus)) {
             return;
         }
-        // 这里做合约初始化的操作, 如果合约有需要再实例化时做的事情,都在此处完成
-        console.log('已初始化');
-    }
-
-    /**
-     * 交易事件处理
-     * @param contractInfo
-     * @param session
-     * @param eventInfo
-     */
-    async [`exec${PolicyEventEnum.TransactionEvent}Handler`](contractInfo: ContractInfo, session: ClientSession, eventInfo: IContractTriggerEventMessage,): Promise<void> {
-        // 交易事件一般需要记录交易的详情订单数据.
+        // contractInfo.fsmDeclarations.envArgs = {};
+        for (const [_, stateDescription] of Object.entries(contractInfo.policyInfo.fsmDescriptionInfo)) {
+            for (const [_, eventInfo] of Object.entries(stateDescription.transition ?? {})) {
+                if (eventInfo.code === PolicyEventEnum.TransactionEvent) {
+                    // 此处需要校验账号信息或者赋值环境变量
+                }
+            }
+        }
     }
 
     /**

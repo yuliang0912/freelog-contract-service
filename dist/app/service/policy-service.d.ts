@@ -1,9 +1,9 @@
 import { IPolicyCompiler, IPolicyService, PolicyInfo } from '../../interface';
-import { FreelogContext, SubjectTypeEnum } from 'egg-freelog-base';
+import { FreelogContext, IMongodbOperation, SubjectTypeEnum } from 'egg-freelog-base';
 export declare class PolicyService implements IPolicyService {
     ctx: FreelogContext;
     policyCompiler: IPolicyCompiler;
-    policyInfoProvider: any;
+    policyInfoProvider: IMongodbOperation<PolicyInfo>;
     /**
      * 查找或者创建策略
      * @param subjectType

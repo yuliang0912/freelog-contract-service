@@ -1,12 +1,14 @@
-import {init, inject, provide, scope, ScopeEnum} from "midway";
-import {KafkaClient} from "./client";
+import {config, init, inject, provide, scope, ScopeEnum} from 'midway';
+import {KafkaClient} from './client';
 
-import {ContractMqEventTriggerHandle} from "../contract-fsm-service/contract-mq-event-trigger-handle";
+import {ContractMqEventTriggerHandle} from '../contract-fsm-service/contract-mq-event-trigger-handle';
 
 @provide()
 @scope(ScopeEnum.Singleton)
 export class KafkaStartup {
 
+    @config('kafka')
+    kafkaConfig;
     @inject()
     kafkaClient: KafkaClient;
     @inject()
@@ -17,8 +19,11 @@ export class KafkaStartup {
      */
     @init()
     async startUp() {
+        if (this.kafkaConfig.enable !== true) {
+            return;
+        }
         await this.subscribeTopics().then(() => {
-            console.log('kafka topic 订阅成功!')
+            console.log('kafka topic 订阅成功!');
         }).catch(error => {
             console.log('kafka topic 订阅失败!', error.toString());
         });
@@ -32,6 +37,6 @@ export class KafkaStartup {
      */
     async subscribeTopics() {
         const topics = [this.contractMqEventTriggerHandle];
-        return this.kafkaClient.subscribes(topics)
+        return this.kafkaClient.subscribes(topics);
     }
 }

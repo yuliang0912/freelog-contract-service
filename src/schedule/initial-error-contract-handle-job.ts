@@ -3,7 +3,7 @@ import {provide, schedule, CommonSchedule, inject} from 'midway';
 import {ContractFsmRunningStatusEnum} from '../enum';
 import {ContractStatusEnum, FreelogContext} from 'egg-freelog-base';
 import PolicyInfoProvider from '../app/data-provider/policy-info-provider';
-import {ContractInfo, IContractStateMachine} from "../interface";
+import {ContractInfo, IContractStateMachine} from '../interface';
 
 @provide()
 @schedule(InitialErrorContractHandleJob.scheduleOptions)
@@ -34,7 +34,8 @@ export class InitialErrorContractHandleJob implements CommonSchedule {
             contract.policyInfo = policyMap.get(contract.policyId);
             const session = await this.contractInfoProvider.model.startSession();
             await session.withTransaction(async () => {
-                await this.buildContractStateMachine(contract).execInitial(session);
+                return this.buildContractStateMachine(contract).execInitial(session);
+            }).catch(error => {
             }).finally(() => {
                 session.endSession();
             });
@@ -43,7 +44,7 @@ export class InitialErrorContractHandleJob implements CommonSchedule {
 
     static get scheduleOptions() {
         return {
-            cron: '* */5 * * * *',
+            cron: '0 */5 * * * *',
             type: 'worker',
             immediate: true, // 启动时是否立即执行一次
             disable: false

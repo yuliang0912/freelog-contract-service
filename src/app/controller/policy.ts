@@ -1,7 +1,6 @@
 import {IMongoConditionBuilder, IPolicyService} from '../../interface';
 import {controller, get, post, inject, provide} from 'midway';
 import {FreelogContext, visitorIdentityValidator, IdentityTypeEnum, SubjectTypeEnum} from 'egg-freelog-base';
-import {PolicyCompiler} from '../../extend/policy-compiler';
 
 @provide()
 @controller('/v2/policies')
@@ -13,8 +12,6 @@ export class PolicyController {
     policyService: IPolicyService;
     @inject()
     mongoConditionBuilder: IMongoConditionBuilder;
-    @inject()
-    policyCompiler: PolicyCompiler;
 
     @get('/list')
     @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
@@ -41,8 +38,6 @@ export class PolicyController {
         const policyTexts = ctx.checkBody('policyTexts').exist().isArray().len(1, 100).value;
         const subjectType = ctx.checkBody('subjectType').exist().toInt().in([SubjectTypeEnum.UserGroup, SubjectTypeEnum.Resource, SubjectTypeEnum.Presentable]).value;
         ctx.validateParams();
-
-        // await this.policyCompiler.compiler(subjectType, policyTexts[0]).then(ctx.success);
 
         await this.policyService.findOrCreatePolicies(subjectType, policyTexts.map(decodeURIComponent)).then(ctx.success);
     }

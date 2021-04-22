@@ -1,13 +1,14 @@
-import {forIn} from 'lodash';
 import {ClientSession} from 'mongoose';
-import {LogicError} from "egg-freelog-base";
+import {BreakOffError, LogicError} from 'egg-freelog-base';
+import {first} from 'lodash';
 import * as StateMachine from 'javascript-state-machine';
 import {IApplicationContext, providerWrapper} from 'midway';
 import {ContractFsmEventHandler} from './contract-fsm-event-handler';
 import {ContractFsmRunningStatusEnum, PolicyEventEnum} from '../enum';
 import {ContractFsmEventPretreatment} from './contract-fsm-event-pretreatment';
-import {ContractFsmEventRegisterHandler} from './contract-fsm-event-register-handler';
-import {ContractInfo, IContractStateMachine, IContractTriggerEventMessage, PolicyEventInfo} from "../interface";
+import {ContractFsmEventTransitionAfterHandler} from './contract-fsm-event-transition-after-handler';
+import {ContractInfo, IContractStateMachine, IContractTriggerEventMessage, PolicyEventInfo} from '../interface';
+import {ContractFsmInvalidTransitionHandler} from './contract-fsm-invalid-transition-handler';
 
 /**
  * 合同状态机这一块设计思路:(2021-02-22)
@@ -19,11 +20,11 @@ import {ContractInfo, IContractStateMachine, IContractTriggerEventMessage, Polic
  * 5.合同事件执行分为事件前置处理,事件执行中,状态切换后等细分的模块.不同生命周期的处理只需要在对应的模块实现即可,不需要单独处理的则忽略.
  * 6.支付等需要外部服务进行主导的事件(自然事件),则先通过合约服务调用支付相关的服务.支付服务会冻结对应的金额,然后发送事件到消息队列.合约状态机接收到
  * 支付事件之后,会对当前状态进行对比,然后调用合约状态机,之后把结果通知到支付服务做实际的扣除或解冻操作.
- * [旧版支付是通过testAndSet互斥锁实现,新版主要是考虑到消息的实际发送顺序,以及消息队列服务可能宕机导致其他之前产生的事件不能正确的生效
+ * [旧版支付是通过testAndSet互斥锁实现,新版主要是考虑到消息的实际发送顺序,以及消息队列服务可能宕机导致其他之前产生的事件不能正确按实际发生顺序生效
  * 新版同时移除了合约的锁状态.因为合约的事件本身已经顺序逐条执行,不存在同一个合约并发处理好几个事件的情况,所以锁存在的意义就没有了
  * 新版修改了事件的注册机制,旧版是状态切换之后,把新状态可能需要注册的事件一条一条的发送注册,新版则直接批量一次性发送,然后合约服务同时事务来处理.
  * 要么批量成功,要么失败.同时把旧状态事件取消注册融入到注册业务中.即注册业务通过事务批量注册新事件,同时删除旧的事件侦听.
- * 由于事件注册是通过消息队列发送,所以注册失败的话,目前不影响本次合约的状态流转.但是合约会锁定状态(时间注册中),锁定期合约暂不接受其他事件.
+ * 由于事件注册是通过消息队列发送,所以注册失败的话,不影响本次合约的状态流转.但是合约会锁定状态(时间注册中),锁定期合约暂不接受其他事件.
  * 然后后续会通过消息job的方式继续注册,直到成功为止]
  */
 /**
@@ -34,14 +35,15 @@ class ContractStateMachine implements IContractStateMachine {
     fsm: StateMachine;
     contractInfo: ContractInfo;
     fromInitialStateName = '_none_';
-    // 初始化事件名称为init.目前合约初始化需要主动调用initial
     eventMap: Map<string, PolicyEventInfo> = new Map();
 
     session: ClientSession;
+    latestTransitionStateId: string;
     eventInfo: IContractTriggerEventMessage;
     contractFsmEventHandler: ContractFsmEventHandler;
     contractFsmEventPretreatment: ContractFsmEventPretreatment;
-    contractFsmEventRegisterHandler: ContractFsmEventRegisterHandler;
+    contractFsmEventTransitionAfterHandler: ContractFsmEventTransitionAfterHandler;
+    contractFsmInvalidTransitionHandler: ContractFsmInvalidTransitionHandler;
 
     /**
      * 初始化
@@ -53,9 +55,12 @@ class ContractStateMachine implements IContractStateMachine {
             throw new LogicError('合约信息不全,请检查合约以及策略信息');
         }
         this.contractInfo = contractInfo;
-        this.contractFsmEventHandler = context.get<ContractFsmEventHandler>('contractFsmEventHandler');
-        this.contractFsmEventPretreatment = context.get<ContractFsmEventPretreatment>('contractFsmEventPretreatment');
-        this.contractFsmEventRegisterHandler = context.get<ContractFsmEventRegisterHandler>('contractFsmEventRegisterHandler');
+        this.contractFsmEventHandler = context.get('contractFsmEventHandler');
+        this.contractFsmEventPretreatment = context.get('contractFsmEventPretreatment');
+        this.contractFsmInvalidTransitionHandler = context.get('contractFsmInvalidTransitionHandler');
+        this.contractFsmEventTransitionAfterHandler = context.get('contractFsmEventTransitionAfterHandler');
+
+        // 初始化事件名称为init.目前合约初始化需要主动调用initial,所以需要显示的申明init事件定义
         this.eventMap.set('init', {eventId: 'init', code: PolicyEventEnum.InitialEvent} as PolicyEventInfo);
 
         const stateMachineOptions = {
@@ -71,6 +76,11 @@ class ContractStateMachine implements IContractStateMachine {
         };
         if ([ContractFsmRunningStatusEnum.Uninitialized, ContractFsmRunningStatusEnum.InitializedError].includes(this.contractInfo.fsmRunningStatus)) {
             Reflect.deleteProperty(stateMachineOptions, 'init');
+            const initialState = Object.entries(this.contractInfo.policyInfo.fsmDescriptionInfo).find(([_, value]) => value.isInitial);
+            stateMachineOptions.transitions.unshift({
+                name: PolicyEventEnum.InitialEvent.toString(),
+                from: this.fromInitialStateName, to: first(initialState)
+            });
         }
         StateMachine.defaults.init.from = this.fromInitialStateName;
         this.fsm = new StateMachine(stateMachineOptions);
@@ -88,6 +98,14 @@ class ContractStateMachine implements IContractStateMachine {
     }
 
     /**
+     * 获取事件信息
+     * @param eventId
+     */
+    getEventInfo(eventId: string): PolicyEventInfo {
+        return this.eventMap.get(eventId);
+    }
+
+    /**
      * 初始化合约
      * @param session
      */
@@ -96,7 +114,12 @@ class ContractStateMachine implements IContractStateMachine {
             throw new LogicError('不能重复初始化');
         }
         this.session = session;
-        return this.fsm.init();
+        this.eventInfo = {
+            contractId: this.contractInfo.contractId, code: 'init', eventId: 'init', eventTime: new Date()
+        } as any;
+        return this.fsm.init().catch(error => {
+            return this.contractFsmEventHandler.contractInitialErrorHandle(this.contractInfo, session, this.eventInfo, error?.toString()).then();
+        });
     }
 
     /**
@@ -110,12 +133,14 @@ class ContractStateMachine implements IContractStateMachine {
         if (this.contractInfo.fsmRunningStatus === ContractFsmRunningStatusEnum.ToBeRegisteredEvents) {
             throw new LogicError('合约当前正在等待注册事件,请稍后再试');
         }
-        if (!PolicyEventEnum[eventInfo.code]) {
-            throw new LogicError('不合规的事件调用');
+        // 此处不在做isCanExecEvent校验.主要考虑是需要针对部分无效事件做单独的处理.例如支付事件
+        if (!this.fsm.allTransitions().includes(eventInfo?.eventId)) {
+            // 此处不抛异常.无需消息队列中断重试执行. 正常逻辑不会进入到此处.万一进入,是程序逻辑层面数据不对等.
+            return this.contractFsmInvalidTransitionHandler.invalidTransitionHandle(this.contractInfo, session, eventInfo, '非正常数据.事件与合约不匹配');
         }
         this.session = session;
         this.eventInfo = eventInfo;
-        return this.fsm[eventInfo.eventId].call(this.fsm, ...args);
+        return this.fsm[eventInfo.eventId].call(this.fsm, ...args).catch(this.errorHandle);
     }
 
     /**
@@ -145,7 +170,7 @@ class ContractStateMachine implements IContractStateMachine {
             return;
         }
         const currentEventInfo = this.eventMap.get(lifeCycle.transition);
-        const eventHandleFuncName = `exec${currentEventInfo.code}Handler`;
+        const eventHandleFuncName = `exec${currentEventInfo.code}Handle`;
         // 如果事件不需要单独处理,则默认返回true
         if (!currentEventInfo || !Reflect.has(this.contractFsmEventHandler, eventHandleFuncName)) {
             return;
@@ -162,7 +187,9 @@ class ContractStateMachine implements IContractStateMachine {
         if (this._isInvalidStateTransition(lifeCycle)) {
             return;
         }
-        return this.contractFsmEventHandler.syncOrderStateAndChangedHistory(this.contractInfo, this.session, this.eventInfo, lifeCycle.transition, lifeCycle.from, lifeCycle.to);
+        return this.contractFsmEventHandler.syncOrderStateAndChangedHistory(this.contractInfo, this.session, this.eventInfo, lifeCycle.transition, lifeCycle.from, lifeCycle.to).then(latestTransitionStateId => {
+            this.latestTransitionStateId = latestTransitionStateId;
+        });
     }
 
     /**
@@ -174,17 +201,43 @@ class ContractStateMachine implements IContractStateMachine {
         if (this._isInvalidStateTransition(lifeCycle)) {
             return;
         }
-        return this.contractFsmEventRegisterHandler.registerContractEvents(this.contractInfo, this.session, this.eventInfo, lifeCycle.from, lifeCycle.to);
+        const currentEventInfo = this.eventMap.get(lifeCycle.transition);
+        const eventHandleFuncName = `exec${currentEventInfo.code}Handle`;
+        const commonHandle = this.contractFsmEventTransitionAfterHandler.registerContractEvents(this.contractInfo, this.session, this.eventInfo, lifeCycle.from, lifeCycle.to);
+        // 如果事件不需要单独处理,则默认返回true
+        if (!currentEventInfo || !Reflect.has(this.contractFsmEventTransitionAfterHandler, eventHandleFuncName)) {
+            return commonHandle;
+        }
+        const specificEventHandle = Reflect.apply(this.contractFsmEventTransitionAfterHandler[eventHandleFuncName], this.contractFsmEventTransitionAfterHandler, [this.contractInfo, this.session, this.eventInfo, this.latestTransitionStateId]);
+        return Promise.all([commonHandle, specificEventHandle]);
     }
 
     /**
      * 无效的事件处理
      * @param transition
-     * @param from
-     * @param to
      */
-    onInvalidTransition(transition, from, to) {
-        return false;
+    onInvalidTransition(transition) {
+        const currentEventInfo = this.eventMap.get(transition);
+        const eventHandleFuncName = `exec${currentEventInfo?.code}InvalidEventHandle`;
+        const commonHandle = this.contractFsmInvalidTransitionHandler.invalidTransitionHandle(this.contractInfo, this.session, this.eventInfo, '合约当前状态不允许执行此事件');
+        // 如果事件不需要单独处理,则默认返回true
+        if (!currentEventInfo || !Reflect.has(this.contractFsmInvalidTransitionHandler, eventHandleFuncName)) {
+            return commonHandle;
+        }
+        return commonHandle.then(() => {
+            return Reflect.apply(this.contractFsmInvalidTransitionHandler[eventHandleFuncName], this.contractFsmInvalidTransitionHandler, [this.contractInfo, this.session, this.eventInfo]);
+        });
+    }
+
+    /**
+     * 错误处理
+     * @param error
+     */
+    errorHandle(error: any) {
+        if (!(error instanceof BreakOffError)) {
+            throw error;
+        }
+        console.log('中断错误,不对外抛出异常,但是状态机也不拨动状态');
     }
 
     /**
@@ -201,20 +254,15 @@ class ContractStateMachine implements IContractStateMachine {
      */
     _fsmDescriptionInfoWarpToFsmTransitions() {
         const fsmTransitions = [];
-        // payment为测试数据
-        this.eventMap.set('payment', {eventId: 'payment', code: PolicyEventEnum.TransactionEvent} as PolicyEventInfo);
-        fsmTransitions.push({name: 'payment', from: 'initial', to: 'auth'});
-        fsmTransitions.push({name: 'init', from: '_none_', to: 'initial'});
-
-        forIn(this.contractInfo.policyInfo.fsmDescriptionInfo, (stateDescription, stateName) => {
-            forIn(stateDescription.transition ?? {}, (eventInfo, nextStateName) => {
+        for (const [stateName, stateDescription] of Object.entries(this.contractInfo.policyInfo.fsmDescriptionInfo)) {
+            for (const [nextStateName, eventInfo] of Object.entries(stateDescription.transition ?? {})) {
                 if (!eventInfo?.eventId) {
                     throw new Error('策略对象存在异常,不存在事件ID');
                 }
                 this.eventMap.set(eventInfo.eventId, eventInfo);
                 fsmTransitions.push({name: eventInfo.eventId, from: stateName, to: nextStateName});
-            });
-        });
+            }
+        }
         return fsmTransitions;
     }
 }

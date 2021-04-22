@@ -1,14 +1,13 @@
-import { ContractInfo, BeSignSubjectOptions, IContractService, IOutsideApiService, IContractEventHandler, IPolicyService } from '../../interface';
+import { ContractInfo, BeSignSubjectOptions, IContractService, IOutsideApiService, IPolicyService, PolicyInfo, IContractStateMachine } from '../../interface';
 import { FreelogContext, ContractLicenseeIdentityTypeEnum, SubjectTypeEnum, PageResult, IMongodbOperation } from 'egg-freelog-base';
 export declare class ContractService implements IContractService {
     mongoose: any;
     ctx: FreelogContext;
     contractInfoProvider: IMongodbOperation<ContractInfo>;
     policyService: IPolicyService;
-    contractChangedHistoryProvider: IMongodbOperation<any>;
     contractInfoSignatureProvider: any;
     outsideApiService: IOutsideApiService;
-    contractEventHandler: IContractEventHandler;
+    buildContractStateMachine: (contractInfo: ContractInfo) => IContractStateMachine;
     /**
      * 批量签约标的物
      * @param subjects
@@ -36,15 +35,9 @@ export declare class ContractService implements IContractService {
     findByIds(contractIds: string[], ...args: any[]): Promise<ContractInfo[]>;
     findIntervalList(condition: object, skip?: number, limit?: number, projection?: string[], sort?: object): Promise<PageResult<ContractInfo>>;
     count(condition: object): Promise<number>;
-    addContractChangedHistory(contract: ContractInfo, fromState: string, toState: string, event: string, triggerDate: Date): Promise<any>;
-    addContractChangedHistoryAndLockFsmRunningStatus(contract: ContractInfo, fromState: string, toState: string, event: string, triggerDate: Date): Promise<{
-        n: number;
-        nModified: number;
-        ok: number;
-    }>;
     /**
      * 给资源填充策略详情信息
-     * @param resources
+     * @param contracts
      */
     fillContractPolicyInfo(contracts: ContractInfo[]): Promise<ContractInfo[]>;
     /**
@@ -69,4 +62,10 @@ export declare class ContractService implements IContractService {
         status: number;
         contractId?: string;
     }>): Promise<any[]>;
+    /**
+     * 初始化合约
+     * @param contracts
+     * @param subjectPolicyMap
+     */
+    _initialContracts(contracts: ContractInfo[], subjectPolicyMap: Map<string, PolicyInfo>): Promise<any>;
 }

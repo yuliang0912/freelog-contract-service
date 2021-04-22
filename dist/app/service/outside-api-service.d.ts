@@ -5,6 +5,22 @@ export declare class OutsideApiService implements IOutsideApiService {
     readonly licenseeWrapMap: Map<number, (licenseeId: string | number) => Promise<LicenseeInfo>>;
     ctx: FreelogContext;
     /**
+     * 合约支付
+     * @param fromAccountId
+     * @param toAccountId
+     * @param transactionAmount
+     * @param contractId
+     * @param contractName
+     * @param eventId
+     * @param password
+     */
+    contractPayment(fromAccountId: string, toAccountId: string, transactionAmount: number, contractId: string, contractName: string, eventId: string, password: string): Promise<any>;
+    /**
+     * 查询交易记录信息
+     * @param transactionRecordId
+     */
+    getTransactionRecordInfo(transactionRecordId: string): Promise<any>;
+    /**
      * 获取用户信息
      * @param {number} userId
      * @returns {Promise<UserInfo>}

@@ -1,6 +1,6 @@
 import {provide, inject} from 'midway';
 import {IPolicyCompiler, IPolicyService, PolicyInfo} from '../../interface';
-import {FreelogContext, SubjectTypeEnum} from 'egg-freelog-base';
+import {FreelogContext, IMongodbOperation, SubjectTypeEnum} from 'egg-freelog-base';
 
 @provide('policyService')
 export class PolicyService implements IPolicyService {
@@ -10,7 +10,7 @@ export class PolicyService implements IPolicyService {
     @inject()
     policyCompiler: IPolicyCompiler;
     @inject()
-    policyInfoProvider;
+    policyInfoProvider: IMongodbOperation<PolicyInfo>;
 
     /**
      * 查找或者创建策略

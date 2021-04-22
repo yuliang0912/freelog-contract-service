@@ -1,4 +1,4 @@
-import {isString, pick, chain, first, isArray, isEmpty, assign, isNumber} from 'lodash';
+import {isString, pick, chain, isArray, isEmpty, assign, isNumber} from 'lodash';
 import {provide, inject, plugin} from 'midway';
 import {
     ContractInfo,
@@ -27,8 +27,6 @@ export class ContractService implements IContractService {
     @inject()
     policyService: IPolicyService;
     @inject()
-    contractChangedHistoryProvider: IMongodbOperation<any>;
-    @inject()
     contractInfoSignatureProvider;
     @inject()
     outsideApiService: IOutsideApiService;
@@ -45,7 +43,6 @@ export class ContractService implements IContractService {
     async batchSignSubjects(subjects: BeSignSubjectOptions[], licenseeId: string | number, licenseeIdentityType: ContractLicenseeIdentityTypeEnum, subjectType: SubjectTypeEnum): Promise<ContractInfo[]> {
 
         // console.log('参数传递待签约标的物数量:' + subjects.map(x => x.policyId).toString());
-
         const reSignCheckResults = await this._checkIsCanReSignContracts(subjects.map(subject => Object({
             subjectType, licenseeId,
             subjectId: subject.subjectId,
@@ -68,9 +65,14 @@ export class ContractService implements IContractService {
         });
 
         const beSignSubjectPolicyMap: Map<string, PolicyInfo> = await this.policyService.findByIds(beSignSubjects.map(x => x.policyId)).then(list => new Map(list.map(x => [x.policyId, x])));
+        const invalidSubjectIds = [];
         const invalidPolicyIds = [];
         const beSignContracts = beSignSubjects.map(beSignSubject => {
             const subjectInfo = beSignSubjectMap.get(beSignSubject.subjectId);
+            if (subjectInfo?.status !== 1) {
+                invalidSubjectIds.push(subjectInfo.subjectId);
+                return;
+            }
             const {licensorId, licensorName, licensorOwnerId, policies, licensorOwnerName, subjectId, subjectName, subjectType} = subjectInfo;
             const subjectPolicyInfo = policies.find(x => x.policyId === beSignSubject.policyId);
             if (!subjectPolicyInfo || subjectPolicyInfo.status !== 1 || !beSignSubjectPolicyMap.has(beSignSubject.policyId)) {
@@ -95,6 +97,9 @@ export class ContractService implements IContractService {
             return contract;
         });
 
+        if (!isEmpty(invalidSubjectIds)) {
+            throw new ApplicationError(this.ctx.gettext('sign-subject-invalid-error', '标的物不可用'), invalidPolicyIds);
+        }
         if (!isEmpty(invalidPolicyIds)) {
             throw new ApplicationError(this.ctx.gettext('subject-policy-check-failed'), invalidPolicyIds);
         }
@@ -178,50 +183,6 @@ export class ContractService implements IContractService {
         return this.contractInfoProvider.count(condition);
     }
 
-    async addContractChangedHistory(contract: ContractInfo, fromState: string, toState: string, event: string, triggerDate: Date) {
-        const fsmStateTransitionInfo = {
-            fromState, toState, event, triggerDate
-        };
-        await this.contractChangedHistoryProvider.create({
-            contractId: contract.contractId,
-            histories: [fsmStateTransitionInfo]
-        });
-        return this.contractChangedHistoryProvider.findOneAndUpdate({contractId: contract.contractId}, {
-            $addToSet: {histories: fsmStateTransitionInfo},
-        }, {new: true}).then(changeHistory => {
-            return changeHistory || this.contractChangedHistoryProvider.create({
-                contractId: contract.contractId,
-                histories: [fsmStateTransitionInfo]
-            });
-        });
-    }
-
-    async addContractChangedHistoryAndLockFsmRunningStatus(contract: ContractInfo, fromState: string, toState: string, event: string, triggerDate: Date) {
-
-        const fsmStateTransitionInfo = {
-            fromState, toState, event, triggerDate
-        };
-        const existingHistoryInfo = await this.contractChangedHistoryProvider.findOne({contractId: contract.contractId}, {histories: {$slice: -1}} as any);
-        if (existingHistoryInfo && !isEmpty(existingHistoryInfo.histories)) {
-            const latestEventRecord: any = first(existingHistoryInfo.histories);
-            // 逻辑上事件历史记录必须能够按状态机的事件接受顺序串联起来
-            if (latestEventRecord.toState !== fsmStateTransitionInfo.fromState) {
-                throw new LogicError(`please check contract event,add contract event history failed.contractId:${contract.contractId},eventId:${event}`);
-            }
-        }
-        if (existingHistoryInfo) {
-            await this.contractChangedHistoryProvider.updateOne({
-                contractId: contract.contractId
-            }, {$push: {histories: fsmStateTransitionInfo}});
-        } else {
-            await this.contractChangedHistoryProvider.create({
-                contractId: contract.contractId,
-                histories: [fsmStateTransitionInfo]
-            });
-        }
-        return true;
-        // return this.contractInfoProvider.updateOne({_id: contract.contractId}, {fsmRunningStatus: ContractFsmRunningStatusEnum.Locked});
-    }
 
     /**
      * 给资源填充策略详情信息
@@ -298,13 +259,11 @@ export class ContractService implements IContractService {
                 return;
             }
             const session = await this.mongoose.startSession();
-            return session.withTransaction(() => {
-                const tasks = [];
+            return session.withTransaction(async () => {
                 for (const contract of contracts) {
                     contract.policyInfo = subjectPolicyMap.get(contract.policyId);
-                    tasks.push(this.buildContractStateMachine(contract).execInitial(session));
+                    await this.buildContractStateMachine(contract).execInitial(session);
                 }
-                return Promise.all(tasks);
             }).catch().finally(() => session.endSession());
         } catch (error) {
             // 错误不用处理,后续有job会定期检查未初始化的合约

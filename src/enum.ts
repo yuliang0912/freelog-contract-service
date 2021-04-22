@@ -20,6 +20,7 @@ export enum ContractFsmEventEnum {
 /**
  * A开头的为自然事件,单例执行,例如时间,周期等.
  * S需要主动触发
+ * 详细的事件code与定义参考:https://github.com/freelogfe/freelog_event_definition/blob/master/event_def.csv
  */
 export enum PolicyEventEnum {
 

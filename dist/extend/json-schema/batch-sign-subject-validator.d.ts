@@ -3,7 +3,6 @@ export declare class BatchSignSubjectValidator extends CommonJsonSchema implemen
     /**
      * 解决依赖资源格式校验
      * @param {object[]} operations 解决依赖资源数据
-     * @returns {ValidatorResult}
      */
     validate(operations: object[]): import("jsonschema").ValidatorResult;
     /**

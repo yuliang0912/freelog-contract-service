@@ -1,13 +1,30 @@
-import { ContractInfo, PolicyEventInfo, PolicyInfo } from '../../interface';
+import { ContractInfo, IContractStateMachine } from '../../interface';
+import { PolicyEventEnum } from '../../enum';
+import { PolicyService } from './policy-service';
+import { OutsideApiService } from './outside-api-service';
 export declare class ContractEventExecService {
     ctx: any;
-    contractFsmGenerator: any;
-    eventCodeHandlerMap: Map<string, (eventInfo: PolicyEventInfo) => Promise<any>>;
+    policyService: PolicyService;
+    outsideApiService: OutsideApiService;
+    buildContractStateMachine: (contractInfo: ContractInfo) => IContractStateMachine;
+    private eventCodeHandlerMap;
+    constructor();
     /**
-     * 详细的事件code与定义参考:https://github.com/freelogfe/freelog_event_definition/blob/master/event_def.csv
-     * @param eventInfo
+     * 执行合约事件
+     * @param contractInfo
+     * @param eventType
+     * @param eventId
+     * @param args
      */
-    contractEventExec(contractInfo: ContractInfo, policyInfo: PolicyInfo, eventInfo: PolicyEventInfo): Promise<void>;
-    _s210EventExec(eventInfo: PolicyEventInfo): Promise<any>;
-    init(): void;
+    execContractEvent(contractInfo: ContractInfo, eventType: PolicyEventEnum, eventId: string, ...args: any[]): Promise<any>;
+    /**
+     * 交易事件触发(发送交易请求到支付服务..后续的处理由支付何物和合约服务自动对接)
+     * @param contractFsm
+     * @param eventInfo
+     * @param accountId
+     * @param transactionAmount
+     * @param password
+     * @private
+     */
+    private transactionEventHandle;
 }

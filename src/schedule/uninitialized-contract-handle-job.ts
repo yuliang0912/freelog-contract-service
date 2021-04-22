@@ -3,7 +3,7 @@ import {ContractFsmRunningStatusEnum} from '../enum';
 import {ContractStatusEnum} from 'egg-freelog-base';
 import {provide, schedule, CommonSchedule, inject, plugin} from 'midway';
 import PolicyInfoProvider from '../app/data-provider/policy-info-provider';
-import {ContractInfo, IContractStateMachine} from "../interface";
+import {ContractInfo, IContractStateMachine} from '../interface';
 import {MongoClient} from 'mongodb';
 
 @provide()
@@ -41,7 +41,8 @@ export class UninitializedContractHandleJob implements CommonSchedule {
             contract.policyInfo = policyMap.get(contract.policyId);
             const session = await this.mongoose.startSession();
             await session.withTransaction(async () => {
-                return this.buildContractStateMachine(contract).initial(session);
+                return this.buildContractStateMachine(contract).execInitial(session);
+            }).catch(() => {
             }).finally(() => {
                 session.endSession();
             });
@@ -50,7 +51,7 @@ export class UninitializedContractHandleJob implements CommonSchedule {
 
     static get scheduleOptions() {
         return {
-            cron: '* */3 * * * *',
+            cron: '0 */5 * * * *',
             type: 'worker',
             immediate: true, // 启动时是否立即执行一次
             disable: false

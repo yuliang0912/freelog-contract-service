@@ -38,7 +38,7 @@ let ContractInfoSignatureProvider = class ContractInfoSignatureProvider {
         return this.contractBaseInfoSignature(contract) === contract.signature;
     }
     /**
-     * 合同基础信息唯一key生成
+     * 合同基础信息唯一key生成(防止重签,作为数据库unique)
      * @param {ContractInfo} contract
      * @returns {string}
      */

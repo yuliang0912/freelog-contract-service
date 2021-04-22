@@ -28,7 +28,7 @@ let ContractInfoModel = ContractInfoModel_1 = class ContractInfoModel extends mo
          * 相比于旧版,此版本的策略减少了身份认证部分.调整成了签约限制.所以目前合约的授权只受状态机影响.
          * 所以合同中设置了合同是否授权的字段.当状态发生改变时,根据当前状态下的颜色集属性,重新计算授权结果.然后保存.
          */
-        const contractInfoScheme = new this.mongoose.Schema({
+        const contractInfoSchema = new this.mongoose.Schema({
             // contractCode: {type: String, required: false}, // 合同编号,目前还不需要此字段.
             contractName: { type: String, required: true },
             licensorId: { type: String, required: true },
@@ -59,23 +59,23 @@ let ContractInfoModel = ContractInfoModel_1 = class ContractInfoModel extends mo
             toJSON: ContractInfoModel_1.toObjectOptions,
             toObject: ContractInfoModel_1.toObjectOptions
         });
-        contractInfoScheme.index({ licensorId: 1, licensorOwnerId: 1 });
-        contractInfoScheme.index({ licenseeId: 1, licenseeOwnerId: 1 });
-        contractInfoScheme.index({ subjectId: 1, subjectType: 1, policyId: 1 });
-        contractInfoScheme.index({ uniqueKey: 1 }, { unique: true });
-        contractInfoScheme.virtual('contractId').get(function () {
+        contractInfoSchema.index({ licensorId: 1, licensorOwnerId: 1 });
+        contractInfoSchema.index({ licenseeId: 1, licenseeOwnerId: 1 });
+        contractInfoSchema.index({ subjectId: 1, subjectType: 1, policyId: 1 });
+        contractInfoSchema.index({ uniqueKey: 1 }, { unique: true });
+        contractInfoSchema.virtual('contractId').get(function () {
             return this.id;
         });
-        contractInfoScheme.virtual('isDefault').get(function () {
+        contractInfoSchema.virtual('isDefault').get(function () {
             return lodash_1.isNumber(this.sortId) ? this.sortId === 1 : undefined;
         });
-        contractInfoScheme.virtual('isAuth').get(function () {
+        contractInfoSchema.virtual('isAuth').get(function () {
             return lodash_1.isNumber(this.authStatus) ? (this.authStatus & enum_1.ContractAuthStatusEnum.Authorized) === enum_1.ContractAuthStatusEnum.Authorized : undefined;
         });
-        contractInfoScheme.virtual('isTestAuth').get(function () {
+        contractInfoSchema.virtual('isTestAuth').get(function () {
             return lodash_1.isNumber(this.authStatus) ? (this.authStatus & enum_1.ContractAuthStatusEnum.TestNodeAuthorized) === enum_1.ContractAuthStatusEnum.TestNodeAuthorized : undefined;
         });
-        return this.mongoose.model('contract-infos', contractInfoScheme);
+        return this.mongoose.model('contract-infos', contractInfoSchema);
     }
     static get toObjectOptions() {
         return {

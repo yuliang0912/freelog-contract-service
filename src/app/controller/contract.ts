@@ -1,11 +1,8 @@
 import {first, isEmpty, isString, isUndefined} from 'lodash';
 import {controller, get, inject, post, provide, put} from 'midway';
 import {
-    ContractInfo,
-    IContractService,
-    IContractStateMachine,
-    IMongoConditionBuilder,
-    IPolicyService
+    ContractInfo, IContractService,
+    IContractStateMachine, IMongoConditionBuilder, IPolicyService
 } from '../../interface';
 import {
     ApplicationError, ArgumentError, AuthorizationError, CommonRegex,
@@ -174,7 +171,6 @@ export class ContractController {
     @visitorIdentityValidator(IdentityTypeEnum.LoginUser | IdentityTypeEnum.InternalClient)
     async count() {
         const {ctx} = this;
-
         const userIds = ctx.checkQuery('userIds').exist().isSplitNumber().toSplitArray().len(1, 100).value;
         const licenseeIdentityType = ctx.checkQuery('licenseeIdentityType').optional().toInt().default(3).in([1, 2, 3]).value;
         ctx.validateParams();
@@ -190,7 +186,6 @@ export class ContractController {
     @visitorIdentityValidator(IdentityTypeEnum.LoginUser | IdentityTypeEnum.InternalClient)
     async show() {
         const {ctx} = this;
-
         const contractId = ctx.checkParams('contractId').notEmpty().isContractId().value;
         const isLoadPolicyInfo = ctx.checkQuery('isLoadPolicyInfo').optional().toInt().in([0, 1, 2]).default(0).value;
         const projection = ctx.checkQuery('projection').optional().toSplitArray().default([]).value;

@@ -32,6 +32,7 @@ export class ContractFsmEventHandler {
      * @param toState
      */
     async syncOrderStateAndChangedHistory(contractInfo: ContractInfo, session: ClientSession, eventInfo: IContractTriggerEventMessage, transition: string, fromState: string, toState: string): Promise<any> {
+
         const updateContractModel: Partial<ContractInfo> = {
             fsmCurrentState: toState,
             fsmRunningStatus: ContractFsmEventHandler.GetContractFsmRunningStatus(contractInfo, toState),

@@ -28,7 +28,8 @@ export declare class ContractFsmEventHandler {
      * @param errorMsg
      */
     contractInitialErrorHandle(contractInfo: ContractInfo, session: ClientSession, eventInfo: IContractTriggerEventMessage, errorMsg: string): Promise<{
-        n: number; /**
+        n: number;
+        /**
          * 执行初始化操作
          * @param contractInfo
          * @param session

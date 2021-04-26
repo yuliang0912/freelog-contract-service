@@ -11,6 +11,8 @@ export class PolicyCompiler implements IPolicyCompiler {
 
     @config()
     gatewayUrl: string;
+    @config()
+    env: string;
 
     /**
      * 根据标的物类型编译策略文本
@@ -19,7 +21,11 @@ export class PolicyCompiler implements IPolicyCompiler {
      */
     async compiler(subjectType: SubjectTypeEnum, policyText: string): Promise<PolicyInfo> {
 
-        const {state_machine} = await compile(policyText, SubjectTypeEnum[subjectType].toLocaleLowerCase(), 'http://api.testfreelog.com', 'dev');
+        let targetUrl = this.gatewayUrl;
+        if (this.env === 'local') {
+            targetUrl = 'http://api.testfreelog.com';
+        }
+        const {state_machine} = await compile(policyText, SubjectTypeEnum[subjectType].toLocaleLowerCase(), targetUrl, 'dev');
         const serviceStateMap = new Map((state_machine.declarations.serviceStates as any[]).map(x => [x.name, capitalize(x.type)]));
         for (const [_, fsmStateDescriptionInfo] of Object.entries(state_machine.states)) {
             fsmStateDescriptionInfo['isAuth'] = fsmStateDescriptionInfo['serviceStates'].some(x => serviceStateMap.get(x) === ContractColorStateTypeEnum[ContractColorStateTypeEnum.Authorization]);

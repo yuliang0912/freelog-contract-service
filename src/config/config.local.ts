@@ -28,10 +28,6 @@ export default () => {
         url: `mongodb://contract_service:MTAwZGRhODU0Njc2MTM=@dds-wz9ac40fee5c09441604-pub.mongodb.rds.aliyuncs.com:3717,dds-wz9ac40fee5c09442584-pub.mongodb.rds.aliyuncs.com:3717/local-contracts?replicaSet=mgset-44484047`
     };
 
-    // config.mongoose = {
-    //     url: 'mongodb://39.108.77.211:30772/contracts'
-    // };
-
     config.localIdentity = {
         userId: 50021,
         username: 'yuliang'

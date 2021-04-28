@@ -30,12 +30,6 @@ export class ContractController {
     @inject()
     outsideApiService: OutsideApiService;
 
-    @get('/test1')
-    @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
-    async test() {
-        await this.outsideApiService.getNodeInfo(80000000).then(this.ctx.success);
-    }
-
     @get('/')
     @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
     async index() {

@@ -6,6 +6,7 @@ import {
 import {ContractLicenseeIdentityTypeEnum, IMongodbOperation} from 'egg-freelog-base';
 import {inject, plugin, provide, scope, ScopeEnum} from 'midway';
 import {ClientSession} from 'mongoose';
+import {ContractEnvironmentVariableHandler} from './contract-environment-variable-handler';
 
 @provide()
 @scope(ScopeEnum.Singleton)
@@ -17,6 +18,8 @@ export class ContractFsmEventHandler {
     contractInfoProvider: IMongodbOperation<ContractInfo>;
     @inject()
     contractTransitionRecordProvider: IMongodbOperation<ContractTransitionRecord>;
+    @inject()
+    contractEnvironmentVariableHandler: ContractEnvironmentVariableHandler;
 
     /**
      * 同步订单状态,并且记录订单变更历史
@@ -36,7 +39,8 @@ export class ContractFsmEventHandler {
         const updateContractModel: Partial<ContractInfo> = {
             fsmCurrentState: toState,
             fsmRunningStatus: ContractFsmEventHandler.GetContractFsmRunningStatus(contractInfo, toState),
-            authStatus: ContractFsmEventHandler.GetContractAuthStatus(contractInfo, toState)
+            authStatus: ContractFsmEventHandler.GetContractAuthStatus(contractInfo, toState),
+            fsmDeclarations: contractInfo.fsmDeclarations
         };
         const transitionRecord: ContractTransitionRecord = {
             _id: this.mongoose.getNewObjectId(),
@@ -80,14 +84,15 @@ export class ContractFsmEventHandler {
         if (![ContractFsmRunningStatusEnum.InitializedError, ContractFsmRunningStatusEnum.Uninitialized].includes(contractInfo.fsmRunningStatus)) {
             return;
         }
+        await this.contractEnvironmentVariableHandler.initialStaticEnvironmentVariable(contractInfo);
         // contractInfo.fsmDeclarations.envArgs = {};
-        for (const [_, stateDescription] of Object.entries(contractInfo.policyInfo.fsmDescriptionInfo)) {
-            for (const [_, eventInfo] of Object.entries(stateDescription.transition ?? {})) {
-                if (eventInfo.code === PolicyEventEnum.TransactionEvent) {
-                    // 此处需要校验账号信息或者赋值环境变量
-                }
-            }
-        }
+        // for (const [_, stateDescription] of Object.entries(contractInfo.policyInfo.fsmDescriptionInfo)) {
+        //     for (const [_, eventInfo] of Object.entries(stateDescription.transition ?? {})) {
+        //         if (eventInfo.code === PolicyEventEnum.TransactionEvent) {
+        //             // 此处需要校验账号信息或者赋值环境变量
+        //         }
+        //     }
+        // }
     }
 
     /**

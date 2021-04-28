@@ -27,6 +27,10 @@ export declare class OutsideApiService implements IOutsideApiService {
      */
     getUserInfo(userId: number): Promise<UserInfo>;
     /**
+     * 获取用户交易账号
+     */
+    getIndividualTransactionAccounts(userId: number): Promise<any>;
+    /**
      * 获取节点信息
      * @param {number} nodeId
      * @returns {Promise<NodeInfo>}

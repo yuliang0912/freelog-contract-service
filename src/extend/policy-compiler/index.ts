@@ -44,7 +44,7 @@ export class PolicyCompiler implements IPolicyCompiler {
         return {
             policyId: this.generatePolicyId(subjectType, policyText),
             subjectType, policyText,
-            fsmDeclarationInfo: state_machine.declarations,
+            fsmDeclarationInfo: Object.assign({}, state_machine.declarations || {}, state_machine.description || {}),
             fsmDescriptionInfo: state_machine.states,
         };
     }

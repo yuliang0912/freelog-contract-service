@@ -50,6 +50,13 @@ export class OutsideApiService implements IOutsideApiService {
     }
 
     /**
+     * 获取用户交易账号
+     */
+    async getIndividualTransactionAccounts(userId: number) {
+        return this.ctx.curlIntranetApi(`${this.ctx.webApi.accountInfoV2}/individualAccounts/${userId}`);
+    }
+
+    /**
      * 获取节点信息
      * @param {number} nodeId
      * @returns {Promise<NodeInfo>}

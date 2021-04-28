@@ -9,7 +9,6 @@ export declare class ContractController {
     mongoConditionBuilder: IMongoConditionBuilder;
     buildContractStateMachine: (contractInfo: ContractInfo) => IContractStateMachine;
     outsideApiService: OutsideApiService;
-    test(): Promise<void>;
     index(): Promise<void>;
     list(): Promise<void>;
     createContract(): Promise<void>;

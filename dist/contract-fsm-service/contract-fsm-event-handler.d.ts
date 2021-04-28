@@ -2,10 +2,12 @@ import { ContractFsmRunningStatusEnum } from '../enum';
 import { ContractInfo, ContractTransitionRecord, IContractTriggerEventMessage } from '../interface';
 import { IMongodbOperation } from 'egg-freelog-base';
 import { ClientSession } from 'mongoose';
+import { ContractEnvironmentVariableHandler } from './contract-environment-variable-handler';
 export declare class ContractFsmEventHandler {
     mongoose: any;
     contractInfoProvider: IMongodbOperation<ContractInfo>;
     contractTransitionRecordProvider: IMongodbOperation<ContractTransitionRecord>;
+    contractEnvironmentVariableHandler: ContractEnvironmentVariableHandler;
     /**
      * 同步订单状态,并且记录订单变更历史
      * 1.同步合同的授权状态
@@ -29,12 +31,6 @@ export declare class ContractFsmEventHandler {
      */
     contractInitialErrorHandle(contractInfo: ContractInfo, session: ClientSession, eventInfo: IContractTriggerEventMessage, errorMsg: string): Promise<{
         n: number;
-        /**
-         * 执行初始化操作
-         * @param contractInfo
-         * @param session
-         * @param eventInfo
-         */
         nModified: number;
         ok: number;
     }>;

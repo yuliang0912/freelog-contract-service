@@ -12,6 +12,7 @@
     "javascript-state-machine": "^3.1.0",
     "jsonschema": "^1.2.6",
     "kafkajs": "^1.15.0",
+    "lodash": "^4.17.21",
     "midway": "^1.20.2",
     "moment": "^2.29.1",
     "mongoose": "^5.12.6",

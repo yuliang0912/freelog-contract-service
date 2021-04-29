@@ -1,4 +1,4 @@
-import {provide, inject} from 'midway';
+import {inject, provide} from 'midway';
 import {ContractInfo, IContractStateMachine, PolicyEventInfo} from '../../interface';
 import {PolicyEventEnum} from '../../enum';
 import {PolicyService} from './policy-service';
@@ -36,7 +36,7 @@ export class ContractEventExecService {
      * @param args
      */
     async execContractEvent(contractInfo: ContractInfo, eventType: PolicyEventEnum, eventId: string, ...args) {
-        if (contractInfo?.licenseeOwnerId !== this.ctx.userId || contractInfo?.licensorOwnerId !== this.ctx.userId) {
+        if (!this.contractExecutePermissionCheck(contractInfo, eventType)) {
             throw new AuthorizationError(this.ctx.gettext('user-authorization-failed'));
         }
         if (!contractInfo.policyInfo) {
@@ -74,9 +74,22 @@ export class ContractEventExecService {
         const contractInfo = contractFsm.contractInfo;
         let reciprocalAccountId = args.account;
         if (this.contractEnvironmentVariableHandler.isIncludesStaticEnvironmentVariable(reciprocalAccountId)) {
-            const envArgInfo = await this.contractEnvironmentVariableHandler.getEnvironmentVariable(contractInfo, args.account);
+            const envArgInfo = await this.contractEnvironmentVariableHandler.getEnvironmentVariable(contractInfo, reciprocalAccountId);
             reciprocalAccountId = envArgInfo?.accountId; // 合约初始化成功,则一定存在账户ID属性.
         }
         return this.outsideApiService.contractPayment(accountId, reciprocalAccountId, transactionAmount, contractInfo.contractId, contractInfo.contractName, eventId, password);
+    }
+
+    /**
+     * 合约执行权限校验
+     * @param contractInfo
+     * @param eventType
+     * @private
+     */
+    private contractExecutePermissionCheck(contractInfo: ContractInfo, eventType: PolicyEventEnum) {
+        const isLicensee = contractInfo?.licenseeOwnerId === this.ctx.userId;
+        //const isLicensor = contractInfo?.licensorOwnerId === this.ctx.userId;
+        // 目前只支持乙方触发交易事件.后续动态调整,比如甲方没收保证金
+        return isLicensee && [PolicyEventEnum.TransactionEvent].includes(eventType);
     }
 }

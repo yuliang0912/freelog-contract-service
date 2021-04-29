@@ -29,4 +29,11 @@ export declare class ContractEventExecService {
      * @private
      */
     private transactionEventHandle;
+    /**
+     * 合约执行权限校验
+     * @param contractInfo
+     * @param eventType
+     * @private
+     */
+    private contractExecutePermissionCheck;
 }

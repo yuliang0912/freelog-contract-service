@@ -20,7 +20,7 @@ export class ContractEventController {
      * 支付事件
      */
     @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
-    @post('/:contractId/payment')
+    @post('/:contractId/events/payment')
     async payment() {
 
         const {ctx} = this;

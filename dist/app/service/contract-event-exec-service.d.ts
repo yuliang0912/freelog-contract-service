@@ -2,11 +2,13 @@ import { ContractInfo, IContractStateMachine } from '../../interface';
 import { PolicyEventEnum } from '../../enum';
 import { PolicyService } from './policy-service';
 import { OutsideApiService } from './outside-api-service';
+import { ContractEnvironmentVariableHandler } from '../../extend/contract-environment-variable-handler';
 export declare class ContractEventExecService {
     ctx: any;
     policyService: PolicyService;
     outsideApiService: OutsideApiService;
     buildContractStateMachine: (contractInfo: ContractInfo) => IContractStateMachine;
+    contractEnvironmentVariableHandler: ContractEnvironmentVariableHandler;
     private eventCodeHandlerMap;
     constructor();
     /**

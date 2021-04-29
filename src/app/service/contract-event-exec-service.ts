@@ -5,6 +5,7 @@ import {PolicyService} from './policy-service';
 import {ApplicationError, AuthorizationError} from 'egg-freelog-base';
 import {OutsideApiService} from './outside-api-service';
 import Decimal from 'decimal.js-light';
+import {ContractEnvironmentVariableHandler} from '../../extend/contract-environment-variable-handler';
 
 // 只执行需要人为触发的事件
 @provide()
@@ -18,6 +19,8 @@ export class ContractEventExecService {
     outsideApiService: OutsideApiService;
     @inject()
     buildContractStateMachine: (contractInfo: ContractInfo) => IContractStateMachine;
+    @inject()
+    contractEnvironmentVariableHandler: ContractEnvironmentVariableHandler;
 
     private eventCodeHandlerMap = new Map<string, (contractFsm: IContractStateMachine, eventInfo: PolicyEventInfo, ...args) => Promise<any>>();
 
@@ -50,7 +53,6 @@ export class ContractEventExecService {
         if (eventInfo.code !== eventType) {
             throw new ApplicationError('实际事件与预设的事件类型不匹配');
         }
-        // return this.eventCodeHandlerMap.get(eventInfo.code)(contractFsm, eventInfo, ...args);
         return Reflect.apply(this.eventCodeHandlerMap.get(eventInfo.code), this, [contractFsm, eventInfo, ...args]);
     }
 
@@ -63,13 +65,18 @@ export class ContractEventExecService {
      * @param password
      * @private
      */
-    private transactionEventHandle(contractFsm: IContractStateMachine, eventInfo: PolicyEventInfo, accountId: string, transactionAmount: number, password: string) {
+    private async transactionEventHandle(contractFsm: IContractStateMachine, eventInfo: PolicyEventInfo, accountId: string, transactionAmount: number, password: string) {
         const {args, eventId} = eventInfo;
         // 交易金额二次传递确认是为了保证前端显示的交易金额与后端的计算金额一致,防止出现技术失误
         if (!new Decimal(args.amount).eq(transactionAmount)) {
             throw new ApplicationError('交易金额与合约约定的金额不符合');
         }
         const contractInfo = contractFsm.contractInfo;
-        return this.outsideApiService.contractPayment(accountId, args.account, transactionAmount, contractInfo.contractId, contractInfo.contractName, eventId, password);
+        let reciprocalAccountId = args.account;
+        if (this.contractEnvironmentVariableHandler.isIncludesStaticEnvironmentVariable(reciprocalAccountId)) {
+            const envArgInfo = await this.contractEnvironmentVariableHandler.getEnvironmentVariable(contractInfo, args.account);
+            reciprocalAccountId = envArgInfo?.accountId; // 合约初始化成功,则一定存在账户ID属性.
+        }
+        return this.outsideApiService.contractPayment(accountId, reciprocalAccountId, transactionAmount, contractInfo.contractId, contractInfo.contractName, eventId, password);
     }
 }

@@ -61,6 +61,34 @@ export class ContractEnvironmentVariableHandler {
     }
 
     /**
+     * 获取合约环境变量
+     * @param contractInfo
+     * @param name
+     */
+    async getEnvironmentVariable(contractInfo: ContractInfo, name: string) {
+        if (this.isIncludesStaticEnvironmentVariable(name)) {
+            return contractInfo.fsmDeclarations.envArgs.find(x => x.name === name);
+        }
+        return null;
+    }
+
+    /**
+     * 是否存在环境变量
+     * @param name
+     */
+    isIncludesEnvironmentVariable(name: string) {
+        return ['self.account'].includes(name);
+    }
+
+    /**
+     * 是否包含静态环境变量(静态环境变量初始化之后就不在变更)
+     * @param name
+     */
+    isIncludesStaticEnvironmentVariable(name: string) {
+        return ContractEnvironmentVariableHandler.StaticEnvironmentVariables.includes(name);
+    }
+
+    /**
      * 获取全局环境变量
      */
     static get StaticEnvironmentVariables() {

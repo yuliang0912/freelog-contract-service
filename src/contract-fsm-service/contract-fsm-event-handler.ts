@@ -6,7 +6,7 @@ import {
 import {ContractLicenseeIdentityTypeEnum, IMongodbOperation} from 'egg-freelog-base';
 import {inject, plugin, provide, scope, ScopeEnum} from 'midway';
 import {ClientSession} from 'mongoose';
-import {ContractEnvironmentVariableHandler} from './contract-environment-variable-handler';
+import {ContractEnvironmentVariableHandler} from '../extend/contract-environment-variable-handler';
 
 @provide()
 @scope(ScopeEnum.Singleton)
@@ -84,15 +84,8 @@ export class ContractFsmEventHandler {
         if (![ContractFsmRunningStatusEnum.InitializedError, ContractFsmRunningStatusEnum.Uninitialized].includes(contractInfo.fsmRunningStatus)) {
             return;
         }
+        // 初始化静态全局环境变量
         await this.contractEnvironmentVariableHandler.initialStaticEnvironmentVariable(contractInfo);
-        // contractInfo.fsmDeclarations.envArgs = {};
-        // for (const [_, stateDescription] of Object.entries(contractInfo.policyInfo.fsmDescriptionInfo)) {
-        //     for (const [_, eventInfo] of Object.entries(stateDescription.transition ?? {})) {
-        //         if (eventInfo.code === PolicyEventEnum.TransactionEvent) {
-        //             // 此处需要校验账号信息或者赋值环境变量
-        //         }
-        //     }
-        // }
     }
 
     /**

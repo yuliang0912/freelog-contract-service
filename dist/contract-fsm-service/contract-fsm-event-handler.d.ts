@@ -2,7 +2,7 @@ import { ContractFsmRunningStatusEnum } from '../enum';
 import { ContractInfo, ContractTransitionRecord, IContractTriggerEventMessage } from '../interface';
 import { IMongodbOperation } from 'egg-freelog-base';
 import { ClientSession } from 'mongoose';
-import { ContractEnvironmentVariableHandler } from './contract-environment-variable-handler';
+import { ContractEnvironmentVariableHandler } from '../extend/contract-environment-variable-handler';
 export declare class ContractFsmEventHandler {
     mongoose: any;
     contractInfoProvider: IMongodbOperation<ContractInfo>;

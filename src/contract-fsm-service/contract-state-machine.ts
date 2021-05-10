@@ -203,7 +203,7 @@ class ContractStateMachine implements IContractStateMachine {
         }
         const currentEventInfo = this.eventMap.get(lifeCycle.transition);
         const eventHandleFuncName = `exec${currentEventInfo.code}Handle`;
-        const commonHandle = this.contractFsmEventTransitionAfterHandler.registerContractEvents(this.contractInfo, this.session, this.eventInfo, lifeCycle.from, lifeCycle.to);
+        const commonHandle = this.contractFsmEventTransitionAfterHandler.registerContractEvents(this.contractInfo, this.session, lifeCycle.from, lifeCycle.to);
         // 如果事件不需要单独处理,则默认返回true
         if (!currentEventInfo || !Reflect.has(this.contractFsmEventTransitionAfterHandler, eventHandleFuncName)) {
             return commonHandle;

@@ -1,6 +1,6 @@
 import {inject, provide, scope, ScopeEnum} from 'midway';
 import {ContractInfo, IContractTriggerEventMessage, PolicyEventInfo} from '../interface';
-import {forIn, pick} from 'lodash';
+import {forIn, isEmpty, pick} from 'lodash';
 import {ContractFsmRunningStatusEnum, PolicyEventEnum} from '../enum';
 import {KafkaClient} from '../kafka/client';
 import {IMongodbOperation} from 'egg-freelog-base';
@@ -22,30 +22,37 @@ export class ContractFsmEventTransitionAfterHandler {
      * 注册失败时,合约无法接受其他事件,直到合约注册成功为止
      * @param contractInfo
      * @param session
-     * @param eventInfo
      * @param fromState
      * @param toState
      */
-    async registerContractEvents(contractInfo: ContractInfo, session: ClientSession, eventInfo: IContractTriggerEventMessage, fromState: string, toState: string): Promise<void> {
+    async registerContractEvents(contractInfo: ContractInfo, session: ClientSession, fromState: string, toState: string): Promise<void> {
 
         const toBeRegisterEventInfos = this.getCanRegisterEvents(contractInfo, toState);
-        const alreadyRegisteredEventInfos = this.getCanRegisterEvents(contractInfo, fromState);
-        if (!toBeRegisterEventInfos.length && !alreadyRegisteredEventInfos.length) {
+        if (isEmpty(toBeRegisterEventInfos.length)) {
             return;
         }
         const eventBody = toBeRegisterEventInfos.map(eventInfo => pick(eventInfo, ['service', 'name', 'code', 'eventId', 'args']));
         try {
-            await this.kafkaClient.send({
-                topic: 'contract-fsm-event-register-topic', acks: -1,
-                messages: [{
-                    key: contractInfo.contractId,
-                    value: JSON.stringify(eventBody),
-                    headers: {contractId: contractInfo.contractId, fromState, toState}
-                }]
-            }).catch(error => this.errorHandle(contractInfo, session));
+            await this.sendContractRegisterEventToKafka(contractInfo, eventBody).catch(error => this.errorHandle(contractInfo, session));
         } catch (error) {
             await this.errorHandle(contractInfo, session);
         }
+    }
+
+    /**
+     * 发送合约注册事件到消息队列
+     * @param contractInfo
+     * @param eventBody
+     */
+    async sendContractRegisterEventToKafka(contractInfo: ContractInfo, eventBody) {
+        return this.kafkaClient.send({
+            topic: 'contract-fsm-event-register-topic', acks: -1,
+            messages: [{
+                key: contractInfo.contractId,
+                value: JSON.stringify(eventBody),
+                headers: {contractId: contractInfo.contractId}
+            }]
+        });
     }
 
     /**

@@ -3,11 +3,11 @@ import {
     EachBatchPayload,
     Kafka, Producer, ProducerBatch,
     ProducerRecord, RecordMetadata
-} from "kafkajs";
-import {config, init, provide, scope, ScopeEnum} from "midway";
-import {IKafkaSubscribeMessageHandle} from "../interface";
-import {groupBy, first} from 'lodash'
-import {ApplicationError} from "egg-freelog-base";
+} from 'kafkajs';
+import {config, init, provide, scope, ScopeEnum} from 'midway';
+import {IKafkaSubscribeMessageHandle} from '../interface';
+import {groupBy, first} from 'lodash';
+import {ApplicationError} from 'egg-freelog-base';
 
 /**
  * WIKI:https://kafka.js.org/docs/getting-started
@@ -39,7 +39,7 @@ export class KafkaClient {
     async subscribes(topics: IKafkaSubscribeMessageHandle[]) {
         const buildTopicGroupKey = (topic: string, groupId: string) => {
             return `topic_${topic}##group_id_${groupId}`;
-        }
+        };
         const topicGroup = groupBy(topics, x => x.consumerGroupId);
         for (const [groupId, topicGroups] of Object.entries(topicGroup)) {
             const consumer = this.kafka.consumer({groupId});
@@ -57,7 +57,7 @@ export class KafkaClient {
                     const asyncHandleFunc = this.consumerTopicAsyncHandleFunc.get(buildTopicGroupKey(batch.topic, groupId));
                     await Reflect.apply(asyncHandleFunc, null, args);
                 }
-            })
+            });
             this.consumers.push(consumer);
         }
     }
@@ -90,10 +90,10 @@ export class KafkaClient {
         this.producer.on(this.producer.events.CONNECT, () => {
             this.producerIsReady = true;
             console.log('kafka producer connected');
-        })
+        });
         this.producer.on(this.producer.events.DISCONNECT, () => {
             this.producerIsReady = false;
             console.log('kafka producer disconnect');
-        })
+        });
     }
 }

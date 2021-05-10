@@ -41,10 +41,11 @@ export class PolicyCompiler implements IPolicyCompiler {
             }
         }
 
+        let fsmDeclarationInfo = Object.assign({}, state_machine.declarations || {}, state_machine.description || {});
+        fsmDeclarationInfo.audiences = state_machine.audiences || [];
         return {
             policyId: this.generatePolicyId(subjectType, policyText),
-            subjectType, policyText,
-            fsmDeclarationInfo: Object.assign({}, state_machine.declarations || {}, state_machine.description || {}),
+            subjectType, policyText, fsmDeclarationInfo,
             fsmDescriptionInfo: state_machine.states,
         };
     }

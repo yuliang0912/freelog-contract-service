@@ -1,5 +1,5 @@
-import { Consumer, EachBatchPayload, Kafka, Producer, ProducerBatch, ProducerRecord, RecordMetadata } from "kafkajs";
-import { IKafkaSubscribeMessageHandle } from "../interface";
+import { Consumer, EachBatchPayload, Kafka, Producer, ProducerBatch, ProducerRecord, RecordMetadata } from 'kafkajs';
+import { IKafkaSubscribeMessageHandle } from '../interface';
 /**
  * WIKI:https://kafka.js.org/docs/getting-started
  */

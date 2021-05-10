@@ -1,4 +1,4 @@
-import { ContractInfo, IContractTriggerEventMessage, PolicyEventInfo } from '../interface';
+import { ContractInfo, PolicyEventInfo } from '../interface';
 import { KafkaClient } from '../kafka/client';
 import { IMongodbOperation } from 'egg-freelog-base';
 import { ClientSession } from 'mongoose';
@@ -12,11 +12,16 @@ export declare class ContractFsmEventTransitionAfterHandler {
      * 注册失败时,合约无法接受其他事件,直到合约注册成功为止
      * @param contractInfo
      * @param session
-     * @param eventInfo
      * @param fromState
      * @param toState
      */
-    registerContractEvents(contractInfo: ContractInfo, session: ClientSession, eventInfo: IContractTriggerEventMessage, fromState: string, toState: string): Promise<void>;
+    registerContractEvents(contractInfo: ContractInfo, session: ClientSession, fromState: string, toState: string): Promise<void>;
+    /**
+     * 发送合约注册事件到消息队列
+     * @param contractInfo
+     * @param eventBody
+     */
+    sendContractRegisterEventToKafka(contractInfo: ContractInfo, eventBody: any): Promise<import("kafkajs").RecordMetadata[]>;
     /**
      * 获取可以注册的事件集
      * @param contractInfo
@@ -31,6 +36,11 @@ export declare class ContractFsmEventTransitionAfterHandler {
     errorHandle(contractInfo: ContractInfo, session: ClientSession): Promise<{
         n: number;
         nModified: number;
+        /**
+         * 获取可以注册的事件集
+         * @param contractInfo
+         * @param state
+         */
         ok: number;
     }>;
     /**

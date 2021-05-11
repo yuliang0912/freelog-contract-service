@@ -121,19 +121,20 @@ export class ContractController {
         const {ctx} = this;
 
         const subjectId = ctx.checkBody('subjectId').exist().isMongoObjectId().value;
-        const subjectType = ctx.checkBody('subjectType').exist().in([SubjectTypeEnum.Presentable, SubjectTypeEnum.Resource, SubjectTypeEnum.UserGroup]).value;
         const policyId = ctx.checkBody('policyId').exist().isMd5().value;
         const licenseeId = ctx.checkBody('licenseeId').exist().value;
-        const licenseeIdentityType = ctx.checkBody('licenseeIdentityType').exist().toInt().in([ContractLicenseeIdentityTypeEnum.Resource, ContractLicenseeIdentityTypeEnum.Node, ContractLicenseeIdentityTypeEnum.ClientUser]).value;
+        // 先限制前端必须传,但是不使用
+        ctx.checkBody('subjectType').exist().in([SubjectTypeEnum.Presentable]).value;
+        ctx.checkBody('licenseeIdentityType').exist().toInt().in([ContractLicenseeIdentityTypeEnum.ClientUser]).value;
         ctx.validateParams();
 
-        if (licenseeIdentityType === ContractLicenseeIdentityTypeEnum.ClientUser && licenseeId.toString() !== ctx.userId.toString()) {
-            throw new ArgumentError(ctx.gettext('params-required-validate-failed', 'licenseeId'));
+        if (licenseeId.toString() !== ctx.userId.toString()) {
+            throw new ArgumentError(ctx.gettext('params-validate-failed', 'licenseeId'));
         }
 
-        await this.contractService.batchSignSubjects([{
-            subjectId, policyId
-        }], licenseeId, licenseeIdentityType, subjectType).then(contracts => ctx.success(first(contracts)));
+        await this.contractService.signClientUserPresentable(subjectId, policyId, licenseeId).then(contracts => ctx.success(first(contracts)));
+
+        // }], licenseeId, licenseeIdentityType, subjectType).then(contracts => ctx.success(first(contracts)));
     }
 
     @post('/batchSign')
@@ -158,7 +159,7 @@ export class ContractController {
             throw new ArgumentError(ctx.gettext('params-required-validate-failed', 'licenseeId'));
         }
 
-        await this.contractService.batchSignSubjects(subjects, licenseeId, licenseeIdentityType, subjectType).then(ctx.success);
+        await this.contractService.batchSignSubjects(subjects, licenseeId, licenseeIdentityType, subjectType, false).then(ctx.success);
     }
 
     @get('/count')

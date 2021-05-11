@@ -9,13 +9,20 @@ export declare class ContractService implements IContractService {
     outsideApiService: IOutsideApiService;
     buildContractStateMachine: (contractInfo: ContractInfo) => IContractStateMachine;
     /**
+     * C端用户签约展品
+     * @param presentableId
+     * @param policyId
+     * @param licenseeId
+     */
+    signClientUserPresentable(presentableId: string, policyId: string, licenseeId: number): Promise<ContractInfo[]>;
+    /**
      * 批量签约标的物
      * @param subjects
      * @param licenseeId
      * @param licenseeIdentityType
      * @param subjectType
      */
-    batchSignSubjects(subjects: BeSignSubjectOptions[], licenseeId: string | number, licenseeIdentityType: ContractLicenseeIdentityTypeEnum, subjectType: SubjectTypeEnum): Promise<ContractInfo[]>;
+    batchSignSubjects(subjects: BeSignSubjectOptions[], licenseeId: string | number, licenseeIdentityType: ContractLicenseeIdentityTypeEnum, subjectType: SubjectTypeEnum, isWaitInitial?: boolean): Promise<ContractInfo[]>;
     /**
      * 更新合同基础信息
      * @param {ContractInfo} contract

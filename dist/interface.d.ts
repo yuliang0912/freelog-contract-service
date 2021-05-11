@@ -129,13 +129,21 @@ export interface IContractService {
     setDefaultExecContract(contract: ContractInfo): Promise<boolean>;
     updateContractInfo(contract: ContractInfo, options: any): Promise<boolean>;
     /**
+     * C端用户签约展品
+     * @param presentableId
+     * @param policyId
+     * @param licenseeId
+     */
+    signClientUserPresentable(presentableId: string, policyId: string, licenseeId: number): Promise<ContractInfo[]>;
+    /**
      * 批量签约标的物
      * @param subjects
      * @param licenseeId
      * @param identityType
      * @param subjectType
+     * @param isWaitInitial
      */
-    batchSignSubjects(subjects: BeSignSubjectOptions[], licenseeId: string | number, identityType: ContractLicenseeIdentityTypeEnum, subjectType: SubjectTypeEnum): Promise<ContractInfo[]>;
+    batchSignSubjects(subjects: BeSignSubjectOptions[], licenseeId: string | number, identityType: ContractLicenseeIdentityTypeEnum, subjectType: SubjectTypeEnum, isWaitInitial: boolean): Promise<ContractInfo[]>;
     fillContractPolicyInfo(contracts: ContractInfo[]): Promise<ContractInfo[]>;
     findLicenseeSignCounts(licenseeOwnerIds: number[], licenseeIdentityType: ContractLicenseeIdentityTypeEnum): Promise<Array<{
         licensorOwnerId: number;

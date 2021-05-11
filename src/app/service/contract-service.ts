@@ -34,13 +34,26 @@ export class ContractService implements IContractService {
     buildContractStateMachine: (contractInfo: ContractInfo) => IContractStateMachine;
 
     /**
+     * C端用户签约展品
+     * @param presentableId
+     * @param policyId
+     * @param licenseeId
+     */
+    async signClientUserPresentable(presentableId: string, policyId: string, licenseeId: number): Promise<ContractInfo[]> {
+        const contracts = await this.batchSignSubjects([{
+            subjectId: presentableId, policyId
+        }], licenseeId, ContractLicenseeIdentityTypeEnum.ClientUser, SubjectTypeEnum.Presentable, true);
+        return this.contractInfoProvider.find({_id: {$in: contracts.map(x => x.contractId)}});
+    }
+
+    /**
      * 批量签约标的物
      * @param subjects
      * @param licenseeId
      * @param licenseeIdentityType
      * @param subjectType
      */
-    async batchSignSubjects(subjects: BeSignSubjectOptions[], licenseeId: string | number, licenseeIdentityType: ContractLicenseeIdentityTypeEnum, subjectType: SubjectTypeEnum): Promise<ContractInfo[]> {
+    async batchSignSubjects(subjects: BeSignSubjectOptions[], licenseeId: string | number, licenseeIdentityType: ContractLicenseeIdentityTypeEnum, subjectType: SubjectTypeEnum, isWaitInitial = false): Promise<ContractInfo[]> {
 
         // console.log('参数传递待签约标的物数量:' + subjects.map(x => x.policyId).toString());
         const reSignCheckResults = await this._checkIsCanReSignContracts(subjects.map(subject => Object({
@@ -106,7 +119,11 @@ export class ContractService implements IContractService {
 
         const latestSignedContracts = await this.contractInfoProvider.insertMany(beSignContracts);
 
-        this._initialContracts(latestSignedContracts, beSignSubjectPolicyMap).catch();
+        if (isWaitInitial) {
+            await this._initialContracts(latestSignedContracts, beSignSubjectPolicyMap).catch();
+        } else {
+            this._initialContracts(latestSignedContracts, beSignSubjectPolicyMap).catch();
+        }
 
         return [...latestSignedContracts, ...hasSignedAndEfficientContracts];
     }
@@ -176,7 +193,7 @@ export class ContractService implements IContractService {
     }
 
     async findIntervalList(condition: object, skip?: number, limit?: number, projection?: string[], sort?: object): Promise<PageResult<ContractInfo>> {
-        return this.contractInfoProvider.findIntervalList(condition, skip, limit, projection?.toString(), sort);
+        return this.contractInfoProvider.findIntervalList(condition, skip, limit, projection?.join(' '), sort);
     }
 
     async count(condition: object): Promise<number> {

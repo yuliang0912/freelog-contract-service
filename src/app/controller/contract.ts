@@ -236,7 +236,6 @@ export class ContractController {
         await this.contractService.setDefaultExecContract(contractInfo);
     }
 
-
     @del('/test/deleteContracts')
     @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
     async deleteClientUserPresentableContract() {

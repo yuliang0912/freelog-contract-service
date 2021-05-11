@@ -239,10 +239,11 @@ export class ContractController {
     @del('/test/deleteContracts')
     @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
     async deleteClientUserPresentableContract() {
+
         const {ctx} = this;
-        const userId = ctx.checkBody('userId').exist().isUserId().toInt().value;
-        const contractIds = ctx.checkBody('contractIds').optional().isArray().value;
-        const nodeId = ctx.checkBody('nodeId').optional().toInt().value;
+        const userId = ctx.checkQuery('userId').exist().isUserId().toInt().value;
+        const contractIds = ctx.checkQuery('contractIds').optional().isSplitMongoObjectId().toSplitArray().value;
+        const nodeId = ctx.checkQuery('nodeId').optional().toInt().value;
         ctx.validateParams();
 
         let condition: any = {

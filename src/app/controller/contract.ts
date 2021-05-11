@@ -1,5 +1,5 @@
 import {first, isEmpty, isString, isUndefined} from 'lodash';
-import {controller, get, inject, post, provide, put} from 'midway';
+import {controller, del, get, inject, post, provide, put} from 'midway';
 import {
     ContractInfo, IContractService,
     IContractStateMachine, IMongoConditionBuilder, IPolicyService
@@ -7,7 +7,7 @@ import {
 import {
     ApplicationError, ArgumentError, AuthorizationError, CommonRegex,
     FreelogContext, IdentityTypeEnum, visitorIdentityValidator,
-    SubjectTypeEnum, ContractLicenseeIdentityTypeEnum, ContractStatusEnum, IJsonSchemaValidate
+    SubjectTypeEnum, ContractLicenseeIdentityTypeEnum, ContractStatusEnum, IJsonSchemaValidate, IMongodbOperation
 } from 'egg-freelog-base';
 import {OutsideApiService} from '../service/outside-api-service';
 
@@ -29,6 +29,8 @@ export class ContractController {
     buildContractStateMachine: (contractInfo: ContractInfo) => IContractStateMachine;
     @inject()
     outsideApiService: OutsideApiService;
+    @inject()
+    contractInfoProvider: IMongodbOperation<ContractInfo>;
 
     @get('/')
     @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
@@ -232,5 +234,29 @@ export class ContractController {
         }
 
         await this.contractService.setDefaultExecContract(contractInfo);
+    }
+
+
+    @del('/test/deleteContracts')
+    @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
+    async deleteClientUserPresentableContract() {
+        const {ctx} = this;
+        const userId = ctx.checkBody('userId').exist().isUserId().toInt().value;
+        const contractIds = ctx.checkBody('contractIds').optional().isArray().value;
+        const nodeId = ctx.checkBody('nodeId').optional().toInt().value;
+        ctx.validateParams();
+
+        let condition: any = {
+            licenseeId: userId.toString(), licenseeIdentityType: 3, subjectType: 2
+        };
+        if (contractIds?.length) {
+            condition._id = {$in: contractIds};
+        }
+        if (nodeId) {
+            condition.licenseeId = nodeId.toString();
+        }
+        await this.contractInfoProvider.deleteMany(condition).then(x => ctx.success({
+            result: true, deletedLine: x.n
+        }));
     }
 }

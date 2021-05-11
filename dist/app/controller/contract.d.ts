@@ -1,5 +1,5 @@
 import { ContractInfo, IContractService, IContractStateMachine, IMongoConditionBuilder, IPolicyService } from '../../interface';
-import { FreelogContext, IJsonSchemaValidate } from 'egg-freelog-base';
+import { FreelogContext, IJsonSchemaValidate, IMongodbOperation } from 'egg-freelog-base';
 import { OutsideApiService } from '../service/outside-api-service';
 export declare class ContractController {
     ctx: FreelogContext;
@@ -9,6 +9,7 @@ export declare class ContractController {
     mongoConditionBuilder: IMongoConditionBuilder;
     buildContractStateMachine: (contractInfo: ContractInfo) => IContractStateMachine;
     outsideApiService: OutsideApiService;
+    contractInfoProvider: IMongodbOperation<ContractInfo>;
     index(): Promise<void>;
     list(): Promise<void>;
     createContract(): Promise<void>;
@@ -17,4 +18,5 @@ export declare class ContractController {
     show(): Promise<void>;
     isCanExecEvent(): Promise<void>;
     setDefault(): Promise<void>;
+    deleteClientUserPresentableContract(): Promise<void>;
 }

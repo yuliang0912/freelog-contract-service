@@ -153,7 +153,7 @@ export class OutsideApiService implements IOutsideApiService {
         if (!isEmpty(offlinePresentableIds)) {
             throw new ApplicationError(this.ctx.gettext('sign-subject-offline-error', `,resourceId:[${offlinePresentableIds.toString()}]`));
         }
-        const nodeInfoMap: Map<number, NodeInfo> = await this.ctx.curlIntranetApi(`${this.ctx.webApi.nodeInfoV2}/list?nodeId=${presentableInfos.map(x => x.nodeId).toString()}`).then(list => {
+        const nodeInfoMap: Map<number, NodeInfo> = await this.ctx.curlIntranetApi(`${this.ctx.webApi.nodeInfoV2}/list?nodeIds=${presentableInfos.map(x => x.nodeId).toString()}`).then(list => {
             return new Map(list.map(x => [x.nodeId, x]));
         });
 

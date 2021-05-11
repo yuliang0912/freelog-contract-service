@@ -100,7 +100,7 @@ export class OutsideApiService implements IOutsideApiService {
      */
     async getLicenseeInfo(licenseeId: string | number, identityType: ContractLicenseeIdentityTypeEnum): Promise<LicenseeInfo> {
         if (!this.licenseeWrapMap.has(identityType)) {
-            throw new ApplicationError(`please check code,not support identityType:${identityType}.`);
+            throw new ApplicationError(`please check code, not support identityType:${identityType}.`);
         }
         return this.licenseeWrapMap.get(identityType).call(this, licenseeId);
     }
@@ -226,7 +226,7 @@ export class OutsideApiService implements IOutsideApiService {
      */
     async _userInfoWrapToLicenseeInfo(userId: number): Promise<LicenseeInfo> {
         const userInfo = this.ctx.identityInfo?.userInfo as UserInfo;
-        if (userInfo?.userId !== userId) {
+        if (userInfo?.userId.toString() !== userId.toString()) {
             throw new ApplicationError(this.ctx.gettext('user-authorization-failed'));
         }
         return {

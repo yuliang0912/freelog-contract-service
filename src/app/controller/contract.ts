@@ -127,7 +127,7 @@ export class ContractController {
         const licenseeIdentityType = ctx.checkBody('licenseeIdentityType').exist().toInt().in([ContractLicenseeIdentityTypeEnum.Resource, ContractLicenseeIdentityTypeEnum.Node, ContractLicenseeIdentityTypeEnum.ClientUser]).value;
         ctx.validateParams();
 
-        if (licenseeIdentityType === ContractLicenseeIdentityTypeEnum.ClientUser && licenseeId !== ctx.userId.toString()) {
+        if (licenseeIdentityType === ContractLicenseeIdentityTypeEnum.ClientUser && licenseeId.toString() !== ctx.userId.toString()) {
             throw new ArgumentError(ctx.gettext('params-required-validate-failed', 'licenseeId'));
         }
 

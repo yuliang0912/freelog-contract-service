@@ -64,14 +64,14 @@ export class ContractFsmEventHandler {
      * @param eventInfo
      * @param errorMsg
      */
-    async contractInitialErrorHandle(contractInfo: ContractInfo, session: ClientSession, eventInfo: IContractTriggerEventMessage, errorMsg: string) {
+    async contractInitialErrorHandle(contractInfo: ContractInfo, eventInfo: IContractTriggerEventMessage, errorMsg: string) {
         console.log(`合约${contractInfo.contractId}初始化错误,${errorMsg}`);
         return this.contractInfoProvider.updateOne({
             _id: contractInfo.contractId,
             fsmRunningStatus: {$in: [ContractFsmRunningStatusEnum.Uninitialized, ContractFsmRunningStatusEnum.InitializedError]}
         }, {
             fsmRunningStatus: ContractFsmRunningStatusEnum.InitializedError
-        }, {session});
+        });
     }
 
     /**

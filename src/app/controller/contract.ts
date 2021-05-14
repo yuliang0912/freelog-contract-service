@@ -241,13 +241,12 @@ export class ContractController {
     async deleteClientUserPresentableContract() {
 
         const {ctx} = this;
-        const userId = ctx.checkQuery('userId').exist().isUserId().toInt().value;
         const contractIds = ctx.checkQuery('contractIds').optional().isSplitMongoObjectId().toSplitArray().value;
         const nodeId = ctx.checkQuery('nodeId').optional().toInt().value;
         ctx.validateParams();
 
         let condition: any = {
-            licenseeId: userId.toString(), licenseeIdentityType: 3, subjectType: 2
+            licenseeId: ctx.userId.toString(), licenseeIdentityType: 3, subjectType: 2
         };
         if (contractIds?.length) {
             condition._id = {$in: contractIds};

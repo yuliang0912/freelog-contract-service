@@ -1,6 +1,6 @@
 import { ContractAuthStatusEnum, ContractEventEnum, ContractFsmEventEnum, ContractFsmRunningStatusEnum, OutsideServiceEventEnum } from './enum';
 import { PageResult, SubjectTypeEnum, ContractStatusEnum, ContractLicenseeIdentityTypeEnum } from 'egg-freelog-base';
-import { EachBatchPayload } from 'kafkajs';
+import { EachMessagePayload } from 'kafkajs';
 import { ClientSession } from 'mongoose';
 /**
  * 合约信息
@@ -120,6 +120,8 @@ export interface BeSignSubjectOptions {
     policyId: string;
 }
 export interface IContractService {
+    findContractById(contractId: string, isLoadingPolicy: any): Promise<ContractInfo>;
+    findContractByIds(contractIds: string[], isLoadingPolicy: any): Promise<ContractInfo[]>;
     findOne(condition: object, ...args: any[]): Promise<ContractInfo>;
     findById(contractId: string, ...args: any[]): Promise<ContractInfo>;
     find(condition: object, ...args: any[]): Promise<ContractInfo[]>;
@@ -209,7 +211,7 @@ export interface IMongoConditionBuilder {
 export interface IKafkaSubscribeMessageHandle {
     subscribeTopicName: string;
     consumerGroupId: string;
-    messageHandle(payload: EachBatchPayload): Promise<void>;
+    messageHandle(payload: EachMessagePayload): Promise<void>;
 }
 export interface IContractStateMachine {
     contractInfo: ContractInfo;

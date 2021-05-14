@@ -117,9 +117,11 @@ class ContractStateMachine implements IContractStateMachine {
         this.eventInfo = {
             contractId: this.contractInfo.contractId, code: 'init', eventId: 'init', eventTime: new Date()
         } as any;
-        return this.fsm.init().catch(error => {
-            return this.contractFsmEventHandler.contractInitialErrorHandle(this.contractInfo, session, this.eventInfo, error?.toString()).then();
-        });
+        return this.fsm.init();
+        //.catch(error => {
+        //             this.contractFsmEventHandler.contractInitialErrorHandle(this.contractInfo, this.eventInfo, error?.toString()).then();
+        //             throw error;
+        //         })
     }
 
     /**
@@ -206,6 +208,7 @@ class ContractStateMachine implements IContractStateMachine {
         const commonHandle = this.contractFsmEventTransitionAfterHandler.registerContractEvents(this.contractInfo, this.session, lifeCycle.from, lifeCycle.to);
         // 如果事件不需要单独处理,则默认返回true
         if (!currentEventInfo || !Reflect.has(this.contractFsmEventTransitionAfterHandler, eventHandleFuncName)) {
+            console.log('===================================');
             return commonHandle;
         }
         const specificEventHandle = Reflect.apply(this.contractFsmEventTransitionAfterHandler[eventHandleFuncName], this.contractFsmEventTransitionAfterHandler, [this.contractInfo, this.session, this.eventInfo, this.latestTransitionStateId]);
@@ -220,6 +223,7 @@ class ContractStateMachine implements IContractStateMachine {
         const currentEventInfo = this.eventMap.get(transition);
         const eventHandleFuncName = `exec${currentEventInfo?.code}InvalidEventHandle`;
         const commonHandle = this.contractFsmInvalidTransitionHandler.invalidTransitionHandle(this.contractInfo, this.session, this.eventInfo, '合约当前状态不允许执行此事件');
+        console.log('==========无效事件,不处理==========');
         // 如果事件不需要单独处理,则默认返回true
         if (!currentEventInfo || !Reflect.has(this.contractFsmInvalidTransitionHandler, eventHandleFuncName)) {
             return commonHandle;

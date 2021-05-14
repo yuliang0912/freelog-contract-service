@@ -1,5 +1,5 @@
 import { ContractInfo, IContractStateMachine, IKafkaSubscribeMessageHandle, PolicyInfo } from '../interface';
-import { EachBatchPayload } from 'kafkajs';
+import { EachMessagePayload } from 'kafkajs';
 import { IMongodbOperation } from 'egg-freelog-base';
 import { MongoClient } from 'mongodb';
 export declare class ContractMqEventTriggerHandle implements IKafkaSubscribeMessageHandle {
@@ -14,5 +14,5 @@ export declare class ContractMqEventTriggerHandle implements IKafkaSubscribeMess
      * mq消息处理
      * @param payload
      */
-    messageHandle(payload: EachBatchPayload): Promise<void>;
+    messageHandle(payload: EachMessagePayload): Promise<void>;
 }

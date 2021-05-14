@@ -28,7 +28,7 @@ export class ContractFsmEventTransitionAfterHandler {
     async registerContractEvents(contractInfo: ContractInfo, session: ClientSession, fromState: string, toState: string): Promise<void> {
 
         const toBeRegisterEventInfos = this.getCanRegisterEvents(contractInfo, toState);
-        if (isEmpty(toBeRegisterEventInfos.length)) {
+        if (isEmpty(toBeRegisterEventInfos)) {
             return;
         }
         const eventBody = toBeRegisterEventInfos.map(eventInfo => pick(eventInfo, ['service', 'name', 'code', 'eventId', 'args']));

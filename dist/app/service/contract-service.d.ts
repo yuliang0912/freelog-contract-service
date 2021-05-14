@@ -9,6 +9,18 @@ export declare class ContractService implements IContractService {
     outsideApiService: IOutsideApiService;
     buildContractStateMachine: (contractInfo: ContractInfo) => IContractStateMachine;
     /**
+     * 根据ID获取合约
+     * @param contractId
+     * @param isLoadingPolicy
+     */
+    findContractById(contractId: string, isLoadingPolicy?: boolean): Promise<ContractInfo>;
+    /**
+     * 批量获取合约
+     * @param contractIds
+     * @param isLoadingPolicy
+     */
+    findContractByIds(contractIds: string[], isLoadingPolicy?: boolean): Promise<ContractInfo[]>;
+    /**
      * C端用户签约展品
      * @param presentableId
      * @param policyId
@@ -74,5 +86,5 @@ export declare class ContractService implements IContractService {
      * @param contracts
      * @param subjectPolicyMap
      */
-    _initialContracts(contracts: ContractInfo[], subjectPolicyMap: Map<string, PolicyInfo>): Promise<any>;
+    _initialContracts(contracts: ContractInfo[], subjectPolicyMap: Map<string, PolicyInfo>): Promise<void>;
 }

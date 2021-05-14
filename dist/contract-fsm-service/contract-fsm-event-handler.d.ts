@@ -29,7 +29,7 @@ export declare class ContractFsmEventHandler {
      * @param eventInfo
      * @param errorMsg
      */
-    contractInitialErrorHandle(contractInfo: ContractInfo, session: ClientSession, eventInfo: IContractTriggerEventMessage, errorMsg: string): Promise<{
+    contractInitialErrorHandle(contractInfo: ContractInfo, eventInfo: IContractTriggerEventMessage, errorMsg: string): Promise<{
         n: number;
         nModified: number;
         ok: number;

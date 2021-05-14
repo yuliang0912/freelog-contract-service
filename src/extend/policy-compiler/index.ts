@@ -26,6 +26,7 @@ export class PolicyCompiler implements IPolicyCompiler {
             targetUrl = 'http://api.testfreelog.com';
         }
         const {state_machine} = await compile(policyText, SubjectTypeEnum[subjectType].toLocaleLowerCase(), targetUrl, 'dev');
+        console.log(state_machine);
         const serviceStateMap = new Map((state_machine.declarations.serviceStates as any[]).map(x => [x.name, capitalize(x.type)]));
         for (const [_, fsmStateDescriptionInfo] of Object.entries(state_machine.states)) {
             fsmStateDescriptionInfo['isAuth'] = fsmStateDescriptionInfo['serviceStates'].some(x => serviceStateMap.get(x) === ContractColorStateTypeEnum[ContractColorStateTypeEnum.Authorization]);

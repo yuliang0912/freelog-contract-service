@@ -34,6 +34,32 @@ export class ContractService implements IContractService {
     buildContractStateMachine: (contractInfo: ContractInfo) => IContractStateMachine;
 
     /**
+     * 根据ID获取合约
+     * @param contractId
+     * @param isLoadingPolicy
+     */
+    async findContractById(contractId: string, isLoadingPolicy = false) {
+        const contractInfo = await this.contractInfoProvider.findOne({_id: contractId});
+        if (isLoadingPolicy) {
+            await this.fillContractPolicyInfo([contractInfo]);
+        }
+        return contractInfo;
+    }
+
+    /**
+     * 批量获取合约
+     * @param contractIds
+     * @param isLoadingPolicy
+     */
+    async findContractByIds(contractIds: string[], isLoadingPolicy = false) {
+        const contracts = await this.contractInfoProvider.find({_id: {$in: contractIds}});
+        if (isLoadingPolicy) {
+            await this.fillContractPolicyInfo(contracts);
+        }
+        return contracts;
+    }
+
+    /**
      * C端用户签约展品
      * @param presentableId
      * @param policyId
@@ -43,6 +69,7 @@ export class ContractService implements IContractService {
         const contracts = await this.batchSignSubjects([{
             subjectId: presentableId, policyId
         }], licenseeId, ContractLicenseeIdentityTypeEnum.ClientUser, SubjectTypeEnum.Presentable, true);
+
         return this.contractInfoProvider.find({_id: {$in: contracts.map(x => x.contractId)}});
     }
 
@@ -271,19 +298,18 @@ export class ContractService implements IContractService {
      * @param subjectPolicyMap
      */
     async _initialContracts(contracts: ContractInfo[], subjectPolicyMap: Map<string, PolicyInfo>) {
-        try {
-            if (!contracts?.length) {
-                return;
+        const session = await this.mongoose.startSession();
+        await session.withTransaction(() => {
+            const tasks = [];
+            for (const contract of contracts) {
+                contract.policyInfo = subjectPolicyMap.get(contract.policyId);
+                tasks.push(this.buildContractStateMachine(contract).execInitial(session));
             }
-            const session = await this.mongoose.startSession();
-            return session.withTransaction(async () => {
-                for (const contract of contracts) {
-                    contract.policyInfo = subjectPolicyMap.get(contract.policyId);
-                    await this.buildContractStateMachine(contract).execInitial(session);
-                }
-            }).catch().finally(() => session.endSession());
-        } catch (error) {
-            // 错误不用处理,后续有job会定期检查未初始化的合约
-        }
+            return Promise.all(tasks) as any;
+        }).catch(error => {
+            console.log('合约初始化错误,message:' + error.toString());
+        }).finally(() => {
+            session.endSession();
+        });
     }
 }

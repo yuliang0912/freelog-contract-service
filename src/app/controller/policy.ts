@@ -51,6 +51,6 @@ export class PolicyController {
         const projection: string[] = ctx.checkQuery('projection').optional().toSplitArray().default([]).value;
         ctx.validateParams();
 
-        await this.policyService.findOne({policyId}, projection.join(' ')).then(ctx.success);
+        await this.policyService.findOne({policyId}, projection.join(' ')).then(data => ctx.success(data['toObject']()));
     }
 }

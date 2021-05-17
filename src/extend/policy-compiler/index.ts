@@ -1,5 +1,4 @@
 import {v4} from 'uuid';
-import {capitalize} from 'lodash';
 import {config, provide, scope} from 'midway';
 import {compile} from '@freelog/resource-policy-lang';
 import {IPolicyCompiler, PolicyInfo} from '../../interface';
@@ -26,11 +25,11 @@ export class PolicyCompiler implements IPolicyCompiler {
             targetUrl = 'http://api.testfreelog.com';
         }
         const {state_machine} = await compile(policyText, SubjectTypeEnum[subjectType].toLocaleLowerCase(), targetUrl, 'dev');
-        console.log(state_machine);
-        const serviceStateMap = new Map((state_machine.declarations.serviceStates as any[]).map(x => [x.name, capitalize(x.type)]));
+        const serviceStateMap = new Map((state_machine.declarations.serviceStates as any[]).map(x => [x.name, x.type.toLowerCase()]));
+
         for (const [_, fsmStateDescriptionInfo] of Object.entries(state_machine.states)) {
             fsmStateDescriptionInfo['isAuth'] = fsmStateDescriptionInfo['serviceStates'].some(x => serviceStateMap.get(x) === ContractColorStateTypeEnum[ContractColorStateTypeEnum.Authorization]);
-            fsmStateDescriptionInfo['isTestAuth'] = fsmStateDescriptionInfo['serviceStates'].some(x => serviceStateMap.get(x) === ContractColorStateTypeEnum[ContractColorStateTypeEnum.TestAuthorization]);
+            fsmStateDescriptionInfo['isTestAuth'] = fsmStateDescriptionInfo['serviceStates'].some(x => serviceStateMap.get(x) === ContractColorStateTypeEnum[ContractColorStateTypeEnum.TestAuthorization].toLowerCase());
             if (!fsmStateDescriptionInfo['transition']) {
                 fsmStateDescriptionInfo['isTerminate'] = true;
                 continue;

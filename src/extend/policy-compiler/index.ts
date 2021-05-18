@@ -28,7 +28,7 @@ export class PolicyCompiler implements IPolicyCompiler {
         const serviceStateMap = new Map((state_machine.declarations.serviceStates as any[]).map(x => [x.name, x.type.toLowerCase()]));
 
         for (const [_, fsmStateDescriptionInfo] of Object.entries(state_machine.states)) {
-            fsmStateDescriptionInfo['isAuth'] = fsmStateDescriptionInfo['serviceStates'].some(x => serviceStateMap.get(x) === ContractColorStateTypeEnum[ContractColorStateTypeEnum.Authorization]);
+            fsmStateDescriptionInfo['isAuth'] = fsmStateDescriptionInfo['serviceStates'].some(x => serviceStateMap.get(x) === ContractColorStateTypeEnum[ContractColorStateTypeEnum.Authorization].toLowerCase());
             fsmStateDescriptionInfo['isTestAuth'] = fsmStateDescriptionInfo['serviceStates'].some(x => serviceStateMap.get(x) === ContractColorStateTypeEnum[ContractColorStateTypeEnum.TestAuthorization].toLowerCase());
             if (!fsmStateDescriptionInfo['transition']) {
                 fsmStateDescriptionInfo['isTerminate'] = true;

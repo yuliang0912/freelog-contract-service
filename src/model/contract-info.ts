@@ -76,7 +76,7 @@ export class ContractInfoModel extends MongooseModelBase {
             getters: true,
             virtuals: true,
             transform(doc, ret) {
-                return assign({contractId: doc.id}, omit(ret, ['_id', 'id', 'sortId', 'signature', 'uniqueKey', 'fsmDeclarations']));
+                return assign({contractId: doc.id}, omit(ret, ['_id', 'id', 'sortId', 'signature', 'uniqueKey']));
             }
         };
     }

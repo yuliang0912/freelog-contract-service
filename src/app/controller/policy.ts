@@ -42,6 +42,28 @@ export class PolicyController {
         await this.policyService.findOrCreatePolicies(subjectType, policyTexts.map(decodeURIComponent)).then(ctx.success);
     }
 
+    // @get('/convert')
+    // async convert() {
+    //     const policyList = await this.policyService.find({status: 0}) as any[];
+    //     for (const policy of policyList) {
+    //         const fsmDescriptionInfo = policy.fsmDescriptionInfo;
+    //         for (const [_, stateInfo] of Object.entries(fsmDescriptionInfo)) {
+    //             const transitions = [];
+    //             for (const [toState, eventInfo] of Object.entries(stateInfo['transition'] || {})) {
+    //                 if (!eventInfo) {
+    //                     continue;
+    //                 }
+    //                 eventInfo['toState'] = toState;
+    //                 transitions.push(eventInfo);
+    //             }
+    //             stateInfo['transitions'] = transitions;
+    //             delete stateInfo['transition'];
+    //         }
+    //         await policy.updateOne({fsmDescriptionInfo});
+    //     }
+    //     this.ctx.success(1);
+    // }
+
     @get('/:policyId')
     @visitorIdentityValidator(IdentityTypeEnum.InternalClient | IdentityTypeEnum.LoginUser)
     async show() {
@@ -53,4 +75,5 @@ export class PolicyController {
 
         await this.policyService.findOne({policyId}, projection.join(' ')).then(data => ctx.success(data['toObject']()));
     }
+
 }

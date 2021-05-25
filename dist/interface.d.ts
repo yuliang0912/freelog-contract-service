@@ -88,6 +88,7 @@ export interface PolicyEventInfo {
     service: string;
     name: string;
     eventId: string;
+    toState: string;
     args?: {
         [paramName: string]: any;
     };
@@ -101,9 +102,7 @@ export interface FsmStateDescriptionInfo {
     isInitial?: boolean;
     isTerminate?: boolean;
     serviceStates: string[];
-    transition: {
-        [nextStateName: string]: PolicyEventInfo | null;
-    };
+    transitions: PolicyEventInfo[];
 }
 export interface LicenseeInfo {
     licenseeId: string | number;

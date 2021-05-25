@@ -1,6 +1,6 @@
 import {inject, provide, scope, ScopeEnum} from 'midway';
 import {ContractInfo, IContractTriggerEventMessage, PolicyEventInfo} from '../interface';
-import {forIn, isEmpty, pick} from 'lodash';
+import {isEmpty, pick} from 'lodash';
 import {ContractFsmRunningStatusEnum, PolicyEventEnum} from '../enum';
 import {KafkaClient} from '../kafka/client';
 import {IMongodbOperation} from 'egg-freelog-base';
@@ -33,7 +33,7 @@ export class ContractFsmEventTransitionAfterHandler {
         }
         const eventBody = toBeRegisterEventInfos.map(eventInfo => pick(eventInfo, ['service', 'name', 'code', 'eventId', 'args']));
         try {
-            await this.sendContractRegisterEventToKafka(contractInfo, eventBody).catch(error => this.errorHandle(contractInfo, session));
+            await this.sendContractRegisterEventToKafka(contractInfo, eventBody).catch(() => this.errorHandle(contractInfo, session));
         } catch (error) {
             await this.errorHandle(contractInfo, session);
         }
@@ -60,6 +60,7 @@ export class ContractFsmEventTransitionAfterHandler {
      * @param contractInfo
      * @param session
      * @param eventInfo
+     * @param transitionStateId
      */
     async [`exec${PolicyEventEnum.TransactionEvent}Handle`](contractInfo: ContractInfo, session: ClientSession, eventInfo: IContractTriggerEventMessage, transitionStateId: string): Promise<void> {
         const messageBody = {
@@ -82,14 +83,11 @@ export class ContractFsmEventTransitionAfterHandler {
     getCanRegisterEvents(contractInfo: ContractInfo, state: string): PolicyEventInfo[] {
         const toBeRegisterEventInfos: PolicyEventInfo[] = [];
         const fsmDescriptionInfo = contractInfo.policyInfo.fsmDescriptionInfo[state];
-        if (!fsmDescriptionInfo?.transition) {
-            return toBeRegisterEventInfos;
-        }
-        forIn(fsmDescriptionInfo.transition, (eventInfo) => {
+        for (const eventInfo of fsmDescriptionInfo?.transitions) {
             if (ContractFsmEventTransitionAfterHandler.AllowRegisterEvents.includes(eventInfo.code)) {
                 toBeRegisterEventInfos.push(eventInfo);
             }
-        });
+        }
         return toBeRegisterEventInfos;
     }
 

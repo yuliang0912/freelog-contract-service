@@ -259,12 +259,12 @@ class ContractStateMachine implements IContractStateMachine {
     _fsmDescriptionInfoWarpToFsmTransitions() {
         const fsmTransitions = [];
         for (const [stateName, stateDescription] of Object.entries(this.contractInfo.policyInfo.fsmDescriptionInfo)) {
-            for (const [nextStateName, eventInfo] of Object.entries(stateDescription.transition ?? {})) {
+            for (const eventInfo of stateDescription.transitions) {
                 if (!eventInfo?.eventId) {
                     throw new Error('策略对象存在异常,不存在事件ID');
                 }
                 this.eventMap.set(eventInfo.eventId, eventInfo);
-                fsmTransitions.push({name: eventInfo.eventId, from: stateName, to: nextStateName});
+                fsmTransitions.push({name: eventInfo.eventId, from: stateName, to: eventInfo.toState});
             }
         }
         return fsmTransitions;

@@ -77,7 +77,7 @@ export class ContractEventExecService {
             const envArgInfo = await this.contractEnvironmentVariableHandler.getEnvironmentVariable(contractInfo, reciprocalAccountId);
             reciprocalAccountId = envArgInfo?.accountId; // 合约初始化成功,则一定存在账户ID属性.
         }
-        return this.outsideApiService.contractPayment(accountId, reciprocalAccountId, transactionAmount, contractInfo.contractId, contractInfo.contractName, eventId, password);
+        return this.outsideApiService.contractPayment(accountId, reciprocalAccountId, transactionAmount, contractInfo.contractId, contractInfo.subjectType, contractInfo.contractName, eventId, password);
     }
 
     /**

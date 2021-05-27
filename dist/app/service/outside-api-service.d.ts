@@ -10,11 +10,12 @@ export declare class OutsideApiService implements IOutsideApiService {
      * @param toAccountId
      * @param transactionAmount
      * @param contractId
+     * @param subjectType
      * @param contractName
      * @param eventId
      * @param password
      */
-    contractPayment(fromAccountId: string, toAccountId: string, transactionAmount: number, contractId: string, contractName: string, eventId: string, password: string): Promise<any>;
+    contractPayment(fromAccountId: string, toAccountId: string, transactionAmount: number, contractId: string, subjectType: number, contractName: string, eventId: string, password: string): Promise<any>;
     /**
      * 查询交易记录信息
      * @param transactionRecordId

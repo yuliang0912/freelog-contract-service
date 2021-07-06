@@ -60,7 +60,6 @@ export class ContractFsmEventHandler {
     /**
      * 合约初始化错误处理
      * @param contractInfo
-     * @param session
      * @param eventInfo
      * @param errorMsg
      */

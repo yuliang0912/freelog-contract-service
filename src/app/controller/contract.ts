@@ -135,8 +135,6 @@ export class ContractController {
         }
 
         await this.contractService.signClientUserPresentable(subjectId, policyId, licenseeId).then(contracts => ctx.success(first(contracts)));
-
-        // }], licenseeId, licenseeIdentityType, subjectType).then(contracts => ctx.success(first(contracts)));
     }
 
     @post('/batchSign')

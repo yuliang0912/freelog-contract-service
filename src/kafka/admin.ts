@@ -1,10 +1,10 @@
-import {logLevel} from "kafkajs";
+import {logLevel} from 'kafkajs';
 
-const {Kafka} = require('kafkajs')
+const {Kafka} = require('kafkajs');
 
 export class KafkaManager {
 
-    TOPIC_CONTRACT_EVENT_TRIGGER_NAME: 'contract_event_trigger'
+    TOPIC_CONTRACT_EVENT_TRIGGER_NAME: 'contract_event_trigger';
 
     async main() {
         const kafka = new Kafka({
@@ -16,7 +16,7 @@ export class KafkaManager {
         await admin.connect().then(() => {
             admin.createTopics({
                 topics: [{topic: this.TOPIC_CONTRACT_EVENT_TRIGGER_NAME, numPartitions: 2}]
-            })
-        })
+            });
+        });
     }
 }

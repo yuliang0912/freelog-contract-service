@@ -33,7 +33,7 @@ export class ContractEnvironmentVariableHandler {
         }
         contractInfo.fsmDeclarations.envArgs = contractInfo.fsmDeclarations.envArgs || [];
         for (const environmentVariable of staticEnvironmentVariables) {
-            switch (environmentVariable) {
+            switch (environmentVariable?.toLowerCase()) {
                 case 'self.account':
                     const accountInfo = await this.getIndividualTransactionAccounts(contractInfo.licensorOwnerId);
                     if (!accountInfo) {

@@ -216,8 +216,8 @@ export class ContractController {
     @put('/:contractId/setDefault')
     @visitorIdentityValidator(IdentityTypeEnum.LoginUser | IdentityTypeEnum.InternalClient)
     async setDefault() {
-        const {ctx} = this;
 
+        const {ctx} = this;
         const contractId = ctx.checkParams('contractId').notEmpty().isContractId().value;
         ctx.validateParams();
 

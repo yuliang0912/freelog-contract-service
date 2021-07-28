@@ -1,6 +1,10 @@
 import {IMongoConditionBuilder, IPolicyService} from '../../interface';
 import {controller, get, post, inject, provide} from 'midway';
 import {FreelogContext, visitorIdentityValidator, IdentityTypeEnum, SubjectTypeEnum} from 'egg-freelog-base';
+import {report} from '@freelog/resource-policy-lang/dist';
+import {ContractEntity} from '@freelog/resource-policy-lang/dist/tools/ContractTool';
+import {FSMEntity} from '@freelog/resource-policy-lang/src/translate/tools/FSMTool';
+import {EventEntity} from '@freelog/resource-policy-lang/src/translate/tools/EventTool';
 
 @provide()
 @controller('/v2/policies')
@@ -20,14 +24,49 @@ export class PolicyController {
         const {ctx} = this;
         const policyIds = ctx.checkQuery('policyIds').exist().isSplitMd5().toSplitArray().len(1, 200).value;
         const subjectType = ctx.checkQuery('subjectType').optional().toInt().in([SubjectTypeEnum.Presentable, SubjectTypeEnum.Resource, SubjectTypeEnum.UserGroup]).value;
-        const projection = ctx.checkQuery('projection').optional().toSplitArray().default([]).value;
+        const isTranslate = ctx.checkQuery('translate').optional().toBoolean().default(false).value;
+        let projection = ctx.checkQuery('projection').optional().toSplitArray().default([]).value;
         ctx.validateParams();
 
         const condition = this.mongoConditionBuilder
             .setArray('policyId', policyIds)
             .setNumber('subjectType', subjectType).value();
 
-        await this.policyService.find(condition, projection.join(' ')).then(ctx.success);
+        if (isTranslate) {
+            projection = [];
+        }
+        const policies = await this.policyService.find(condition, projection.join(' '));
+        if (!isTranslate) {
+            return ctx.success(policies);
+        }
+
+        const list = [];
+        for (let policyInfo of policies) {
+            policyInfo = policyInfo['toObject']();
+            const contractEntity: ContractEntity = {
+                audiences: policyInfo.fsmDeclarationInfo?.audiences ?? [],
+                fsmStates: []
+            };
+            for (const [stateName, stateInfo] of Object.entries(policyInfo.fsmDescriptionInfo)) {
+                const fsmState: FSMEntity = {
+                    name: stateName,
+                    serviceStates: stateInfo.serviceStates,
+                    events: stateInfo.transitions.map(eventInfo => {
+                        return {
+                            id: eventInfo.eventId,
+                            name: eventInfo.name,
+                            args: eventInfo.args,
+                            state: eventInfo.toState
+                        } as EventEntity;
+                    })
+                };
+                contractEntity.fsmStates.push(fsmState);
+            }
+            policyInfo.translateInfo = report(contractEntity);
+            list.push(policyInfo);
+        }
+
+        ctx.success(list);
     }
 
     @post('/')

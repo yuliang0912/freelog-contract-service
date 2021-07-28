@@ -82,6 +82,7 @@ export interface PolicyInfo {
     fsmDescriptionInfo?: FsmDescriptionInfo;
     fsmDeclarationInfo?: any;
     subjectType: SubjectTypeEnum;
+    translateInfo?: any;
 }
 export interface PolicyEventInfo {
     code: string;

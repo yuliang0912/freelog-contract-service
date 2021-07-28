@@ -150,6 +150,8 @@ export interface IContractService {
         licensorOwnerId: number;
         count: number;
     }>>;
+    findContractTransitionRecords(condition: object, projection?: string, options?: object): Promise<ContractTransitionRecord[]>;
+    findIntervalContractTransitionRecords(condition: object, skip?: number, limit?: number, projection?: string[], sort?: object): Promise<PageResult<ContractTransitionRecord>>;
 }
 export interface IPolicyService {
     findOrCreatePolicy(subjectType: SubjectTypeEnum, policyText: string): Promise<PolicyInfo>;

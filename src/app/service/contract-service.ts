@@ -7,7 +7,7 @@ import {
     IOutsideApiService,
     IPolicyService,
     PolicyInfo,
-    SubjectBaseInfo, IContractStateMachine
+    SubjectBaseInfo, IContractStateMachine, ContractTransitionRecord
 } from '../../interface';
 import {ContractAuthStatusEnum, ContractFsmRunningStatusEnum} from '../../enum';
 import {
@@ -30,6 +30,8 @@ export class ContractService implements IContractService {
     contractInfoSignatureProvider;
     @inject()
     outsideApiService: IOutsideApiService;
+    @inject()
+    contractTransitionRecordProvider: IMongodbOperation<ContractTransitionRecord>;
     @inject()
     buildContractStateMachine: (contractInfo: ContractInfo) => IContractStateMachine;
 
@@ -268,6 +270,28 @@ export class ContractService implements IContractService {
                 $project: {_id: 0, licensorOwnerId: '$_id', count: '$count'}
             }
         ]);
+    }
+
+    /**
+     * 查询合同流转记录
+     * @param condition
+     * @param projection
+     * @param options
+     */
+    async findContractTransitionRecords(condition: object, projection?: string, options?: object): Promise<ContractTransitionRecord[]> {
+        return this.contractTransitionRecordProvider.find(condition, projection, options);
+    }
+
+    /**
+     * 分页查询合约流转记录
+     * @param condition
+     * @param skip
+     * @param limit
+     * @param projection
+     * @param sort
+     */
+    async findIntervalContractTransitionRecords(condition: object, skip?: number, limit?: number, projection?: string[], sort?: object): Promise<PageResult<ContractTransitionRecord>> {
+        return this.contractTransitionRecordProvider.findIntervalList(condition, skip, limit, projection?.join(' '), sort);
     }
 
     /**

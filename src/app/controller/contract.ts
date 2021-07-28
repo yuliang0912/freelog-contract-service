@@ -256,4 +256,20 @@ export class ContractController {
             result: true, deletedLine: x.n
         }));
     }
+
+    /**
+     * 合约流转记录
+     */
+    @get('/:contractId/transitionRecords')
+    async contractTransitionRecords() {
+        const {ctx} = this;
+        const contractId = ctx.checkParams('contractId').notEmpty().isContractId().value;
+        const skip = ctx.checkQuery('skip').optional().toInt().default(0).ge(0).value;
+        const limit = ctx.checkQuery('limit').optional().toInt().default(10).gt(0).lt(101).value;
+        ctx.validateParams();
+
+        await this.contractService.findIntervalContractTransitionRecords({
+            contractId, eventId: {$ne: 'init'}
+        }, skip, limit, ['contractId', 'fromState', 'toState', 'eventId', 'createDate']).then(ctx.success);
+    }
 }

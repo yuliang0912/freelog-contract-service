@@ -192,6 +192,10 @@ export interface IContractService {
     fillContractPolicyInfo(contracts: ContractInfo[]): Promise<ContractInfo[]>;
 
     findLicenseeSignCounts(licenseeOwnerIds: number[], licenseeIdentityType: ContractLicenseeIdentityTypeEnum): Promise<Array<{ licensorOwnerId: number, count: number }>>;
+
+    findContractTransitionRecords(condition: object, projection?: string, options?: object): Promise<ContractTransitionRecord[]>;
+
+    findIntervalContractTransitionRecords(condition: object, skip?: number, limit?: number, projection?: string[], sort?: object): Promise<PageResult<ContractTransitionRecord>>;
 }
 
 export interface IPolicyService {

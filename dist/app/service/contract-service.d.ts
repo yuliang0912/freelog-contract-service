@@ -1,4 +1,4 @@
-import { ContractInfo, BeSignSubjectOptions, IContractService, IOutsideApiService, IPolicyService, PolicyInfo, IContractStateMachine } from '../../interface';
+import { ContractInfo, BeSignSubjectOptions, IContractService, IOutsideApiService, IPolicyService, PolicyInfo, IContractStateMachine, ContractTransitionRecord } from '../../interface';
 import { FreelogContext, ContractLicenseeIdentityTypeEnum, SubjectTypeEnum, PageResult, IMongodbOperation } from 'egg-freelog-base';
 export declare class ContractService implements IContractService {
     mongoose: any;
@@ -7,6 +7,7 @@ export declare class ContractService implements IContractService {
     policyService: IPolicyService;
     contractInfoSignatureProvider: any;
     outsideApiService: IOutsideApiService;
+    contractTransitionRecordProvider: IMongodbOperation<ContractTransitionRecord>;
     buildContractStateMachine: (contractInfo: ContractInfo) => IContractStateMachine;
     /**
      * 根据ID获取合约
@@ -68,6 +69,22 @@ export declare class ContractService implements IContractService {
         licensorOwnerId: number;
         count: number;
     }>>;
+    /**
+     * 查询合同流转记录
+     * @param condition
+     * @param projection
+     * @param options
+     */
+    findContractTransitionRecords(condition: object, projection?: string, options?: object): Promise<ContractTransitionRecord[]>;
+    /**
+     * 分页查询合约流转记录
+     * @param condition
+     * @param skip
+     * @param limit
+     * @param projection
+     * @param sort
+     */
+    findIntervalContractTransitionRecords(condition: object, skip?: number, limit?: number, projection?: string[], sort?: object): Promise<PageResult<ContractTransitionRecord>>;
     /**
      * 检查合同是否可以重签
      * @param baseInfos

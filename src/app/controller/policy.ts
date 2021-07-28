@@ -24,7 +24,7 @@ export class PolicyController {
         const {ctx} = this;
         const policyIds = ctx.checkQuery('policyIds').exist().isSplitMd5().toSplitArray().len(1, 200).value;
         const subjectType = ctx.checkQuery('subjectType').optional().toInt().in([SubjectTypeEnum.Presentable, SubjectTypeEnum.Resource, SubjectTypeEnum.UserGroup]).value;
-        const isTranslate = ctx.checkQuery('translate').optional().toBoolean().default(false).value;
+        const isTranslate = ctx.checkQuery('isTranslate').optional().toBoolean().default(false).value;
         let projection = ctx.checkQuery('projection').optional().toSplitArray().default([]).value;
         ctx.validateParams();
 

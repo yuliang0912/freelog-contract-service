@@ -1,10 +1,7 @@
 import {IMongoConditionBuilder, IPolicyService} from '../../interface';
 import {controller, get, post, inject, provide} from 'midway';
 import {FreelogContext, visitorIdentityValidator, IdentityTypeEnum, SubjectTypeEnum} from 'egg-freelog-base';
-import {report} from '@freelog/resource-policy-lang/dist';
-import {ContractEntity} from '@freelog/resource-policy-lang/dist/tools/ContractTool';
-import {FSMEntity} from '@freelog/resource-policy-lang/src/translate/tools/FSMTool';
-import {EventEntity} from '@freelog/resource-policy-lang/src/translate/tools/EventTool';
+import {first} from 'lodash';
 
 @provide()
 @controller('/v2/policies')
@@ -40,33 +37,7 @@ export class PolicyController {
             return ctx.success(policies);
         }
 
-        const list = [];
-        for (let policyInfo of policies) {
-            policyInfo = policyInfo['toObject']();
-            const contractEntity: ContractEntity = {
-                audiences: policyInfo.fsmDeclarationInfo?.audiences ?? [],
-                fsmStates: []
-            };
-            for (const [stateName, stateInfo] of Object.entries(policyInfo.fsmDescriptionInfo)) {
-                const fsmState: FSMEntity = {
-                    name: stateName,
-                    serviceStates: stateInfo.serviceStates,
-                    events: stateInfo.transitions.map(eventInfo => {
-                        return {
-                            id: eventInfo.eventId,
-                            name: eventInfo.name,
-                            args: eventInfo.args,
-                            state: eventInfo.toState
-                        } as EventEntity;
-                    })
-                };
-                contractEntity.fsmStates.push(fsmState);
-            }
-            policyInfo.translateInfo = report(contractEntity);
-            list.push(policyInfo);
-        }
-
-        ctx.success(list);
+        ctx.success(this.policyService.policyTranslate(policies));
     }
 
     @post('/')
@@ -109,10 +80,17 @@ export class PolicyController {
 
         const {ctx} = this;
         const policyId = ctx.checkParams('policyId').exist().isMd5().value;
-        const projection: string[] = ctx.checkQuery('projection').optional().toSplitArray().default([]).value;
+        let projection: string[] = ctx.checkQuery('projection').optional().toSplitArray().default([]).value;
+        const isTranslate = ctx.checkQuery('isTranslate').optional().toBoolean().default(false).value;
         ctx.validateParams();
 
-        await this.policyService.findOne({policyId}, projection.join(' ')).then(data => ctx.success(data['toObject']()));
+        if (isTranslate) {
+            projection = [];
+        }
+        const policyInfo = await this.policyService.findOne({policyId}, projection.join(' '));
+        if (!isTranslate) {
+            return ctx.success(policyInfo);
+        }
+        ctx.success(first(this.policyService.policyTranslate([policyInfo])));
     }
-
 }

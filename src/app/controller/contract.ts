@@ -50,6 +50,7 @@ export class ContractController {
         const status = ctx.checkQuery('status').optional().toInt().in([ContractStatusEnum.Terminated, ContractStatusEnum.Executed, ContractStatusEnum.Exception]).value;
         const authStatus = ctx.checkQuery('authStatus').optional().toInt().value;
         const isLoadPolicyInfo = ctx.checkQuery('isLoadPolicyInfo').optional().toInt().in([0, 1, 2]).default(0).value;
+        const isTranslate = ctx.checkQuery('isTranslate').optional().toBoolean().default(false).value;
         const licenseeIdentityType = ctx.checkQuery('licenseeIdentityType').optional().toInt().in([ContractLicenseeIdentityTypeEnum.Resource, ContractLicenseeIdentityTypeEnum.Node, ContractLicenseeIdentityTypeEnum.ClientUser]).value;
         const projection: string[] = ctx.checkQuery('projection').optional().toSplitArray().default([]).value;
         ctx.validateParams();
@@ -77,7 +78,7 @@ export class ContractController {
 
         const pageResult = await this.contractService.findIntervalList(conditionBuilder.value(), skip, limit, projection, sort ?? {createDate: -1});
         if (isLoadPolicyInfo) {
-            pageResult.dataList = await this.contractService.fillContractPolicyInfo(pageResult.dataList);
+            pageResult.dataList = await this.contractService.fillContractPolicyInfo(pageResult.dataList, isTranslate);
         }
         ctx.success(pageResult);
     }
@@ -94,6 +95,7 @@ export class ContractController {
         const licensorId = ctx.checkQuery('licensorId').optional().value; // 甲方
         const licenseeId = ctx.checkQuery('licenseeId').optional().value; // 乙方
         const isLoadPolicyInfo = ctx.checkQuery('isLoadPolicyInfo').optional().toInt().in([0, 1, 2]).default(0).value;
+        const isTranslate = ctx.checkQuery('isTranslate').optional().toBoolean().default(false).value;
         const projection: string[] = ctx.checkQuery('projection').optional().toSplitArray().default([]).value;
         ctx.validateParams();
 
@@ -112,7 +114,7 @@ export class ContractController {
 
         let dataList = await this.contractService.find(condition, projection.join(' '));
         if (isLoadPolicyInfo) {
-            dataList = await this.contractService.fillContractPolicyInfo(dataList);
+            dataList = await this.contractService.fillContractPolicyInfo(dataList, isTranslate);
         }
         ctx.success(dataList);
     }
@@ -183,12 +185,13 @@ export class ContractController {
         const {ctx} = this;
         const contractId = ctx.checkParams('contractId').notEmpty().isContractId().value;
         const isLoadPolicyInfo = ctx.checkQuery('isLoadPolicyInfo').optional().toInt().in([0, 1, 2]).default(0).value;
+        const isTranslate = ctx.checkQuery('isTranslate').optional().toBoolean().default(false).value;
         const projection = ctx.checkQuery('projection').optional().toSplitArray().default([]).value;
         ctx.validateParams();
 
         let contractInfo = await this.contractService.findById(contractId, projection.join(' '));
         if (contractInfo && isLoadPolicyInfo) {
-            contractInfo = await this.contractService.fillContractPolicyInfo([contractInfo]).then(first);
+            contractInfo = await this.contractService.fillContractPolicyInfo([contractInfo], isTranslate).then(first);
         }
         ctx.success(contractInfo);
     }

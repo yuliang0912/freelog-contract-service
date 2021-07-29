@@ -1,6 +1,10 @@
 import {provide, inject} from 'midway';
 import {IPolicyCompiler, IPolicyService, PolicyInfo} from '../../interface';
 import {FreelogContext, IMongodbOperation, SubjectTypeEnum} from 'egg-freelog-base';
+import {ContractEntity} from '@freelog/resource-policy-lang/dist/tools/ContractTool';
+import {FSMEntity} from '@freelog/resource-policy-lang/src/translate/tools/FSMTool';
+import {EventEntity} from '@freelog/resource-policy-lang/src/translate/tools/EventTool';
+import {report} from '@freelog/resource-policy-lang/dist';
 
 @provide('policyService')
 export class PolicyService implements IPolicyService {
@@ -11,6 +15,35 @@ export class PolicyService implements IPolicyService {
     policyCompiler: IPolicyCompiler;
     @inject()
     policyInfoProvider: IMongodbOperation<PolicyInfo>;
+
+    policyTranslate(policies: PolicyInfo[]): PolicyInfo[] {
+        const list = [];
+        for (let policyInfo of policies) {
+            policyInfo = Reflect.has(policyInfo, 'toObject') ? policyInfo['toObject']() : policyInfo;
+            const contractEntity: ContractEntity = {
+                audiences: policyInfo.fsmDeclarationInfo?.audiences ?? [],
+                fsmStates: []
+            };
+            for (const [stateName, stateInfo] of Object.entries(policyInfo.fsmDescriptionInfo)) {
+                const fsmState: FSMEntity = {
+                    name: stateName,
+                    serviceStates: stateInfo.serviceStates,
+                    events: stateInfo.transitions.map(eventInfo => {
+                        return {
+                            id: eventInfo.eventId,
+                            name: eventInfo.name,
+                            args: eventInfo.args,
+                            state: eventInfo.toState
+                        } as EventEntity;
+                    })
+                };
+                contractEntity.fsmStates.push(fsmState);
+            }
+            policyInfo.translateInfo = report(contractEntity);
+            list.push(policyInfo);
+        }
+        return list;
+    }
 
     /**
      * 查找或者创建策略

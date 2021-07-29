@@ -4,6 +4,7 @@ export declare class PolicyService implements IPolicyService {
     ctx: FreelogContext;
     policyCompiler: IPolicyCompiler;
     policyInfoProvider: IMongodbOperation<PolicyInfo>;
+    policyTranslate(policies: PolicyInfo[]): PolicyInfo[];
     /**
      * 查找或者创建策略
      * @param subjectType

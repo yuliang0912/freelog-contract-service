@@ -233,8 +233,9 @@ export class ContractService implements IContractService {
     /**
      * 给资源填充策略详情信息
      * @param contracts
+     * @param isTranslate
      */
-    async fillContractPolicyInfo(contracts: ContractInfo[]): Promise<ContractInfo[]> {
+    async fillContractPolicyInfo(contracts: ContractInfo[], isTranslate?: boolean): Promise<ContractInfo[]> {
         if (!isArray(contracts) || isEmpty(contracts)) {
             return contracts;
         }
@@ -243,6 +244,9 @@ export class ContractService implements IContractService {
             return contracts;
         }
         const policyMap: Map<string, PolicyInfo> = await this.policyService.findByIds(policyIds, 'policyId policyName policyText fsmDescriptionInfo').then(list => {
+            if (isTranslate) {
+                list = this.policyService.policyTranslate(list);
+            }
             return new Map(list.map(x => [x.policyId, x]));
         });
 

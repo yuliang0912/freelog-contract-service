@@ -58,8 +58,9 @@ export declare class ContractService implements IContractService {
     /**
      * 给资源填充策略详情信息
      * @param contracts
+     * @param isTranslate
      */
-    fillContractPolicyInfo(contracts: ContractInfo[]): Promise<ContractInfo[]>;
+    fillContractPolicyInfo(contracts: ContractInfo[], isTranslate?: boolean): Promise<ContractInfo[]>;
     /**
      * 获取签约数量
      * @param licenseeOwnerIds

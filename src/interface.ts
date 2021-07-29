@@ -190,7 +190,7 @@ export interface IContractService {
      */
     batchSignSubjects(subjects: BeSignSubjectOptions[], licenseeId: string | number, identityType: ContractLicenseeIdentityTypeEnum, subjectType: SubjectTypeEnum, isWaitInitial: boolean): Promise<ContractInfo[]>;
 
-    fillContractPolicyInfo(contracts: ContractInfo[]): Promise<ContractInfo[]>;
+    fillContractPolicyInfo(contracts: ContractInfo[], isTranslate?: boolean): Promise<ContractInfo[]>;
 
     findLicenseeSignCounts(licenseeOwnerIds: number[], licenseeIdentityType: ContractLicenseeIdentityTypeEnum): Promise<Array<{ licensorOwnerId: number, count: number }>>;
 
@@ -200,6 +200,8 @@ export interface IContractService {
 }
 
 export interface IPolicyService {
+
+    policyTranslate(policies: PolicyInfo[]): PolicyInfo[];
 
     findOrCreatePolicy(subjectType: SubjectTypeEnum, policyText: string): Promise<PolicyInfo>;
 

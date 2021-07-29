@@ -6,5 +6,5 @@ export declare class PolicyController {
     mongoConditionBuilder: IMongoConditionBuilder;
     list(): Promise<FreelogContext>;
     batchCreate(): Promise<void>;
-    show(): Promise<void>;
+    show(): Promise<FreelogContext>;
 }

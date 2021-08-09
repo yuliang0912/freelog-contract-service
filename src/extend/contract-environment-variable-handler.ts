@@ -23,7 +23,7 @@ export class ContractEnvironmentVariableHandler {
         if (![ContractFsmRunningStatusEnum.Uninitialized, ContractFsmRunningStatusEnum.InitializedError].includes(contractInfo.fsmRunningStatus)) {
             return;
         }
-        const {symbolArgs} = contractInfo.policyInfo.fsmDeclarationInfo;
+        const {symbolArgs} = contractInfo.policyInfo.fsmDeclarationInfo ?? {};
         if (!isArray(symbolArgs?.envArgs)) {
             return;
         }
@@ -35,7 +35,9 @@ export class ContractEnvironmentVariableHandler {
         for (const environmentVariable of staticEnvironmentVariables) {
             switch (environmentVariable?.toLowerCase()) {
                 case 'self.account':
-                    const accountInfo = await this.getIndividualTransactionAccounts(contractInfo.licensorOwnerId);
+                    const accountInfo = await this.getIndividualTransactionAccounts(contractInfo.licensorOwnerId).catch(error => {
+                        throw new ApplicationError('初始化环境变量失败,用户不存在交易账户');
+                    });
                     if (!accountInfo) {
                         throw new ApplicationError('初始化环境变量失败,用户不存在交易账户');
                     }
@@ -50,6 +52,7 @@ export class ContractEnvironmentVariableHandler {
                     break;
             }
         }
+        console.log(contractInfo.fsmDeclarations.envArgs);
     }
 
     /**

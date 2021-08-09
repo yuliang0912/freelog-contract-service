@@ -117,11 +117,11 @@ class ContractStateMachine implements IContractStateMachine {
         this.eventInfo = {
             contractId: this.contractInfo.contractId, code: 'init', eventId: 'init', eventTime: new Date()
         } as any;
-        return this.fsm.init();
-        //.catch(error => {
-        //             this.contractFsmEventHandler.contractInitialErrorHandle(this.contractInfo, this.eventInfo, error?.toString()).then();
-        //             throw error;
-        //         })
+        return this.fsm.init().catch(error => {
+            console.log(error);
+            // this.contractFsmEventHandler.contractInitialErrorHandle(this.contractInfo, this.eventInfo, error?.toString()).then();
+            throw error;
+        });
     }
 
     /**

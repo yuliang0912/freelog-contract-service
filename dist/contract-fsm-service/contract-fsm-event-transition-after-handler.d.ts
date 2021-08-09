@@ -36,11 +36,7 @@ export declare class ContractFsmEventTransitionAfterHandler {
     errorHandle(contractInfo: ContractInfo, session: ClientSession): Promise<{
         n: number;
         nModified: number;
-        ok: number; /**
-         * 获取可以注册的事件集
-         * @param contractInfo
-         * @param state
-         */
+        ok: number;
     }>;
     /**
      * 允许注册的事件集

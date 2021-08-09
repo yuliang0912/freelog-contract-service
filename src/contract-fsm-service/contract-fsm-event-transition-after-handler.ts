@@ -26,7 +26,6 @@ export class ContractFsmEventTransitionAfterHandler {
      * @param toState
      */
     async registerContractEvents(contractInfo: ContractInfo, session: ClientSession, fromState: string, toState: string): Promise<void> {
-
         const toBeRegisterEventInfos = this.getCanRegisterEvents(contractInfo, toState);
         if (isEmpty(toBeRegisterEventInfos)) {
             return;
@@ -83,7 +82,7 @@ export class ContractFsmEventTransitionAfterHandler {
     getCanRegisterEvents(contractInfo: ContractInfo, state: string): PolicyEventInfo[] {
         const toBeRegisterEventInfos: PolicyEventInfo[] = [];
         const fsmDescriptionInfo = contractInfo.policyInfo.fsmDescriptionInfo[state];
-        for (const eventInfo of fsmDescriptionInfo?.transitions) {
+        for (const eventInfo of fsmDescriptionInfo?.transitions ?? []) {
             if (ContractFsmEventTransitionAfterHandler.AllowRegisterEvents.includes(eventInfo.code)) {
                 toBeRegisterEventInfos.push(eventInfo);
             }

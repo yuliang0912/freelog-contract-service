@@ -147,6 +147,7 @@ export class ContractController {
         const licenseeId = ctx.checkBody('licenseeId').exist().value;
         const subjectType = ctx.checkBody('subjectType').exist().in([SubjectTypeEnum.Presentable, SubjectTypeEnum.Resource, SubjectTypeEnum.UserGroup]).value;
         const subjects = ctx.checkBody('subjects').exist().isArray().value;
+        const isWaitInitial = ctx.checkBody('isWaitInitial').optional().toBoolean().default(false).value;
         const licenseeIdentityType = ctx.checkBody('licenseeIdentityType').optional().toInt().in([ContractLicenseeIdentityTypeEnum.Resource, ContractLicenseeIdentityTypeEnum.Node, ContractLicenseeIdentityTypeEnum.ClientUser]).value;
         ctx.validateParams();
 
@@ -161,7 +162,7 @@ export class ContractController {
             throw new ArgumentError(ctx.gettext('params-required-validate-failed', 'licenseeId'));
         }
 
-        await this.contractService.batchSignSubjects(subjects, licenseeId, licenseeIdentityType, subjectType, false).then(ctx.success);
+        await this.contractService.batchSignSubjects(subjects, licenseeId, licenseeIdentityType, subjectType, isWaitInitial).then(ctx.success);
     }
 
     @get('/count')

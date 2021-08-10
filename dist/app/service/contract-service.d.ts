@@ -34,6 +34,7 @@ export declare class ContractService implements IContractService {
      * @param licenseeId
      * @param licenseeIdentityType
      * @param subjectType
+     * @param isWaitInitial
      */
     batchSignSubjects(subjects: BeSignSubjectOptions[], licenseeId: string | number, licenseeIdentityType: ContractLicenseeIdentityTypeEnum, subjectType: SubjectTypeEnum, isWaitInitial?: boolean): Promise<ContractInfo[]>;
     /**

@@ -81,6 +81,7 @@ export class ContractService implements IContractService {
      * @param licenseeId
      * @param licenseeIdentityType
      * @param subjectType
+     * @param isWaitInitial
      */
     async batchSignSubjects(subjects: BeSignSubjectOptions[], licenseeId: string | number, licenseeIdentityType: ContractLicenseeIdentityTypeEnum, subjectType: SubjectTypeEnum, isWaitInitial = false): Promise<ContractInfo[]> {
 
@@ -146,10 +147,14 @@ export class ContractService implements IContractService {
             throw new ApplicationError(this.ctx.gettext('subject-policy-check-failed'), invalidPolicyIds);
         }
 
-        const latestSignedContracts = await this.contractInfoProvider.insertMany(beSignContracts);
+        let latestSignedContracts = await this.contractInfoProvider.insertMany(beSignContracts);
 
         if (isWaitInitial) {
-            await this._initialContracts(latestSignedContracts, beSignSubjectPolicyMap).catch();
+            await this._initialContracts(latestSignedContracts, beSignSubjectPolicyMap).then(() => {
+                return this.contractInfoProvider.find({_id: {$in: latestSignedContracts.map(x => x.contractId)}});
+            }).then(contractList => {
+                latestSignedContracts = contractList;
+            }).catch();
         } else {
             this._initialContracts(latestSignedContracts, beSignSubjectPolicyMap).catch();
         }

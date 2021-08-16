@@ -24,7 +24,7 @@ export class ContractFsmEventPretreatment {
 
         const ctx = this.app.createAnonymousContext() as FreelogContext;
         const transactionRecordInfo = await ctx.curlIntranetApi(`${ctx.webApi.transactionInfoV2}/records/${eventInfo.args.transactionRecordId}`);
-
+        // 合约在拨动状态之前.会对交易状态做二次确认.只有待确认状态的交易才是有效的.主要防止交易确认超时,导致支付中心把交易取消了.但是合约服务依然拨动了合约状态
         if (transactionRecordInfo.status !== 1) {
             const model = {
                 contractId: contractInfo.contractId,

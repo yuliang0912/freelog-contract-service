@@ -77,6 +77,7 @@ export class ContractEventExecService {
             const envArgInfo = await this.contractEnvironmentVariableHandler.getEnvironmentVariable(contractInfo, reciprocalAccountId);
             reciprocalAccountId = envArgInfo?.accountId; // 合约初始化成功,则一定存在账户ID属性.
         }
+        // 合约支付请求之后,支付中心会冻结掉交易金额.然后等合约状态拨动完毕之后,发送确认结果.支付中心再执行真实扣款操作
         return this.outsideApiService.contractPayment(accountId, reciprocalAccountId, transactionAmount, contractInfo.contractId, contractInfo.subjectType, contractInfo.contractName, eventId, password);
     }
 

@@ -15,7 +15,6 @@ export class PolicyController {
     mongoConditionBuilder: IMongoConditionBuilder;
 
     @get('/list')
-    @visitorIdentityValidator(IdentityTypeEnum.InternalClient | IdentityTypeEnum.LoginUser)
     async list() {
 
         const {ctx} = this;
@@ -75,7 +74,6 @@ export class PolicyController {
     // }
 
     @get('/:policyId')
-    @visitorIdentityValidator(IdentityTypeEnum.InternalClient | IdentityTypeEnum.LoginUser)
     async show() {
 
         const {ctx} = this;

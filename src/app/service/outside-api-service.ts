@@ -22,13 +22,15 @@ export class OutsideApiService implements IOutsideApiService {
      * @param contractId
      * @param subjectType
      * @param contractName
+     * @param subjectName
      * @param eventId
      * @param password
      */
-    async contractPayment(fromAccountId: string, toAccountId: string, transactionAmount: number, contractId: string, subjectType: number, contractName: string, eventId: string, password: string) {
+    async contractPayment(fromAccountId: string, toAccountId: string, transactionAmount: number, contractId: string, subjectType: number, subjectName: string, contractName: string, eventId: string, password: string) {
         return this.ctx.curlIntranetApi(`${this.ctx.webApi.transactionInfoV2}/contracts/payment`, {
             method: 'post', contentType: 'json', data: {
-                fromAccountId, toAccountId, transactionAmount, contractId, subjectType, contractName, eventId, password
+                fromAccountId, toAccountId, transactionAmount, contractId,
+                subjectType, subjectName, contractName, eventId, password
             }
         });
     }

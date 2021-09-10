@@ -1,5 +1,11 @@
 import {provide, inject, init} from 'midway';
-import {ApplicationError, ContractLicenseeIdentityTypeEnum, FreelogContext, SubjectTypeEnum} from 'egg-freelog-base';
+import {
+    ApiInvokingError,
+    ApplicationError,
+    ContractLicenseeIdentityTypeEnum,
+    FreelogContext,
+    SubjectTypeEnum
+} from 'egg-freelog-base';
 import {
     IOutsideApiService, LicenseeInfo, NodeInfo, SubjectBaseInfo, UserInfo, ResourceInfo, PresentableInfo
 } from '../../interface';
@@ -32,6 +38,10 @@ export class OutsideApiService implements IOutsideApiService {
                 fromAccountId, toAccountId, transactionAmount, contractId,
                 subjectType, subjectName, contractName, eventId, password
             }
+        }).catch(error => {
+            throw new ApiInvokingError(error.message, {
+                code: error.data?.apiInvokingAttachData?.code ?? 'E1999'
+            });
         });
     }
 

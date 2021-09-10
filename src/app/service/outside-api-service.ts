@@ -39,6 +39,7 @@ export class OutsideApiService implements IOutsideApiService {
                 subjectType, subjectName, contractName, eventId, password
             }
         }).catch(error => {
+            console.log(JSON.stringify(error), error.data);
             throw new ApiInvokingError(error.message, {
                 code: error.data?.apiInvokingAttachData?.code ?? 'E1999'
             });

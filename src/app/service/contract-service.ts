@@ -319,8 +319,7 @@ export class ContractService implements IContractService {
         return baseInfos.map(baseInfo => {
             const existingContract = hasSignedAndEfficientContracts.find(x => x.subjectId === baseInfo.subjectId && x.subjectType === baseInfo.subjectType && x.policyId === baseInfo.policyId && x.licenseeId.toString() === baseInfo.licenseeId.toString());
             return assign(baseInfo, {
-                isCanReSign: !Boolean(existingContract),
-                signedContractInfo: existingContract
+                isCanReSign: !Boolean(existingContract), signedContractInfo: existingContract
             });
         });
     }

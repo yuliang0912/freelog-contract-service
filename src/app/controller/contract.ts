@@ -1,4 +1,4 @@
-import {first, isEmpty, isString, isUndefined} from 'lodash';
+import {first, isEmpty, isString, isUndefined, isDate} from 'lodash';
 import {controller, del, get, inject, post, provide, put} from 'midway';
 import {
     ContractInfo, IContractService,
@@ -52,6 +52,8 @@ export class ContractController {
         const isLoadPolicyInfo = ctx.checkQuery('isLoadPolicyInfo').optional().toInt().in([0, 1, 2]).default(0).value;
         const isTranslate = ctx.checkQuery('isTranslate').optional().toBoolean().default(false).value;
         const licenseeIdentityType = ctx.checkQuery('licenseeIdentityType').optional().toInt().in([ContractLicenseeIdentityTypeEnum.Resource, ContractLicenseeIdentityTypeEnum.Node, ContractLicenseeIdentityTypeEnum.ClientUser]).value;
+        const startDate = ctx.checkQuery('startDate').ignoreParamWhenEmpty().toDate().value;
+        const endDate = ctx.checkQuery('endDate').ignoreParamWhenEmpty().toDate().value;
         const projection: string[] = ctx.checkQuery('projection').optional().toSplitArray().default([]).value;
         ctx.validateParams();
 
@@ -74,6 +76,13 @@ export class ContractController {
             } else {
                 conditionBuilder.setArray('$or', [{contractName: searchRegExp}, {licensorName: searchRegExp}, {licenseeName: searchRegExp}]);
             }
+        }
+        if (isDate(startDate) && isDate(endDate)) {
+            conditionBuilder.setObject('createDate', {$gte: startDate, $lte: endDate});
+        } else if (isDate(startDate)) {
+            conditionBuilder.setObject('createDate', {$gte: startDate});
+        } else if (isDate(endDate)) {
+            conditionBuilder.setObject('createDate', {$lte: endDate});
         }
 
         const pageResult = await this.contractService.findIntervalList(conditionBuilder.value(), skip, limit, projection, sort ?? {createDate: -1});

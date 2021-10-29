@@ -194,7 +194,7 @@ export class ContractController {
     async subjectSingCount() {
 
         const {ctx} = this;
-        const subjectIds = ctx.checkQuery('subjectIds').optional().isSplitMongoObjectId().toSplitArray().len(1, 300).value;
+        const subjectIds = ctx.checkQuery('subjectIds').exist().isSplitMongoObjectId().toSplitArray().len(1, 300).value;
         const subjectType = ctx.checkQuery('subjectType').optional().toInt().in([SubjectTypeEnum.Presentable, SubjectTypeEnum.Resource, SubjectTypeEnum.UserGroup]).value;
         ctx.validateParams();
 

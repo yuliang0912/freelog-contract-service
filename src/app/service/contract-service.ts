@@ -306,6 +306,10 @@ export class ContractService implements IContractService {
             }
         }];
 
+        if (!subjectType) {
+            delete aggregates[0].$match.subjectType;
+        }
+
         return this.contractInfoProvider.aggregate(aggregates);
     }
 

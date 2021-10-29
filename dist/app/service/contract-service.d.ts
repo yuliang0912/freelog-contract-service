@@ -72,6 +72,12 @@ export declare class ContractService implements IContractService {
         count: number;
     }>>;
     /**
+     * 获取标的物签约次数(同一个用户去重)
+     * @param subjectType
+     * @param subjectIds
+     */
+    findSubjectSignCounts(subjectType: SubjectTypeEnum, subjectIds: string[]): Promise<any>;
+    /**
      * 查询合同流转记录
      * @param condition
      * @param projection

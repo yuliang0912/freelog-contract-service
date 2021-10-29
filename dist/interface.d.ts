@@ -128,6 +128,12 @@ export interface IContractService {
     findByIds(contractIds: string[], ...args: any[]): Promise<ContractInfo[]>;
     findIntervalList(condition: object, skip?: number, limit?: number, projection?: string[], sort?: object): Promise<PageResult<ContractInfo>>;
     count(condition: object): Promise<number>;
+    /**
+     * 获取标的物签约次数(同一个用户去重)
+     * @param subjectType
+     * @param subjectIds
+     */
+    findSubjectSignCounts(subjectType: SubjectTypeEnum, subjectIds: string[]): any;
     setDefaultExecContract(contract: ContractInfo): Promise<boolean>;
     updateContractInfo(contract: ContractInfo, options: any): Promise<boolean>;
     /**

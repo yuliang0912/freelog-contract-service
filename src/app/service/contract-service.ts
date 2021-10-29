@@ -282,6 +282,34 @@ export class ContractService implements IContractService {
     }
 
     /**
+     * 获取标的物签约次数(同一个用户去重)
+     * @param subjectType
+     * @param subjectIds
+     */
+    async findSubjectSignCounts(subjectType: SubjectTypeEnum, subjectIds: string[]) {
+
+        const aggregates = [{
+            $match: {
+                subjectId: {$in: subjectIds}, subjectType
+            }
+        }, {
+            $group: {
+                _id: {subjectId: '$subjectId', licenseeId: '$licenseeId'}
+            }
+        }, {
+            $group: {
+                _id: '$_id.subjectId', count: {$sum: 1}
+            }
+        }, {
+            $project: {
+                _id: 0, subjectId: '$_id', count: '$count'
+            }
+        }];
+
+        return this.contractInfoProvider.aggregate(aggregates);
+    }
+
+    /**
      * 查询合同流转记录
      * @param condition
      * @param projection

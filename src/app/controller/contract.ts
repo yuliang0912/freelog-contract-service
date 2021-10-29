@@ -189,6 +189,18 @@ export class ContractController {
         }));
     }
 
+    @get('/subjects/signCount')
+    @visitorIdentityValidator(IdentityTypeEnum.LoginUser | IdentityTypeEnum.InternalClient)
+    async subjectSingCount() {
+
+        const {ctx} = this;
+        const subjectIds = ctx.checkQuery('subjectIds').optional().isSplitMongoObjectId().toSplitArray().len(1, 300).value;
+        const subjectType = ctx.checkQuery('subjectType').optional().toInt().in([SubjectTypeEnum.Presentable, SubjectTypeEnum.Resource, SubjectTypeEnum.UserGroup]).value;
+        ctx.validateParams();
+
+        await this.contractService.findSubjectSignCounts(subjectType, subjectIds).then(ctx.success);
+    }
+
     @get('/:contractId')
     @visitorIdentityValidator(IdentityTypeEnum.LoginUser | IdentityTypeEnum.InternalClient)
     async show() {

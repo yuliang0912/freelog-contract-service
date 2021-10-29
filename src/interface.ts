@@ -168,6 +168,13 @@ export interface IContractService {
 
     count(condition: object): Promise<number>;
 
+    /**
+     * 获取标的物签约次数(同一个用户去重)
+     * @param subjectType
+     * @param subjectIds
+     */
+    findSubjectSignCounts(subjectType: SubjectTypeEnum, subjectIds: string[]);
+
     setDefaultExecContract(contract: ContractInfo): Promise<boolean>;
 
     updateContractInfo(contract: ContractInfo, options: any): Promise<boolean>;

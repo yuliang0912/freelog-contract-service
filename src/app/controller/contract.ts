@@ -202,12 +202,12 @@ export class ContractController {
             return new Map<string, number>(list.map(x => [x.subjectId, x.count]));
         });
 
-        return subjectIds.map(subjectId => {
+        ctx.success(subjectIds.map(subjectId => {
             return {
                 subjectId,
                 count: subjectSignCountMap.has(subjectId) ? subjectSignCountMap.get(subjectId) : 0
             };
-        });
+        }));
     }
 
     @get('/:contractId')

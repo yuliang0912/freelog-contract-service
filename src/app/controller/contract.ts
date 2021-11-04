@@ -198,7 +198,16 @@ export class ContractController {
         const subjectType = ctx.checkQuery('subjectType').optional().toInt().in([SubjectTypeEnum.Presentable, SubjectTypeEnum.Resource, SubjectTypeEnum.UserGroup]).value;
         ctx.validateParams();
 
-        await this.contractService.findSubjectSignCounts(subjectType, subjectIds).then(ctx.success);
+        const subjectSignCountMap = await this.contractService.findSubjectSignCounts(subjectType, subjectIds).then(list => {
+            return new Map<string, number>(list.map(x => [x.subjectId, x.count]));
+        });
+
+        return subjectIds.map(subjectId => {
+            return {
+                subjectId,
+                count: subjectSignCountMap.has(subjectId) ? subjectSignCountMap.get(subjectId) : 0
+            };
+        });
     }
 
     @get('/:contractId')

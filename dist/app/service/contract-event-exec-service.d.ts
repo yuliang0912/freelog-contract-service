@@ -5,12 +5,18 @@ import { OutsideApiService } from './outside-api-service';
 import { ContractEnvironmentVariableHandler } from '../../extend/contract-environment-variable-handler';
 export declare class ContractEventExecService {
     ctx: any;
+    mongoose: any;
     policyService: PolicyService;
     outsideApiService: OutsideApiService;
     buildContractStateMachine: (contractInfo: ContractInfo) => IContractStateMachine;
     contractEnvironmentVariableHandler: ContractEnvironmentVariableHandler;
     private eventCodeHandlerMap;
     constructor();
+    /**
+     * 初始化合约
+     * @param contractInfo
+     */
+    initialContract(contractInfo: ContractInfo): Promise<boolean>;
     /**
      * 执行合约事件
      * @param contractInfo

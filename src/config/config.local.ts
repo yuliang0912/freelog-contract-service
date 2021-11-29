@@ -1,3 +1,5 @@
+import {logLevel} from 'kafkajs';
+
 export const development = {
     watchDirs: [
         'app',
@@ -36,6 +38,14 @@ export default () => {
         userId: 50021,
         username: 'yuliang'
     };
+
+    config.kafka = {
+        enable: false,
+        clientId: 'freelog-contract-service',
+        logLevel: logLevel.ERROR,
+        brokers: ['192.168.164.165:9090']
+    };
+
 
     return config;
 };

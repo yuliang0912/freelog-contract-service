@@ -1,5 +1,4 @@
 import {EggAppInfo} from 'midway';
-import {logLevel} from 'kafkajs';
 
 export default (appInfo: EggAppInfo) => {
     const config: any = {};
@@ -48,13 +47,6 @@ export default (appInfo: EggAppInfo) => {
     };
 
     config.contractSignKey = 'T0RZM01UUTFZV1l4Wm1SalpqRTBOamN5TldRMVkyTTBZVGt3WmpaaE0ySm1aSE5oWm1SellXWmtjMkZtWkhOaE5ETXlORE15TkRZMU16STJOVFF6';
-
-    config.kafka = {
-        enable: true,
-        clientId: 'freelog-contract-service',
-        logLevel: logLevel.ERROR,
-        brokers: ['192.168.164.165:9090']
-    };
 
     return config;
 };

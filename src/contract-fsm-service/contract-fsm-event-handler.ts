@@ -50,9 +50,9 @@ export class ContractFsmEventHandler {
 
         const task1 = this.contractTransitionRecordProvider.create([transitionRecord], {session});
         const task2 = this.contractInfoProvider.updateOne({_id: contractInfo.contractId}, updateContractModel, {session});
-
         await Promise.all([task1, task2]).then(() => {
             console.log(`修改合约状态,contractId:${contractInfo.contractId},from:${fromState},to:${toState}`);
+            return this.execAuthStatusChangedEventHandle(contractInfo, updateContractModel.authStatus);
         });
         return transitionRecord._id;
     }
@@ -85,6 +85,31 @@ export class ContractFsmEventHandler {
         }
         // 初始化静态全局环境变量
         await this.contractEnvironmentVariableHandler.initialStaticEnvironmentVariable(contractInfo);
+    }
+
+    /**
+     * 合约授权状态发生转变事件处理
+     * @param contractInfo
+     * @param afterAuthStatus
+     */
+    async execAuthStatusChangedEventHandle(contractInfo: ContractInfo, afterAuthStatus: ContractAuthStatusEnum) {
+        if (contractInfo.authStatus === afterAuthStatus) {
+            return;
+        }
+        // TODO:发送合约授权状态变更事件
+        // topic-name: <subject-type>-contract-auth-status-changed-queue
+        // key: contractId (同一个contractId可以保证是顺序处理)
+        // msgBody: {
+        //     contractId: contractInfo.contractId,
+        //     subjectId: contractInfo.subjectId,
+        //     subjectName: contractInfo.subjectName,
+        //     subjectType: contractInfo.subjectType,
+        //     licenseeId: contractInfo.licenseeId,
+        //     licenseeOwnerId: contractInfo.licenseeOwnerId,
+        //     licensorId: contractInfo.licensorId,
+        //     licensorOwnerId: contractInfo.licensorOwnerId,
+        //     beforeAuthStatus, afterAuthStatus
+        // };
     }
 
     /**

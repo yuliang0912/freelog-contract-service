@@ -190,7 +190,6 @@ export class ContractController {
     }
 
     @get('/subjects/signCount')
-    @visitorIdentityValidator(IdentityTypeEnum.LoginUser | IdentityTypeEnum.InternalClient)
     async subjectSingCount() {
 
         const {ctx} = this;

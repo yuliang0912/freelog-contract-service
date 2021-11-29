@@ -1,4 +1,4 @@
-import {inject, provide} from 'midway';
+import {inject, plugin, provide} from 'midway';
 import {ContractInfo, IContractStateMachine, PolicyEventInfo} from '../../interface';
 import {PolicyEventEnum} from '../../enum';
 import {PolicyService} from './policy-service';
@@ -13,6 +13,8 @@ export class ContractEventExecService {
 
     @inject()
     ctx;
+    @plugin()
+    mongoose;
     @inject()
     policyService: PolicyService;
     @inject()
@@ -26,6 +28,26 @@ export class ContractEventExecService {
 
     constructor() {
         this.eventCodeHandlerMap.set(PolicyEventEnum.TransactionEvent, this.transactionEventHandle.bind(this));
+    }
+
+    /**
+     * 初始化合约
+     * @param contractInfo
+     */
+    async initialContract(contractInfo: ContractInfo) {
+        if (!contractInfo.policyInfo) {
+            contractInfo.policyInfo = await this.policyService.findOne({policyId: contractInfo.policyId});
+        }
+        const session = await this.mongoose.startSession();
+        await session.withTransaction(() => {
+            return this.buildContractStateMachine(contractInfo).execInitial(session);
+        }).catch(error => {
+            console.log('合约初始化错误,message:' + error.toString());
+            throw error;
+        }).finally(() => {
+            session.endSession();
+        });
+        return true;
     }
 
     /**

@@ -1,4 +1,4 @@
-import { ContractFsmRunningStatusEnum } from '../enum';
+import { ContractAuthStatusEnum, ContractFsmRunningStatusEnum } from '../enum';
 import { ContractInfo, ContractTransitionRecord, IContractTriggerEventMessage } from '../interface';
 import { IMongodbOperation } from 'egg-freelog-base';
 import { ClientSession } from 'mongoose';
@@ -33,6 +33,12 @@ export declare class ContractFsmEventHandler {
         nModified: number;
         ok: number;
     }>;
+    /**
+     * 合约授权状态发生转变事件处理
+     * @param contractInfo
+     * @param afterAuthStatus
+     */
+    execAuthStatusChangedEventHandle(contractInfo: ContractInfo, afterAuthStatus: ContractAuthStatusEnum): Promise<void>;
     /**
      * 获取合同的授权状态
      * @param contractInfo

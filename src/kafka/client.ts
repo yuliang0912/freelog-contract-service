@@ -27,6 +27,9 @@ export class KafkaClient {
 
     @init()
     async initial() {
+        if (this.kafkaConfig.enable === false) {
+            return;
+        }
         this.kafka = new Kafka(this.kafkaConfig);
         this.producer = this.kafka.producer();
         this._instrumentationEvents();

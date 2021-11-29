@@ -38,4 +38,21 @@ export class ContractEventController {
 
         await this.contractEventExecService.execContractEvent(contractInfo, PolicyEventEnum.TransactionEvent, eventId, accountId, transactionAmount, password).then(ctx.success);
     }
+
+    /**
+     * 初始化事件(人工主动初始化接口)
+     */
+    @post('/:contractId/events/init')
+    async initial() {
+        const {ctx} = this;
+        const contractId = ctx.checkParams('contractId').isContractId().value;
+        ctx.validateParams();
+
+        const contractInfo = await this.contractService.findById(contractId);
+        if (!contractInfo) {
+            throw new ApplicationError(ctx.gettext('contract-entity-not-found'));
+        }
+
+        await this.contractEventExecService.initialContract(contractInfo).then(ctx.success);
+    }
 }

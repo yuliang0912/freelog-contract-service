@@ -9,4 +9,8 @@ export declare class ContractEventController {
      * 支付事件
      */
     payment(): Promise<void>;
+    /**
+     * 初始化事件(人工主动初始化接口)
+     */
+    initial(): Promise<void>;
 }

@@ -42,6 +42,9 @@ export class ContractFsmEventHandler {
             authStatus: ContractFsmEventHandler.GetContractAuthStatus(contractInfo, toState),
             fsmDeclarations: contractInfo.fsmDeclarations
         };
+        if (updateContractModel.fsmRunningStatus === ContractFsmRunningStatusEnum.Terminated) {
+            updateContractModel.status = 1;
+        }
         const transitionRecord: ContractTransitionRecord = {
             _id: this.mongoose.getNewObjectId(),
             contractId: contractInfo.contractId,

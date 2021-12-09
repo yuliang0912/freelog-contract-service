@@ -1,18 +1,27 @@
-import {isString, pick, chain, isArray, isEmpty, assign, isNumber} from 'lodash';
-import {provide, inject, plugin} from 'midway';
+import {assign, chain, isArray, isEmpty, isNumber, isString, pick} from 'lodash';
+import {inject, plugin, provide} from 'midway';
 import {
-    ContractInfo,
     BeSignSubjectOptions,
+    ContractInfo,
+    ContractTransitionRecord,
     IContractService,
+    IContractStateMachine,
     IOutsideApiService,
     IPolicyService,
     PolicyInfo,
-    SubjectBaseInfo, IContractStateMachine, ContractTransitionRecord
+    SubjectBaseInfo
 } from '../../interface';
 import {ContractAuthStatusEnum, ContractFsmRunningStatusEnum} from '../../enum';
 import {
-    FreelogContext, ContractStatusEnum, ContractLicenseeIdentityTypeEnum, SubjectTypeEnum,
-    PageResult, ArgumentError, ApplicationError, LogicError, IMongodbOperation
+    ApplicationError,
+    ArgumentError,
+    ContractLicenseeIdentityTypeEnum,
+    ContractStatusEnum,
+    FreelogContext,
+    IMongodbOperation,
+    LogicError,
+    PageResult,
+    SubjectTypeEnum
 } from 'egg-freelog-base';
 
 @provide('contractService')
@@ -351,7 +360,8 @@ export class ContractService implements IContractService {
         return baseInfos.map(baseInfo => {
             const existingContract = hasSignedAndEfficientContracts.find(x => x.subjectId === baseInfo.subjectId && x.subjectType === baseInfo.subjectType && x.policyId === baseInfo.policyId && x.licenseeId.toString() === baseInfo.licenseeId.toString());
             return assign(baseInfo, {
-                isCanReSign: !Boolean(existingContract), signedContractInfo: existingContract
+                isCanReSign: Boolean(!existingContract || existingContract?.status == ContractStatusEnum.Terminated),
+                signedContractInfo: existingContract
             });
         });
     }

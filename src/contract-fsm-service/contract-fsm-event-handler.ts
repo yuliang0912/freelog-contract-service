@@ -7,6 +7,7 @@ import {ContractLicenseeIdentityTypeEnum, IMongodbOperation} from 'egg-freelog-b
 import {inject, plugin, provide, scope, ScopeEnum} from 'midway';
 import {ClientSession} from 'mongoose';
 import {ContractEnvironmentVariableHandler} from '../extend/contract-environment-variable-handler';
+import {ContractInfoSignatureProvider} from '../extend/contract-common-generator/contract-info-signature-generator';
 
 @provide()
 @scope(ScopeEnum.Singleton)
@@ -20,6 +21,8 @@ export class ContractFsmEventHandler {
     contractTransitionRecordProvider: IMongodbOperation<ContractTransitionRecord>;
     @inject()
     contractEnvironmentVariableHandler: ContractEnvironmentVariableHandler;
+    @inject()
+    contractInfoSignatureProvider: ContractInfoSignatureProvider;
 
     /**
      * 同步订单状态,并且记录订单变更历史
@@ -44,6 +47,11 @@ export class ContractFsmEventHandler {
         };
         if (updateContractModel.fsmRunningStatus === ContractFsmRunningStatusEnum.Terminated) {
             updateContractModel.status = 1;
+            updateContractModel.uniqueKey = this.contractInfoSignatureProvider.contractBaseInfoUniqueKeyGenerate({
+                subjectId: contractInfo.subjectId, subjectType: contractInfo.subjectType,
+                licenseeId: contractInfo.licenseeId, policyId: contractInfo.policyId,
+                status: 1, contractId: contractInfo.contractId
+            });
         }
         const transitionRecord: ContractTransitionRecord = {
             _id: this.mongoose.getNewObjectId(),

@@ -3,11 +3,13 @@ import { ContractInfo, ContractTransitionRecord, IContractTriggerEventMessage } 
 import { IMongodbOperation } from 'egg-freelog-base';
 import { ClientSession } from 'mongoose';
 import { ContractEnvironmentVariableHandler } from '../extend/contract-environment-variable-handler';
+import { ContractInfoSignatureProvider } from '../extend/contract-common-generator/contract-info-signature-generator';
 export declare class ContractFsmEventHandler {
     mongoose: any;
     contractInfoProvider: IMongodbOperation<ContractInfo>;
     contractTransitionRecordProvider: IMongodbOperation<ContractTransitionRecord>;
     contractEnvironmentVariableHandler: ContractEnvironmentVariableHandler;
+    contractInfoSignatureProvider: ContractInfoSignatureProvider;
     /**
      * 同步订单状态,并且记录订单变更历史
      * 1.同步合同的授权状态

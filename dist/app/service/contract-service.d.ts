@@ -1,5 +1,5 @@
-import { ContractInfo, BeSignSubjectOptions, IContractService, IOutsideApiService, IPolicyService, PolicyInfo, IContractStateMachine, ContractTransitionRecord } from '../../interface';
-import { FreelogContext, ContractLicenseeIdentityTypeEnum, SubjectTypeEnum, PageResult, IMongodbOperation } from 'egg-freelog-base';
+import { BeSignSubjectOptions, ContractInfo, ContractTransitionRecord, IContractService, IContractStateMachine, IOutsideApiService, IPolicyService, PolicyInfo } from '../../interface';
+import { ContractLicenseeIdentityTypeEnum, FreelogContext, IMongodbOperation, PageResult, SubjectTypeEnum } from 'egg-freelog-base';
 export declare class ContractService implements IContractService {
     mongoose: any;
     ctx: FreelogContext;

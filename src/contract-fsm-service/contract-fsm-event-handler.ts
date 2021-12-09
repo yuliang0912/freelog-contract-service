@@ -1,9 +1,11 @@
 import {ContractAuthStatusEnum, ContractFsmRunningStatusEnum, PolicyEventEnum} from '../enum';
 import {
-    ContractInfo, ContractTransitionRecord,
-    FsmStateDescriptionInfo, IContractTriggerEventMessage
+    ContractInfo,
+    ContractTransitionRecord,
+    FsmStateDescriptionInfo,
+    IContractTriggerEventMessage
 } from '../interface';
-import {ContractLicenseeIdentityTypeEnum, IMongodbOperation} from 'egg-freelog-base';
+import {ContractLicenseeIdentityTypeEnum, ContractStatusEnum, IMongodbOperation} from 'egg-freelog-base';
 import {inject, plugin, provide, scope, ScopeEnum} from 'midway';
 import {ClientSession} from 'mongoose';
 import {ContractEnvironmentVariableHandler} from '../extend/contract-environment-variable-handler';
@@ -46,11 +48,11 @@ export class ContractFsmEventHandler {
             fsmDeclarations: contractInfo.fsmDeclarations
         };
         if (updateContractModel.fsmRunningStatus === ContractFsmRunningStatusEnum.Terminated) {
-            updateContractModel.status = 1;
+            updateContractModel.status = ContractStatusEnum.Terminated;
             updateContractModel.uniqueKey = this.contractInfoSignatureProvider.contractBaseInfoUniqueKeyGenerate({
                 subjectId: contractInfo.subjectId, subjectType: contractInfo.subjectType,
                 licenseeId: contractInfo.licenseeId, policyId: contractInfo.policyId,
-                status: 1, contractId: contractInfo.contractId
+                status: ContractStatusEnum.Terminated, contractId: contractInfo.contractId
             });
         }
         const transitionRecord: ContractTransitionRecord = {

@@ -35,7 +35,7 @@ export default () => {
     config.gatewayUrl = 'http://api.testfreelog.com';
 
     config.localIdentity = {
-        userId: 50021,
+        userId: 50017,
         username: 'yuliang'
     };
 

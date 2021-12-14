@@ -32,7 +32,7 @@ export class PolicyCompiler implements IPolicyCompiler {
         for (const fsmStateDescriptionInfo of Object.values(fsmDescriptionInfo)) {
             fsmStateDescriptionInfo.isAuth = fsmStateDescriptionInfo.serviceStates.some(x => serviceStateMap.get(x) === ContractColorStateTypeEnum[ContractColorStateTypeEnum.Authorization].toLowerCase());
             fsmStateDescriptionInfo.isTestAuth = fsmStateDescriptionInfo.serviceStates.some(x => serviceStateMap.get(x) === ContractColorStateTypeEnum[ContractColorStateTypeEnum.TestAuthorization].toLowerCase());
-            if (isEmpty(fsmStateDescriptionInfo.transitions)) {
+            if (isEmpty(fsmStateDescriptionInfo.transitions) || fsmStateDescriptionInfo.transitions.some(x => x.name === 'terminate')) {
                 fsmStateDescriptionInfo.isTerminate = true;
                 continue;
             }

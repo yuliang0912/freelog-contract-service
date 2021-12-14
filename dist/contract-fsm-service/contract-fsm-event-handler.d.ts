@@ -1,11 +1,13 @@
 import { ContractAuthStatusEnum, ContractFsmRunningStatusEnum } from '../enum';
 import { ContractInfo, ContractTransitionRecord, IContractTriggerEventMessage } from '../interface';
-import { IMongodbOperation } from 'egg-freelog-base';
+import { ContractStatusEnum, IMongodbOperation } from 'egg-freelog-base';
 import { ClientSession } from 'mongoose';
 import { ContractEnvironmentVariableHandler } from '../extend/contract-environment-variable-handler';
 import { ContractInfoSignatureProvider } from '../extend/contract-common-generator/contract-info-signature-generator';
+import { KafkaClient } from '../kafka/client';
 export declare class ContractFsmEventHandler {
     mongoose: any;
+    kafkaClient: KafkaClient;
     contractInfoProvider: IMongodbOperation<ContractInfo>;
     contractTransitionRecordProvider: IMongodbOperation<ContractTransitionRecord>;
     contractEnvironmentVariableHandler: ContractEnvironmentVariableHandler;
@@ -39,8 +41,9 @@ export declare class ContractFsmEventHandler {
      * 合约授权状态发生转变事件处理
      * @param contractInfo
      * @param afterAuthStatus
+     * @param contractStatus
      */
-    execAuthStatusChangedEventHandle(contractInfo: ContractInfo, afterAuthStatus: ContractAuthStatusEnum): Promise<void>;
+    execAuthStatusChangedEventHandle(contractInfo: ContractInfo, afterAuthStatus: ContractAuthStatusEnum, contractStatus: ContractStatusEnum): Promise<import("kafkajs").RecordMetadata[]>;
     /**
      * 获取合同的授权状态
      * @param contractInfo

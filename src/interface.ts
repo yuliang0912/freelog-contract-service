@@ -341,3 +341,17 @@ export interface ContractTransitionRecord {
     toState: string;
     eventInfo: IContractTriggerEventMessage;
 }
+
+export interface IContractAuthStatusChangedEventMessage {
+    contractId: string;
+    subjectId: string;
+    subjectName: string;
+    subjectType: SubjectTypeEnum;
+    licenseeId: string | number;
+    licenseeOwnerId: number;
+    licensorId: string | number;
+    licensorOwnerId: number;
+    beforeAuthStatus: ContractAuthStatusEnum;
+    afterAuthStatus: ContractAuthStatusEnum;
+    contractStatus: ContractStatusEnum;
+}

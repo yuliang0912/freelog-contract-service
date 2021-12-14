@@ -30,6 +30,25 @@ export class KafkaStartup {
         await this.kafkaClient.producer.connect().catch(error => {
             console.log('kafka producer connect failed,', error);
         });
+        // await this.kafkaClient.send({
+        //     topic: 'resource-contract-auth-status-changed-queue',
+        //     messages: [{
+        //         value: JSON.stringify({
+        //             contractId: '5f326eb01bcaeb00347b8eac',
+        //             subjectId: '5f3245bbf5d0dd002f2f0610',
+        //             subjectName: '12345676789/base1',
+        //             subjectType: 1,
+        //             licenseeId: '5f325f4034818a002f4a9b37',
+        //             licenseeOwnerId: 50028,
+        //             licensorId: '5f3245bbf5d0dd002f2f0610',
+        //             licensorOwnerId: 50028,
+        //             beforeAuthStatus: 1,
+        //             afterAuthStatus: 128,
+        //             contractStatus: 1
+        //         })
+        //     }],
+        //     acks: -1
+        // });
     }
 
     /**

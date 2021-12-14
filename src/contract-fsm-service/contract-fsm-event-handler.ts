@@ -3,13 +3,20 @@ import {
     ContractInfo,
     ContractTransitionRecord,
     FsmStateDescriptionInfo,
+    IContractAuthStatusChangedEventMessage,
     IContractTriggerEventMessage
 } from '../interface';
-import {ContractLicenseeIdentityTypeEnum, ContractStatusEnum, IMongodbOperation} from 'egg-freelog-base';
+import {
+    ContractLicenseeIdentityTypeEnum,
+    ContractStatusEnum,
+    IMongodbOperation,
+    SubjectTypeEnum
+} from 'egg-freelog-base';
 import {inject, plugin, provide, scope, ScopeEnum} from 'midway';
 import {ClientSession} from 'mongoose';
 import {ContractEnvironmentVariableHandler} from '../extend/contract-environment-variable-handler';
 import {ContractInfoSignatureProvider} from '../extend/contract-common-generator/contract-info-signature-generator';
+import {KafkaClient} from '../kafka/client';
 
 @provide()
 @scope(ScopeEnum.Singleton)
@@ -17,6 +24,8 @@ export class ContractFsmEventHandler {
 
     @plugin()
     mongoose;
+    @inject()
+    kafkaClient: KafkaClient;
     @inject()
     contractInfoProvider: IMongodbOperation<ContractInfo>;
     @inject()
@@ -65,7 +74,7 @@ export class ContractFsmEventHandler {
         const task2 = this.contractInfoProvider.updateOne({_id: contractInfo.contractId}, updateContractModel, {session});
         await Promise.all([task1, task2]).then(() => {
             console.log(`修改合约状态,contractId:${contractInfo.contractId},from:${fromState},to:${toState}`);
-            return this.execAuthStatusChangedEventHandle(contractInfo, updateContractModel.authStatus);
+            return this.execAuthStatusChangedEventHandle(contractInfo, updateContractModel.authStatus, updateContractModel.status);
         });
         return transitionRecord._id;
     }
@@ -104,25 +113,36 @@ export class ContractFsmEventHandler {
      * 合约授权状态发生转变事件处理
      * @param contractInfo
      * @param afterAuthStatus
+     * @param contractStatus
      */
-    async execAuthStatusChangedEventHandle(contractInfo: ContractInfo, afterAuthStatus: ContractAuthStatusEnum) {
+    async execAuthStatusChangedEventHandle(contractInfo: ContractInfo, afterAuthStatus: ContractAuthStatusEnum, contractStatus: ContractStatusEnum) {
         if (contractInfo.authStatus === afterAuthStatus) {
             return;
         }
-        // TODO:发送合约授权状态变更事件
-        // topic-name: <subject-type>-contract-auth-status-changed-queue
-        // key: contractId (同一个contractId可以保证是顺序处理)
-        // msgBody: {
-        //     contractId: contractInfo.contractId,
-        //     subjectId: contractInfo.subjectId,
-        //     subjectName: contractInfo.subjectName,
-        //     subjectType: contractInfo.subjectType,
-        //     licenseeId: contractInfo.licenseeId,
-        //     licenseeOwnerId: contractInfo.licenseeOwnerId,
-        //     licensorId: contractInfo.licensorId,
-        //     licensorOwnerId: contractInfo.licensorOwnerId,
-        //     beforeAuthStatus, afterAuthStatus
-        // };
+
+        const msgBody: IContractAuthStatusChangedEventMessage = {
+            contractId: contractInfo.contractId,
+            subjectId: contractInfo.subjectId,
+            subjectName: contractInfo.subjectName,
+            subjectType: contractInfo.subjectType,
+            licenseeId: contractInfo.licenseeId,
+            licenseeOwnerId: contractInfo.licenseeOwnerId,
+            licensorId: contractInfo.licensorId,
+            licensorOwnerId: contractInfo.licensorOwnerId,
+            beforeAuthStatus: contractInfo.authStatus,
+            afterAuthStatus, contractStatus
+        };
+
+        const topicName = `${SubjectTypeEnum[contractInfo.subjectType.toString()].toLowerCase()}-contract-auth-status-changed-topic`;
+        return this.kafkaClient.send({
+            topic: topicName,
+            acks: -1,
+            messages: [{
+                key: contractInfo.contractId,
+                value: JSON.stringify(msgBody),
+                headers: {contractId: contractInfo.contractId}
+            }]
+        });
     }
 
     /**

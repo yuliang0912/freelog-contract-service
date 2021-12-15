@@ -262,4 +262,5 @@ export interface IContractAuthStatusChangedEventMessage {
     beforeAuthStatus: ContractAuthStatusEnum;
     afterAuthStatus: ContractAuthStatusEnum;
     contractStatus: ContractStatusEnum;
+    licenseeIdentityType: ContractLicenseeIdentityTypeEnum;
 }

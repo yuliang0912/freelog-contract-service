@@ -9,8 +9,7 @@ import {
 import {
     ContractLicenseeIdentityTypeEnum,
     ContractStatusEnum,
-    IMongodbOperation,
-    SubjectTypeEnum
+    IMongodbOperation
 } from 'egg-freelog-base';
 import {inject, plugin, provide, scope, ScopeEnum} from 'midway';
 import {ClientSession} from 'mongoose';
@@ -130,10 +129,11 @@ export class ContractFsmEventHandler {
             licensorId: contractInfo.licensorId,
             licensorOwnerId: contractInfo.licensorOwnerId,
             beforeAuthStatus: contractInfo.authStatus,
+            licenseeIdentityType: contractInfo.licenseeIdentityType,
             afterAuthStatus, contractStatus
         };
 
-        const topicName = `${SubjectTypeEnum[contractInfo.subjectType.toString()].toLowerCase()}-contract-auth-status-changed-topic`;
+        const topicName = `${ContractLicenseeIdentityTypeEnum[contractInfo.licenseeIdentityType.toString()].toLowerCase()}-contract-auth-status-changed-topic`;
         return this.kafkaClient.send({
             topic: topicName,
             acks: -1,

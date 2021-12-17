@@ -20,10 +20,10 @@ let PolicyInfoProvider = class PolicyInfoProvider extends egg_freelog_base_1.Mon
     }
 };
 PolicyInfoProvider = __decorate([
-    midway_1.provide(),
-    midway_1.scope('Singleton'),
-    __param(0, midway_1.inject('model.PolicyInfo')),
+    (0, midway_1.provide)(),
+    (0, midway_1.scope)('Singleton'),
+    __param(0, (0, midway_1.inject)('model.PolicyInfo')),
     __metadata("design:paramtypes", [Object])
 ], PolicyInfoProvider);
 exports.default = PolicyInfoProvider;
-//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoicG9saWN5LWluZm8tcHJvdmlkZXIuanMiLCJzb3VyY2VSb290IjoiIiwic291cmNlcyI6WyIuLi8uLi8uLi9zcmMvYXBwL2RhdGEtcHJvdmlkZXIvcG9saWN5LWluZm8tcHJvdmlkZXIudHMiXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6Ijs7Ozs7Ozs7Ozs7Ozs7QUFBQSxtQ0FBOEM7QUFDOUMsdURBQWtEO0FBS2xELElBQXFCLGtCQUFrQixHQUF2QyxNQUFxQixrQkFBbUIsU0FBUSxtQ0FBNEI7SUFDeEUsWUFBd0MsS0FBSztRQUN6QyxLQUFLLENBQUMsS0FBSyxDQUFDLENBQUM7SUFDakIsQ0FBQztDQUNKLENBQUE7QUFKb0Isa0JBQWtCO0lBRnRDLGdCQUFPLEVBQUU7SUFDVCxjQUFLLENBQUMsV0FBVyxDQUFDO0lBRUYsV0FBQSxlQUFNLENBQUMsa0JBQWtCLENBQUMsQ0FBQTs7R0FEdEIsa0JBQWtCLENBSXRDO2tCQUpvQixrQkFBa0IifQ==
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoicG9saWN5LWluZm8tcHJvdmlkZXIuanMiLCJzb3VyY2VSb290IjoiIiwic291cmNlcyI6WyIuLi8uLi8uLi9zcmMvYXBwL2RhdGEtcHJvdmlkZXIvcG9saWN5LWluZm8tcHJvdmlkZXIudHMiXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6Ijs7Ozs7Ozs7Ozs7Ozs7QUFBQSxtQ0FBOEM7QUFDOUMsdURBQWtEO0FBS2xELElBQXFCLGtCQUFrQixHQUF2QyxNQUFxQixrQkFBbUIsU0FBUSxtQ0FBNEI7SUFDeEUsWUFBd0MsS0FBSztRQUN6QyxLQUFLLENBQUMsS0FBSyxDQUFDLENBQUM7SUFDakIsQ0FBQztDQUNKLENBQUE7QUFKb0Isa0JBQWtCO0lBRnRDLElBQUEsZ0JBQU8sR0FBRTtJQUNULElBQUEsY0FBSyxFQUFDLFdBQVcsQ0FBQztJQUVGLFdBQUEsSUFBQSxlQUFNLEVBQUMsa0JBQWtCLENBQUMsQ0FBQTs7R0FEdEIsa0JBQWtCLENBSXRDO2tCQUpvQixrQkFBa0IifQ==

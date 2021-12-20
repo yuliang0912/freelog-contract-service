@@ -1,10 +1,10 @@
 import {provide, inject} from 'midway';
 import {IPolicyCompiler, IPolicyService, PolicyInfo} from '../../interface';
 import {FreelogContext, IMongodbOperation, SubjectTypeEnum} from 'egg-freelog-base';
-import {ContractEntity} from '@freelog/resource-policy-lang/dist/tools/ContractTool';
+import {ContractEntity} from '@freelog/resource-policy-lang';
 import {FSMEntity} from '@freelog/resource-policy-lang/src/translate/tools/FSMTool';
 import {EventEntity} from '@freelog/resource-policy-lang/src/translate/tools/EventTool';
-import {report} from '@freelog/resource-policy-lang/dist';
+import {report} from '@freelog/resource-policy-lang';
 
 @provide('policyService')
 export class PolicyService implements IPolicyService {

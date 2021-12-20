@@ -40,7 +40,7 @@ export default () => {
     };
 
     config.kafka = {
-        enable: true,
+        enable: false,
         clientId: 'freelog-contract-service',
         logLevel: logLevel.ERROR,
         brokers: ['192.168.164.165:9090']

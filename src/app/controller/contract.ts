@@ -303,6 +303,6 @@ export class ContractController {
 
         await this.contractService.findIntervalContractTransitionRecords({
             contractId, eventId: {$ne: 'init'}
-        }, skip, limit, ['contractId', 'fromState', 'toState', 'eventId', 'createDate']).then(ctx.success);
+        }, skip, limit, ['contractId', 'fromState', 'toState', 'eventId', 'createDate'], {_id: -1}).then(ctx.success);
     }
 }

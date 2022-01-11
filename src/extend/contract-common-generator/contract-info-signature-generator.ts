@@ -58,7 +58,6 @@ export class ContractInfoSignatureProvider {
             throw new ArgumentError('contract is invalid, signature failed');
         }
         const signText = signContractObjectKeys.map(key => signContractObject[key].toString()).join('-');
-        console.log(signText);
         return CryptoHelper.hmacSha1(signText, signKey);
     }
 }

@@ -208,7 +208,7 @@ class ContractStateMachine implements IContractStateMachine {
         const commonHandle = this.contractFsmEventTransitionAfterHandler.registerContractEvents(this.contractInfo, this.session, lifeCycle.from, lifeCycle.to);
         // 如果事件不需要单独处理,则默认返回true
         if (!currentEventInfo || !Reflect.has(this.contractFsmEventTransitionAfterHandler, eventHandleFuncName)) {
-            console.log('===================================');
+            // console.log('===================================');
             return commonHandle;
         }
         const specificEventHandle = Reflect.apply(this.contractFsmEventTransitionAfterHandler[eventHandleFuncName], this.contractFsmEventTransitionAfterHandler, [this.contractInfo, this.session, this.eventInfo, this.latestTransitionStateId]);
@@ -223,7 +223,7 @@ class ContractStateMachine implements IContractStateMachine {
         const currentEventInfo = this.eventMap.get(transition);
         const eventHandleFuncName = `exec${currentEventInfo?.code}InvalidEventHandle`;
         const commonHandle = this.contractFsmInvalidTransitionHandler.invalidTransitionHandle(this.contractInfo, this.session, this.eventInfo, '合约当前状态不允许执行此事件');
-        console.log('==========无效事件,不处理==========');
+        console.log(`${new Date().toLocaleString()}=====无效事件,不处理.contractId:${this.contractInfo.contractId},eventId:${this.eventInfo.eventId}==========`);
         // 如果事件不需要单独处理,则默认返回true
         if (!currentEventInfo || !Reflect.has(this.contractFsmInvalidTransitionHandler, eventHandleFuncName)) {
             return commonHandle;

@@ -34,7 +34,7 @@ export class ContractMqEventTriggerHandle implements IKafkaSubscribeMessageHandl
 
         const contractInfo = await this.contractInfoProvider.findOne({_id: eventInfo.contractId});
         if (!contractInfo) {
-            console.log(`未找到合约信息,contractId:${eventInfo.contractId},offset:${message.offset}`);
+            console.error(`未找到合约信息,contractId:${eventInfo.contractId},offset:${message.offset}`);
             return;
         }
         contractInfo.policyInfo = await this.policyInfoProvider.findOne({policyId: contractInfo.policyId});

@@ -72,7 +72,7 @@ export class ContractFsmEventHandler {
         const task1 = this.contractTransitionRecordProvider.create([transitionRecord], {session});
         const task2 = this.contractInfoProvider.updateOne({_id: contractInfo.contractId}, updateContractModel, {session});
         await Promise.all([task1, task2]).then(() => {
-            console.log(`修改合约状态,contractId:${contractInfo.contractId},from:${fromState},to:${toState}`);
+            // console.log(`修改合约状态,contractId:${contractInfo.contractId},from:${fromState},to:${toState}`);
             return this.execAuthStatusChangedEventHandle(contractInfo, updateContractModel.authStatus, updateContractModel.status);
         });
         return transitionRecord._id;
@@ -85,7 +85,7 @@ export class ContractFsmEventHandler {
      * @param errorMsg
      */
     async contractInitialErrorHandle(contractInfo: ContractInfo, eventInfo: IContractTriggerEventMessage, errorMsg: string) {
-        console.log(`合约${contractInfo.contractId}初始化错误,${errorMsg}`);
+        console.error(`合约${contractInfo.contractId}初始化错误,${errorMsg}`);
         return this.contractInfoProvider.updateOne({
             _id: contractInfo.contractId,
             fsmRunningStatus: {$in: [ContractFsmRunningStatusEnum.Uninitialized, ContractFsmRunningStatusEnum.InitializedError]}

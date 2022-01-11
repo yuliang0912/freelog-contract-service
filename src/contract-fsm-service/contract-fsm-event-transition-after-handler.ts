@@ -66,12 +66,12 @@ export class ContractFsmEventTransitionAfterHandler {
             transactionRecordId: eventInfo.args.transactionRecordId,
             transactionStatus: 2, stateId: transitionStateId ?? ''
         };
-        return this.kafkaClient.send({
+        await this.kafkaClient.send({
             topic: 'contract-payment-confirm-result-topic', acks: -1,
             messages: [{
                 value: JSON.stringify(messageBody), headers: {signature: ''}
             }]
-        }).then(() => console.log('交易确认消息发送成功'));
+        }).catch(error => console.log('交易消息发送失败' + error.toString()));
     }
 
     /**

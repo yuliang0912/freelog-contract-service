@@ -165,7 +165,8 @@ export class ContractService implements IContractService {
                 latestSignedContracts = contractList;
             }).catch();
         } else {
-            this._initialContracts(latestSignedContracts, beSignSubjectPolicyMap).catch();
+            // 5秒之后再初始化,给其他服务预留足够的数据处理时间. 因为初始化之后会发生合约状态变更. 也会产生对应的mq消息.
+            setTimeout(() => this._initialContracts(latestSignedContracts, beSignSubjectPolicyMap).catch(), 5000);
         }
 
         return [...latestSignedContracts, ...hasSignedAndEfficientContracts];
@@ -365,6 +366,14 @@ export class ContractService implements IContractService {
             });
         });
     }
+
+    // async update() {
+    //     const contracts = await this.contractInfoProvider.find({status: ContractStatusEnum.Terminated});
+    //     for (const item of contracts) {
+    //         const uniqueKey = this.contractInfoSignatureProvider.contractBaseInfoUniqueKeyGenerate(item);
+    //         this.contractInfoProvider.updateOne({_id: item.contractId}, {uniqueKey}).then();
+    //     }
+    // }
 
     /**
      * 初始化合约

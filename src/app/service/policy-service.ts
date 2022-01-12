@@ -16,7 +16,7 @@ export class PolicyService implements IPolicyService {
     @inject()
     policyInfoProvider: IMongodbOperation<PolicyInfo>;
 
-    policyTranslate(policies: PolicyInfo[]): PolicyInfo[] {
+    policyTranslate(policies: PolicyInfo[], isSign?: boolean): PolicyInfo[] {
         const list = [];
         for (let policyInfo of policies) {
             policyInfo = Reflect.has(policyInfo, 'toObject') ? policyInfo['toObject']() : policyInfo;
@@ -39,7 +39,7 @@ export class PolicyService implements IPolicyService {
                 };
                 contractEntity.fsmStates.push(fsmState);
             }
-            policyInfo.translateInfo = report(contractEntity);
+            policyInfo.translateInfo = report(contractEntity, isSign);
             list.push(policyInfo);
         }
         return list;

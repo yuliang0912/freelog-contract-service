@@ -208,7 +208,7 @@ export interface IContractService {
 
 export interface IPolicyService {
 
-    policyTranslate(policies: PolicyInfo[]): PolicyInfo[];
+    policyTranslate(policies: PolicyInfo[], isSign?: boolean): PolicyInfo[];
 
     findOrCreatePolicy(subjectType: SubjectTypeEnum, policyText: string): Promise<PolicyInfo>;
 

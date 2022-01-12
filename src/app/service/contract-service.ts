@@ -260,7 +260,7 @@ export class ContractService implements IContractService {
         }
         const policyMap: Map<string, PolicyInfo> = await this.policyService.findByIds(policyIds, 'policyId policyName policyText fsmDescriptionInfo').then(list => {
             if (isTranslate) {
-                list = this.policyService.policyTranslate(list);
+                list = this.policyService.policyTranslate(list, true);
             }
             return new Map(list.map(x => [x.policyId, x]));
         });

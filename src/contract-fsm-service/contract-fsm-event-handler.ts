@@ -73,6 +73,11 @@ export class ContractFsmEventHandler {
         const task2 = this.contractInfoProvider.updateOne({_id: contractInfo.contractId}, updateContractModel, {session});
         await Promise.all([task1, task2]).then(() => {
             // console.log(`修改合约状态,contractId:${contractInfo.contractId},from:${fromState},to:${toState}`);
+            if (fromState === '_none_') {
+                // 2秒之后再发送状态变更消息,给其他服务预留足够的数据处理时间. 因为初始化之后会发生合约状态变更. 也会产生对应的mq消息.
+                setTimeout(() => this.execAuthStatusChangedEventHandle(contractInfo, updateContractModel.authStatus, updateContractModel.status), 2000);
+                return;
+            }
             return this.execAuthStatusChangedEventHandle(contractInfo, updateContractModel.authStatus, updateContractModel.status);
         });
         return transitionRecord._id;

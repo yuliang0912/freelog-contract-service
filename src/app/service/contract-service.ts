@@ -165,8 +165,7 @@ export class ContractService implements IContractService {
                 latestSignedContracts = contractList;
             }).catch();
         } else {
-            // 5秒之后再初始化,给其他服务预留足够的数据处理时间. 因为初始化之后会发生合约状态变更. 也会产生对应的mq消息.
-            setTimeout(() => this._initialContracts(latestSignedContracts, beSignSubjectPolicyMap).catch(), 5000);
+            this._initialContracts(latestSignedContracts, beSignSubjectPolicyMap).catch();
         }
 
         return [...latestSignedContracts, ...hasSignedAndEfficientContracts];

@@ -328,13 +328,12 @@ export class ContractService implements IContractService {
      * @param signUserId
      * @param signUserType
      */
-    async findSubjectSignGroups(subjectType: SubjectTypeEnum, signUserId: number, signUserType: 1 | 2) {
+    async findSubjectSignGroups(condition: object) {
 
-        const aggregates = [{
-            $match: {
-                [signUserType === 1 ? 'licensorOwnerId' : 'licenseeOwnerId']: signUserId, subjectType
-            }
-        }, {
+        //             //{
+        //             //[signUserType === 1 ? 'licensorOwnerId' : 'licenseeOwnerId']: signUserId, subjectType
+        //             //}
+        const aggregates = [{$match: condition}, {
             $group: {
                 _id: '$subjectId',
                 subjectName: {$first: '$subjectName'},
@@ -354,10 +353,6 @@ export class ContractService implements IContractService {
                 count: '$count'
             }
         }];
-
-        if (!subjectType) {
-            delete aggregates[0].$match.subjectType;
-        }
         return this.contractInfoProvider.aggregate(aggregates);
     }
 

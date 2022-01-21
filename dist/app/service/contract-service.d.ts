@@ -83,7 +83,7 @@ export declare class ContractService implements IContractService {
      * @param signUserId
      * @param signUserType
      */
-    findSubjectSignGroups(subjectType: SubjectTypeEnum, signUserId: number, signUserType: 1 | 2): Promise<any>;
+    findSubjectSignGroups(condition: object): Promise<any>;
     /**
      * 查询合同流转记录
      * @param condition

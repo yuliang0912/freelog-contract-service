@@ -1,15 +1,28 @@
-import {first, isEmpty, isString, isUndefined, isDate} from 'lodash';
+import {first, isDate, isEmpty, isString, isUndefined} from 'lodash';
 import {controller, del, get, inject, post, provide, put} from 'midway';
 import {
-    ContractInfo, IContractService,
-    IContractStateMachine, IMongoConditionBuilder, IPolicyService
+    ContractInfo,
+    IContractService,
+    IContractStateMachine,
+    IMongoConditionBuilder,
+    IPolicyService
 } from '../../interface';
 import {
-    ApplicationError, ArgumentError, AuthorizationError, CommonRegex,
-    FreelogContext, IdentityTypeEnum, visitorIdentityValidator,
-    SubjectTypeEnum, ContractLicenseeIdentityTypeEnum, ContractStatusEnum, IJsonSchemaValidate, IMongodbOperation
+    ApplicationError,
+    ArgumentError,
+    AuthorizationError,
+    CommonRegex,
+    ContractLicenseeIdentityTypeEnum,
+    ContractStatusEnum,
+    FreelogContext,
+    IdentityTypeEnum,
+    IJsonSchemaValidate,
+    IMongodbOperation,
+    SubjectTypeEnum,
+    visitorIdentityValidator
 } from 'egg-freelog-base';
 import {OutsideApiService} from '../service/outside-api-service';
+import {deleteUndefinedFields} from 'egg-freelog-base/lib/freelog-common-func';
 
 @provide()
 @controller('/v2/contracts')
@@ -210,14 +223,19 @@ export class ContractController {
     }
 
     // 标的物签约统计
-    @get('/subjects/signStatistics')
+    @get('/subjects/presentables/signStatistics')
     async subjectSignStatistics() {
         const {ctx} = this;
+        const nodeId = ctx.checkQuery('nodeId').optional().toInt().value;
         const signUserIdentityType = ctx.checkQuery('signUserIdentityType').exist().toInt().in([1, 2]).value;
-        const subjectType = ctx.checkQuery('subjectType').exist().toInt().in([SubjectTypeEnum.Presentable, SubjectTypeEnum.Resource, SubjectTypeEnum.UserGroup]).value;
         ctx.validateParams();
 
-        await this.contractService.findSubjectSignGroups(subjectType, ctx.userId, signUserIdentityType).then(ctx.success);
+        const condition = deleteUndefinedFields<Partial<ContractInfo>>({
+            subjectType: SubjectTypeEnum.Presentable, licensorId: nodeId,
+            [signUserIdentityType === 1 ? 'licensorOwnerId' : 'licenseeOwnerId']: ctx.userId
+        });
+
+        await this.contractService.findSubjectSignGroups(condition).then(ctx.success);
     }
 
     @get('/:contractId')

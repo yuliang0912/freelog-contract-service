@@ -177,11 +177,8 @@ export interface IContractService {
 
     /**
      * 获取标的物签约次数(同一个用户去重)
-     * @param subjectType
-     * @param signUserId 签约用户
-     * @param signUserType 1:甲方 2:乙方
      */
-    findSubjectSignGroups(subjectType: SubjectTypeEnum, signUserId: number, signUserType: 1 | 2);
+    findSubjectSignGroups(condition: object);
 
     setDefaultExecContract(contract: ContractInfo): Promise<boolean>;
 

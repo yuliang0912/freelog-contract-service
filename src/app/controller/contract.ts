@@ -190,7 +190,7 @@ export class ContractController {
     }
 
     @get('/subjects/signCount')
-    async subjectSingCount() {
+    async subjectSignCount() {
 
         const {ctx} = this;
         const subjectIds = ctx.checkQuery('subjectIds').exist().toSplitArray().len(1, 300).value;
@@ -207,6 +207,11 @@ export class ContractController {
                 count: subjectSignCountMap.has(subjectId) ? subjectSignCountMap.get(subjectId) : 0
             };
         }));
+    }
+
+    @get('/subjects/SignGroup')
+    async subjectSignGroup() {
+
     }
 
     @get('/:contractId')
@@ -299,7 +304,7 @@ export class ContractController {
         ctx.validateParams();
 
         await this.contractService.findIntervalContractTransitionRecords({
-            contractId, eventId: {$ne: 'init'}
+            contractId
         }, skip, limit, ['contractId', 'fromState', 'toState', 'eventId', 'createDate'], {_id: -1}).then(ctx.success);
     }
 }

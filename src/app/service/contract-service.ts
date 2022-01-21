@@ -323,6 +323,38 @@ export class ContractService implements IContractService {
     }
 
     /**
+     * 获取标的物签约次数(同一个用户去重)
+     * @param subjectType
+     * @param subjectIds
+     */
+    async findSubjectSignGroups(subjectType: SubjectTypeEnum, signUserId: number, signUserType: 1 | 2) {
+
+        const aggregates = [{
+            $match: {
+                [signUserType === 1 ? 'licensorOwnerId' : 'licenseeOwnerId']: signUserId, subjectType
+            }
+        }, {
+            $group: {
+                _id: {subjectId: '$subjectId', licenseeId: '$licenseeId'}
+            }
+        }, {
+            $group: {
+                _id: '$_id.subjectId', count: {$sum: 1}
+            }
+        }, {
+            $project: {
+                _id: 0, subjectId: '$_id', count: '$count'
+            }
+        }];
+
+        if (!subjectType) {
+            delete aggregates[0].$match.subjectType;
+        }
+
+        return this.contractInfoProvider.aggregate(aggregates);
+    }
+
+    /**
      * 查询合同流转记录
      * @param condition
      * @param projection

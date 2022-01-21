@@ -134,6 +134,13 @@ export interface IContractService {
      * @param subjectIds
      */
     findSubjectSignCounts(subjectType: SubjectTypeEnum, subjectIds: string[]): any;
+    /**
+     * 获取标的物签约次数(同一个用户去重)
+     * @param subjectType
+     * @param signUserId 签约用户
+     * @param signUserType 1:甲方 2:乙方
+     */
+    findSubjectSignGroups(subjectType: SubjectTypeEnum, signUserId: number, signUserType: 1 | 2): any;
     setDefaultExecContract(contract: ContractInfo): Promise<boolean>;
     updateContractInfo(contract: ContractInfo, options: any): Promise<boolean>;
     /**

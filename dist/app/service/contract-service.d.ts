@@ -80,7 +80,8 @@ export declare class ContractService implements IContractService {
     /**
      * 获取标的物签约次数(同一个用户去重)
      * @param subjectType
-     * @param subjectIds
+     * @param signUserId
+     * @param signUserType
      */
     findSubjectSignGroups(subjectType: SubjectTypeEnum, signUserId: number, signUserType: 1 | 2): Promise<any>;
     /**

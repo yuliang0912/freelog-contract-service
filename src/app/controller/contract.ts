@@ -209,9 +209,15 @@ export class ContractController {
         }));
     }
 
-    @get('/subjects/SignGroup')
-    async subjectSignGroup() {
+    // 标的物签约统计
+    @get('/subjects/signStatistics')
+    async subjectSignStatistics() {
+        const {ctx} = this;
+        const signUserIdentityType = ctx.checkQuery('signUserIdentityType').exist().toInt().in([1, 2]).value;
+        const subjectType = ctx.checkQuery('subjectType').exist().toInt().in([SubjectTypeEnum.Presentable, SubjectTypeEnum.Resource, SubjectTypeEnum.UserGroup]).value;
+        ctx.validateParams();
 
+        await this.contractService.findSubjectSignGroups(subjectType, ctx.userId, signUserIdentityType).then(ctx.success);
     }
 
     @get('/:contractId')

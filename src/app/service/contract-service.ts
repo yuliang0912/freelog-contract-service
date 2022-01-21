@@ -325,7 +325,8 @@ export class ContractService implements IContractService {
     /**
      * 获取标的物签约次数(同一个用户去重)
      * @param subjectType
-     * @param subjectIds
+     * @param signUserId
+     * @param signUserType
      */
     async findSubjectSignGroups(subjectType: SubjectTypeEnum, signUserId: number, signUserType: 1 | 2) {
 
@@ -335,22 +336,28 @@ export class ContractService implements IContractService {
             }
         }, {
             $group: {
-                _id: {subjectId: '$subjectId', licenseeId: '$licenseeId'}
+                _id: '$subjectId',
+                subjectName: {$first: '$subjectName'},
+                policyIds: {$addToSet: '$policyId'},
+                latestSignDate: {$last: '$createDate'},
+                count: {$sum: 1}
             }
         }, {
-            $group: {
-                _id: '$_id.subjectId', count: {$sum: 1}
-            }
+            $sort: {latestSignDate: -1}
         }, {
             $project: {
-                _id: 0, subjectId: '$_id', count: '$count'
+                _id: 0,
+                subjectId: '$_id',
+                subjectName: '$subjectName',
+                policyIds: '$policyIds',
+                latestSignDate: '$latestSignDate',
+                count: '$count'
             }
         }];
 
         if (!subjectType) {
             delete aggregates[0].$match.subjectType;
         }
-
         return this.contractInfoProvider.aggregate(aggregates);
     }
 

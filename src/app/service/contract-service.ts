@@ -330,9 +330,6 @@ export class ContractService implements IContractService {
      */
     async findSubjectSignGroups(condition: object) {
 
-        //             //{
-        //             //[signUserType === 1 ? 'licensorOwnerId' : 'licenseeOwnerId']: signUserId, subjectType
-        //             //}
         const aggregates = [{$match: condition}, {
             $group: {
                 _id: '$subjectId',

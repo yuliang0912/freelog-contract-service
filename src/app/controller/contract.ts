@@ -228,13 +228,16 @@ export class ContractController {
         const {ctx} = this;
         const nodeId = ctx.checkQuery('nodeId').optional().toInt().value;
         const signUserIdentityType = ctx.checkQuery('signUserIdentityType').exist().toInt().in([1, 2]).value;
+        const keywords = ctx.checkQuery('keywords').optional().type('string').value;
         ctx.validateParams();
 
         const condition = deleteUndefinedFields<Partial<ContractInfo>>({
-            subjectType: SubjectTypeEnum.Presentable, licensorId: nodeId,
+            subjectType: SubjectTypeEnum.Presentable, licensorId: nodeId?.toString(),
             [signUserIdentityType === 1 ? 'licensorOwnerId' : 'licenseeOwnerId']: ctx.userId
         });
-
+        if (keywords?.length) {
+            condition.subjectName = {$regex: keywords, $options: 'i'} as any;
+        }
         await this.contractService.findSubjectSignGroups(condition).then(ctx.success);
     }
 

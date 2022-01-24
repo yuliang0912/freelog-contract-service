@@ -23,6 +23,7 @@ import {
 } from 'egg-freelog-base';
 import {OutsideApiService} from '../service/outside-api-service';
 import {deleteUndefinedFields} from 'egg-freelog-base/lib/freelog-common-func';
+import {ContractAuthStatusEnum} from '../../enum';
 
 @provide()
 @controller('/v2/contracts')
@@ -238,7 +239,18 @@ export class ContractController {
         if (keywords?.length) {
             condition.subjectName = {$regex: keywords, $options: 'i'} as any;
         }
-        await this.contractService.findSubjectSignGroups(condition).then(ctx.success);
+        const list = await this.contractService.findSubjectSignGroups(condition);
+
+        ctx.success(list.map(x => {
+            return {
+                subjectId: x.subjectId,
+                subjectName: x.subjectName,
+                policyIds: x.policyIds,
+                latestSignDate: x.latestSignDate,
+                count: x.count,
+                isAuth: x.authStatusList.includes(ContractAuthStatusEnum.Authorized)
+            };
+        }));
     }
 
     @get('/:contractId')

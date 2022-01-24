@@ -336,6 +336,7 @@ export class ContractService implements IContractService {
                 subjectName: {$first: '$subjectName'},
                 policyIds: {$addToSet: '$policyId'},
                 latestSignDate: {$last: '$createDate'},
+                authStatusList: {$addToSet: '$authStatus'},
                 count: {$sum: 1}
             }
         }, {
@@ -346,6 +347,7 @@ export class ContractService implements IContractService {
                 subjectId: '$_id',
                 subjectName: '$subjectName',
                 policyIds: '$policyIds',
+                authStatusList: '$authStatusList',
                 latestSignDate: '$latestSignDate',
                 count: '$count'
             }

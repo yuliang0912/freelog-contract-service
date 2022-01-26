@@ -1,5 +1,3 @@
-import {logLevel} from 'kafkajs';
-
 export default () => {
     const config: any = {};
 
@@ -23,8 +21,8 @@ export default () => {
     config.kafka = {
         enable: true,
         clientId: 'freelog-contract-service',
-        logLevel: logLevel.ERROR,
-        brokers: ['kafka-temp.common:9092']
+        logLevel: 1, // logLevel.ERROR,
+        brokers: ['kafka-temp-svc.common:9092']
     };
 
     return config;

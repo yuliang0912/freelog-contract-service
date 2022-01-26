@@ -147,6 +147,8 @@ export class ContractFsmEventHandler {
                 value: JSON.stringify(msgBody),
                 headers: {contractId: contractInfo.contractId}
             }]
+        }).catch(error => {
+            console.log('kafka消息发送失败', error);
         });
     }
 

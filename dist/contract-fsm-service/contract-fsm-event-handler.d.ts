@@ -43,7 +43,7 @@ export declare class ContractFsmEventHandler {
      * @param afterAuthStatus
      * @param contractStatus
      */
-    execAuthStatusChangedEventHandle(contractInfo: ContractInfo, afterAuthStatus: ContractAuthStatusEnum, contractStatus: ContractStatusEnum): Promise<import("kafkajs").RecordMetadata[]>;
+    execAuthStatusChangedEventHandle(contractInfo: ContractInfo, afterAuthStatus: ContractAuthStatusEnum, contractStatus: ContractStatusEnum): Promise<void | import("kafkajs").RecordMetadata[]>;
     /**
      * 获取合同的授权状态
      * @param contractInfo

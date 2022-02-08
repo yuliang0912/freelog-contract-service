@@ -178,6 +178,9 @@ export class ContractFsmEventHandler {
      * @constructor
      */
     static GetContractFsmRunningStatus(contractInfo: ContractInfo, toState: string): ContractFsmRunningStatusEnum {
+        if (contractInfo.fsmRunningStatus === ContractFsmRunningStatusEnum.ToBeRegisteredEvents) {
+            return ContractFsmRunningStatusEnum.ToBeRegisteredEvents;
+        }
         const fsmStateDescriptionInfo: FsmStateDescriptionInfo = contractInfo.policyInfo.fsmDescriptionInfo[toState];
         if (!fsmStateDescriptionInfo) { // 测试
             return ContractFsmRunningStatusEnum.Running;

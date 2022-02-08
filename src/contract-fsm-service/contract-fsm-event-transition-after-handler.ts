@@ -31,11 +31,7 @@ export class ContractFsmEventTransitionAfterHandler {
             return;
         }
         const eventBody = toBeRegisterEventInfos.map(eventInfo => pick(eventInfo, ['service', 'name', 'code', 'eventId', 'args']));
-        try {
-            await this.sendContractRegisterEventToKafka(contractInfo, eventBody).catch(() => this.errorHandle(contractInfo, session));
-        } catch (error) {
-            await this.errorHandle(contractInfo, session);
-        }
+        await this.sendContractRegisterEventToKafka(contractInfo, eventBody).catch(() => this.errorHandle(contractInfo, session));
     }
 
     /**
@@ -97,6 +93,7 @@ export class ContractFsmEventTransitionAfterHandler {
      */
     errorHandle(contractInfo: ContractInfo, session: ClientSession) {
         console.log('事件注册失败,后续job会尝试重新注册');
+        contractInfo.fsmRunningStatus = ContractFsmRunningStatusEnum.ToBeRegisteredEvents;
         return this.contractInfoProvider.updateOne({_id: contractInfo.contractId}, {
             fsmRunningStatus: ContractFsmRunningStatusEnum.ToBeRegisteredEvents
         }, {session});

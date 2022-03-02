@@ -156,6 +156,7 @@ export interface IContractService {
      * @param isWaitInitial
      */
     batchSignSubjects(subjects: BeSignSubjectOptions[], licenseeId: string | number, identityType: ContractLicenseeIdentityTypeEnum, subjectType: SubjectTypeEnum, isWaitInitial: boolean): Promise<ContractInfo[]>;
+    contractTransitionRecordTranslate(policyInfo: PolicyInfo, contractTransitionRecords: PageResult<ContractTransitionRecord>): any;
     fillContractPolicyInfo(contracts: ContractInfo[], isTranslate?: boolean): Promise<ContractInfo[]>;
     findLicenseeSignCounts(licenseeOwnerIds: number[], licenseeIdentityType: ContractLicenseeIdentityTypeEnum): Promise<Array<{
         licensorOwnerId: number;
@@ -165,7 +166,7 @@ export interface IContractService {
     findIntervalContractTransitionRecords(condition: object, skip?: number, limit?: number, projection?: string[], sort?: object): Promise<PageResult<ContractTransitionRecord>>;
 }
 export interface IPolicyService {
-    policyTranslate(policies: PolicyInfo[], isSign?: boolean): PolicyInfo[];
+    policyTranslate(policies: PolicyInfo[]): PolicyInfo[];
     findOrCreatePolicy(subjectType: SubjectTypeEnum, policyText: string): Promise<PolicyInfo>;
     findOrCreatePolicies(subjectType: SubjectTypeEnum, policyTexts: string[]): Promise<PolicyInfo[]>;
     findOne(condition: object, ...args: any[]): Promise<PolicyInfo>;
@@ -252,6 +253,7 @@ export interface ContractTransitionRecord {
     eventId: string;
     fromState: string;
     toState: string;
+    createDate?: Date;
     eventInfo: IContractTriggerEventMessage;
 }
 export interface IContractAuthStatusChangedEventMessage {

@@ -21,5 +21,8 @@ export declare class ContractController {
     isCanExecEvent(): Promise<void>;
     setDefault(): Promise<void>;
     deleteClientUserPresentableContract(): Promise<void>;
+    /**
+     * 合约流转记录
+     */
     contractTransitionRecords(): Promise<void>;
 }

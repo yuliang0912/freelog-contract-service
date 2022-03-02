@@ -1,4 +1,4 @@
-import {assign, chain, isArray, isEmpty, isNumber, isString, pick} from 'lodash';
+import {assign, chain, first, isArray, isEmpty, isNumber, isString, last, pick} from 'lodash';
 import {inject, plugin, provide} from 'midway';
 import {
     BeSignSubjectOptions,
@@ -23,6 +23,8 @@ import {
     PageResult,
     SubjectTypeEnum
 } from 'egg-freelog-base';
+import {transfer} from '@freelog/resource-policy-lang';
+import moment = require('moment');
 
 @provide('contractService')
 export class ContractService implements IContractService {
@@ -51,10 +53,10 @@ export class ContractService implements IContractService {
      */
     async findContractById(contractId: string, isLoadingPolicy = false) {
         const contractInfo = await this.contractInfoProvider.findOne({_id: contractId});
-        if (isLoadingPolicy) {
-            await this.fillContractPolicyInfo([contractInfo]);
+        if (!isLoadingPolicy) {
+            return contractInfo;
         }
-        return contractInfo;
+        return this.fillContractPolicyInfo([contractInfo]).then(first);
     }
 
     /**
@@ -98,8 +100,7 @@ export class ContractService implements IContractService {
         const reSignCheckResults = await this._checkIsCanReSignContracts(subjects.map(subject => Object({
             subjectType, licenseeId,
             subjectId: subject.subjectId,
-            policyId: subject.policyId,
-            status: ContractStatusEnum.Executed
+            policyId: subject.policyId
         })));
 
         const beSignSubjects = reSignCheckResults.filter(x => x.isCanReSign);
@@ -111,7 +112,11 @@ export class ContractService implements IContractService {
             return hasSignedAndEfficientContracts;
         }
 
-        const {licenseeName, licenseeOwnerId, licenseeOwnerName} = await this.outsideApiService.getLicenseeInfo(licenseeId, licenseeIdentityType);
+        const {
+            licenseeName,
+            licenseeOwnerId,
+            licenseeOwnerName
+        } = await this.outsideApiService.getLicenseeInfo(licenseeId, licenseeIdentityType);
         const beSignSubjectMap: Map<string, SubjectBaseInfo> = await this.outsideApiService.getSubjectInfos(beSignSubjects.map(x => x.subjectId), subjectType).then(list => {
             return new Map(list.map(x => [x.subjectId, x]));
         });
@@ -125,7 +130,16 @@ export class ContractService implements IContractService {
                 invalidSubjectIds.push(subjectInfo.subjectId);
                 return;
             }
-            const {licensorId, licensorName, licensorOwnerId, policies, licensorOwnerName, subjectId, subjectName, subjectType} = subjectInfo;
+            const {
+                licensorId,
+                licensorName,
+                licensorOwnerId,
+                policies,
+                licensorOwnerName,
+                subjectId,
+                subjectName,
+                subjectType
+            } = subjectInfo;
             const subjectPolicyInfo = policies.find(x => x.policyId === beSignSubject.policyId);
             if (!subjectPolicyInfo || subjectPolicyInfo.status !== 1 || !beSignSubjectPolicyMap.has(beSignSubject.policyId)) {
                 invalidPolicyIds.push({subjectId: beSignSubject.subjectId, policyId: beSignSubject.policyId});
@@ -259,7 +273,7 @@ export class ContractService implements IContractService {
         }
         const policyMap: Map<string, PolicyInfo> = await this.policyService.findByIds(policyIds, 'policyId policyName policyText fsmDescriptionInfo').then(list => {
             if (isTranslate) {
-                list = this.policyService.policyTranslate(list, true);
+                list = this.policyService.policyTranslate(list);
             }
             return new Map(list.map(x => [x.policyId, x]));
         });
@@ -269,6 +283,31 @@ export class ContractService implements IContractService {
             contractInfo.policyInfo = policyMap.get(contractInfo.policyId) ?? {};
             return contractInfo;
         });
+    }
+
+    /**
+     * 合约流转记录翻译
+     * @param policyInfo
+     * @param contractTransitionRecord
+     */
+    contractTransitionRecordTranslate(policyInfo: PolicyInfo, contractTransitionRecord: PageResult<ContractTransitionRecord>) {
+
+        const records: any[] = contractTransitionRecord.dataList.reverse().map(x => {
+            return {
+                fromState: x.fromState === '_none_' ? null : x.fromState,
+                toState: x.toState,
+                time: moment(x.eventInfo.eventTime).format('YYYY-MM-DD HH:mm:ss'),
+                event: policyInfo.fsmDescriptionInfo[x.fromState]?.transitions.find(x => x.eventId === x.eventId) ?? null
+            };
+        });
+        // 第一页数据,则最后一条是尾部
+        if (contractTransitionRecord.skip === 0) {
+            last(records).isLast = true;
+        }
+
+        const {fsmTransferResults} = transfer(policyInfo.fsmDescriptionInfo, records);
+        contractTransitionRecord.dataList = fsmTransferResults.reverse();
+        return contractTransitionRecord;
     }
 
     /**
@@ -391,10 +430,9 @@ export class ContractService implements IContractService {
         const hasSignedAndEfficientContracts = await this.find({uniqueKey: {$in: contractUniqueKeys}});
 
         return baseInfos.map(baseInfo => {
-            const existingContract = hasSignedAndEfficientContracts.find(x => x.subjectId === baseInfo.subjectId && x.subjectType === baseInfo.subjectType && x.policyId === baseInfo.policyId && x.licenseeId.toString() === baseInfo.licenseeId.toString());
+            const existingContract = hasSignedAndEfficientContracts.find(x => x.subjectId === baseInfo.subjectId && x.policyId === baseInfo.policyId);
             return assign(baseInfo, {
-                isCanReSign: !Boolean(existingContract),
-                signedContractInfo: existingContract
+                isCanReSign: !Boolean(existingContract), signedContractInfo: existingContract
             });
         });
     }

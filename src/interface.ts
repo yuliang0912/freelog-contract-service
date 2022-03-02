@@ -154,7 +154,7 @@ export interface IContractService {
 
     findContractById(contractId: string, isLoadingPolicy): Promise<ContractInfo>;
 
-    findContractByIds(contractIds: string[], isLoadingPolicy): Promise<ContractInfo[]>
+    findContractByIds(contractIds: string[], isLoadingPolicy): Promise<ContractInfo[]>;
 
     findOne(condition: object, ...args): Promise<ContractInfo>;
 
@@ -202,6 +202,8 @@ export interface IContractService {
      */
     batchSignSubjects(subjects: BeSignSubjectOptions[], licenseeId: string | number, identityType: ContractLicenseeIdentityTypeEnum, subjectType: SubjectTypeEnum, isWaitInitial: boolean): Promise<ContractInfo[]>;
 
+    contractTransitionRecordTranslate(policyInfo: PolicyInfo, contractTransitionRecords: PageResult<ContractTransitionRecord>);
+
     fillContractPolicyInfo(contracts: ContractInfo[], isTranslate?: boolean): Promise<ContractInfo[]>;
 
     findLicenseeSignCounts(licenseeOwnerIds: number[], licenseeIdentityType: ContractLicenseeIdentityTypeEnum): Promise<Array<{ licensorOwnerId: number, count: number }>>;
@@ -213,7 +215,7 @@ export interface IContractService {
 
 export interface IPolicyService {
 
-    policyTranslate(policies: PolicyInfo[], isSign?: boolean): PolicyInfo[];
+    policyTranslate(policies: PolicyInfo[]): PolicyInfo[];
 
     findOrCreatePolicy(subjectType: SubjectTypeEnum, policyText: string): Promise<PolicyInfo>;
 
@@ -344,6 +346,7 @@ export interface ContractTransitionRecord {
     eventId: string;
     fromState: string;
     toState: string;
+    createDate?: Date;
     eventInfo: IContractTriggerEventMessage;
 }
 

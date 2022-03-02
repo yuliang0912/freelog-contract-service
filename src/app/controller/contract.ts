@@ -334,16 +334,25 @@ export class ContractController {
         }));
     }
 
+    /**
+     * 合约流转记录
+     */
     @get('/:contractId/transitionRecords')
     async contractTransitionRecords() {
         const {ctx} = this;
         const contractId = ctx.checkParams('contractId').notEmpty().isContractId().value;
+        const isTranslate = ctx.checkQuery('isTranslate').optional().toBoolean().default(false).value;
         const skip = ctx.checkQuery('skip').optional().toInt().default(0).ge(0).value;
         const limit = ctx.checkQuery('limit').optional().toInt().default(10).gt(0).lt(101).value;
         ctx.validateParams();
 
-        await this.contractService.findIntervalContractTransitionRecords({
-            contractId
-        }, skip, limit, ['contractId', 'fromState', 'toState', 'eventId', 'createDate'], {_id: -1}).then(ctx.success);
+        const recordPageResult = await this.contractService.findIntervalContractTransitionRecords({contractId},
+            skip, limit, ['contractId', 'fromState', 'toState', 'eventId', 'eventInfo', 'createDate'], {_id: -1});
+
+        if (isTranslate && recordPageResult.dataList.length) {
+            const contractInfo = await this.contractService.findContractById(contractId, true);
+            this.contractService.contractTransitionRecordTranslate(contractInfo.policyInfo, recordPageResult);
+        }
+        ctx.success(recordPageResult);
     }
 }

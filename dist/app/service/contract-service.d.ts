@@ -63,6 +63,12 @@ export declare class ContractService implements IContractService {
      */
     fillContractPolicyInfo(contracts: ContractInfo[], isTranslate?: boolean): Promise<ContractInfo[]>;
     /**
+     * 合约流转记录翻译
+     * @param policyInfo
+     * @param contractTransitionRecord
+     */
+    contractTransitionRecordTranslate(policyInfo: PolicyInfo, contractTransitionRecord: PageResult<ContractTransitionRecord>): PageResult<ContractTransitionRecord>;
+    /**
      * 获取签约数量
      * @param licenseeOwnerIds
      * @param licenseeIdentityType

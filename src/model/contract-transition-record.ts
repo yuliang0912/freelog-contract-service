@@ -24,6 +24,8 @@ export class ContractTransitionRecordModel extends MongooseModelBase {
             toObject: ContractTransitionRecordModel.toObjectOptions
         });
 
+        contractTransitionRecordSchema.index({contract: 1});
+
         contractTransitionRecordSchema.virtual('stateId').get(function (this: any) {
             return this.id;
         });

@@ -1,9 +1,7 @@
 import {provide, inject} from 'midway';
 import {IPolicyCompiler, IPolicyService, PolicyInfo} from '../../interface';
 import {FreelogContext, IMongodbOperation, SubjectTypeEnum} from 'egg-freelog-base';
-import {ContractEntity} from '@freelog/resource-policy-lang';
-import {FSMEntity} from '@freelog/resource-policy-lang/src/translate/tools/FSMTool';
-import {EventEntity} from '@freelog/resource-policy-lang/src/translate/tools/EventTool';
+
 import {report} from '@freelog/resource-policy-lang';
 
 @provide('policyService')
@@ -20,26 +18,12 @@ export class PolicyService implements IPolicyService {
         const list = [];
         for (let policyInfo of policies) {
             policyInfo = Reflect.has(policyInfo, 'toObject') ? policyInfo['toObject']() : policyInfo;
-            const contractEntity: ContractEntity = {
-                audiences: policyInfo.fsmDeclarationInfo?.audiences ?? [],
-                fsmStates: []
-            };
-            for (const [stateName, stateInfo] of Object.entries(policyInfo.fsmDescriptionInfo)) {
-                const fsmState: FSMEntity = {
-                    name: stateName,
-                    serviceStates: stateInfo.serviceStates,
-                    events: stateInfo.transitions.map(eventInfo => {
-                        return {
-                            id: eventInfo.eventId,
-                            name: eventInfo.name,
-                            args: eventInfo.args,
-                            state: eventInfo.toState
-                        } as EventEntity;
-                    })
-                };
-                contractEntity.fsmStates.push(fsmState);
-            }
-            policyInfo.translateInfo = report(contractEntity);
+            policyInfo.translateInfo = report({
+                audiences: policyInfo.fsmDeclarationInfo.audiences,
+                declarations: policyInfo.fsmDeclarationInfo,
+                description: policyInfo.fsmDeclarationInfo,
+                states: policyInfo.fsmDescriptionInfo
+            });
             list.push(policyInfo);
         }
         return list;

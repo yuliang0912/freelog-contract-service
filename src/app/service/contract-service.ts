@@ -271,7 +271,7 @@ export class ContractService implements IContractService {
         if (isEmpty(policyIds)) {
             return contracts;
         }
-        const policyMap: Map<string, PolicyInfo> = await this.policyService.findByIds(policyIds, 'policyId policyName policyText fsmDescriptionInfo').then(list => {
+        const policyMap: Map<string, PolicyInfo> = await this.policyService.findByIds(policyIds).then(list => {
             if (isTranslate) {
                 list = this.policyService.policyTranslate(list);
             }

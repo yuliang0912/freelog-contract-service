@@ -294,6 +294,7 @@ export class ContractService implements IContractService {
 
         const records: any[] = contractTransitionRecord.dataList.reverse().map(x => {
             return {
+                id: x.stateId,
                 fromState: x.fromState === '_none_' ? null : x.fromState,
                 toState: x.toState,
                 time: moment(x.eventInfo.eventTime).format('YYYY-MM-DD HH:mm:ss'),
@@ -363,9 +364,7 @@ export class ContractService implements IContractService {
 
     /**
      * 获取标的物签约次数(同一个用户去重)
-     * @param subjectType
-     * @param signUserId
-     * @param signUserType
+     * @param condition
      */
     async findSubjectSignGroups(condition: object) {
 

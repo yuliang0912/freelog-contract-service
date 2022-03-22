@@ -19,7 +19,7 @@ export class PolicyService implements IPolicyService {
         for (let policyInfo of policies) {
             policyInfo = Reflect.has(policyInfo, 'toObject') ? policyInfo['toObject']() : policyInfo;
             policyInfo.translateInfo = report({
-                audiences: policyInfo.fsmDeclarationInfo.audiences ?? [],
+                audiences: policyInfo.fsmDeclarationInfo?.audiences ?? [],
                 declarations: policyInfo.fsmDeclarationInfo,
                 description: policyInfo.fsmDeclarationInfo,
                 states: policyInfo.fsmDescriptionInfo

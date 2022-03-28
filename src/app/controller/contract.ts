@@ -211,7 +211,8 @@ export class ContractController {
         const subjectType = ctx.checkQuery('subjectType').optional().toInt().in([SubjectTypeEnum.Presentable, SubjectTypeEnum.Resource, SubjectTypeEnum.UserGroup]).value;
         ctx.validateParams();
 
-        const subjectSignCountMap = await this.contractService.findSubjectSignCounts(subjectType, subjectIds).then(list => {
+        const condition = deleteUndefinedFields({subjectId: {$in: subjectIds}, subjectType});
+        const subjectSignCountMap = await this.contractService.findSubjectSignCounts(condition).then(list => {
             return new Map<string, number>(list.map(x => [x.subjectId, x.count]));
         });
 
@@ -219,6 +220,30 @@ export class ContractController {
             return {
                 subjectId,
                 count: subjectSignCountMap.has(subjectId) ? subjectSignCountMap.get(subjectId) : 0
+            };
+        }));
+    }
+
+    /**
+     * 甲方的所有标的物被签约的次数
+     */
+    @get('/licensors/signCount')
+    async licensorSignCount() {
+
+        const {ctx} = this;
+        const licensorIds = ctx.checkQuery('licensorIds').exist().toSplitArray().len(1, 300).value;
+        const subjectType = ctx.checkQuery('subjectType').optional().toInt().in([SubjectTypeEnum.Presentable, SubjectTypeEnum.Resource, SubjectTypeEnum.UserGroup]).value;
+        ctx.validateParams();
+
+        const condition = deleteUndefinedFields({licensorId: {$in: licensorIds}, subjectType});
+        const subjectSignCountMap = await this.contractService.findLicensorSignCounts(condition).then(list => {
+            return new Map<string, number>(list.map(x => [x.licensorId, x.count]));
+        });
+
+        ctx.success(licensorIds.map(licensorId => {
+            return {
+                licensorId,
+                count: subjectSignCountMap.get(licensorId) ?? 0
             };
         }));
     }

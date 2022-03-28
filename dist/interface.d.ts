@@ -129,11 +129,15 @@ export interface IContractService {
     findIntervalList(condition: object, skip?: number, limit?: number, projection?: string[], sort?: object): Promise<PageResult<ContractInfo>>;
     count(condition: object): Promise<number>;
     /**
-     * 获取标的物签约次数(同一个用户去重)
-     * @param subjectType
-     * @param subjectIds
+     * 获取标的物签约次数(同一个乙方去重)
+     * @param condition
      */
-    findSubjectSignCounts(subjectType: SubjectTypeEnum, subjectIds: string[]): any;
+    findSubjectSignCounts(condition: object): any;
+    /**
+     * 获取甲方的标的物签约次数(同一个乙方去重)
+     * @param condition
+     */
+    findLicensorSignCounts(condition: object): any;
     /**
      * 获取标的物签约次数(同一个用户去重)
      */

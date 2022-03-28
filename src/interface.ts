@@ -169,11 +169,16 @@ export interface IContractService {
     count(condition: object): Promise<number>;
 
     /**
-     * 获取标的物签约次数(同一个用户去重)
-     * @param subjectType
-     * @param subjectIds
+     * 获取标的物签约次数(同一个乙方去重)
+     * @param condition
      */
-    findSubjectSignCounts(subjectType: SubjectTypeEnum, subjectIds: string[]);
+    findSubjectSignCounts(condition: object);
+
+    /**
+     * 获取甲方的标的物签约次数(同一个乙方去重)
+     * @param condition
+     */
+    findLicensorSignCounts(condition: object);
 
     /**
      * 获取标的物签约次数(同一个用户去重)

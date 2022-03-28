@@ -335,12 +335,10 @@ export class ContractService implements IContractService {
      * @param subjectType
      * @param subjectIds
      */
-    async findSubjectSignCounts(subjectType: SubjectTypeEnum, subjectIds: string[]) {
+    async findSubjectSignCounts(condition: object) {
 
         const aggregates = [{
-            $match: {
-                subjectId: {$in: subjectIds}, subjectType
-            }
+            $match: condition
         }, {
             $group: {
                 _id: {subjectId: '$subjectId', licenseeId: '$licenseeId'}
@@ -355,9 +353,27 @@ export class ContractService implements IContractService {
             }
         }];
 
-        if (!subjectType) {
-            delete aggregates[0].$match.subjectType;
-        }
+        return this.contractInfoProvider.aggregate(aggregates);
+    }
+
+    async findLicensorSignCounts(condition: object) {
+
+        const aggregates = [{
+            $match: condition
+        }, {
+            // 同一个甲方,同一个乙方,同一个标的物即使签约多次也只计算一次.例如签约多个策略,或者策略过期了,续签. 最终统计按人头,而非合约数
+            $group: {
+                _id: {licensorId: '$licensorId', licenseeId: '$licenseeId', subjectId: '$subjectId'}
+            }
+        }, {
+            $group: {
+                _id: '$_id.licensorId', count: {$sum: 1}
+            }
+        }, {
+            $project: {
+                _id: 0, licensorId: '$_id', count: '$count'
+            }
+        }];
 
         return this.contractInfoProvider.aggregate(aggregates);
     }

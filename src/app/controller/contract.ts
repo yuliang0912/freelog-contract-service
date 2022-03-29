@@ -23,7 +23,7 @@ import {
 } from 'egg-freelog-base';
 import {OutsideApiService} from '../service/outside-api-service';
 import {deleteUndefinedFields} from 'egg-freelog-base/lib/freelog-common-func';
-import {ContractAuthStatusEnum} from '../../enum';
+import {ContractAuthStatusEnum, ContractFsmRunningStatusEnum} from '../../enum';
 
 @provide()
 @controller('/v2/contracts')
@@ -121,7 +121,7 @@ export class ContractController {
         const keywordsType = ctx.checkQuery('keywordsType').optional().toInt().in([1, 2, 3, 4]).value; // 关键字类型(1:合约ID 2:标的物名称 3:甲方名称 4:乙方名称)
         const status = ctx.checkQuery('status').optional().toInt().in([ContractStatusEnum.Terminated, ContractStatusEnum.Executed, ContractStatusEnum.Exception]).value;
         const authStatus = ctx.checkQuery('authStatus').optional().toInt().value;
-        const compositeState = ctx.checkQuery('compositeState').optional().toInt().in([1, 2, 3, 4, 5]).value;
+        const compositeState = ctx.checkQuery('compositeState').ignoreParamWhenEmpty().toInt().in([1, 2, 3, 4, 5, 6]).value;
         const isLoadPolicyInfo = ctx.checkQuery('isLoadPolicyInfo').optional().toInt().in([0, 1, 2]).default(0).value;
         const isTranslate = ctx.checkQuery('isTranslate').optional().toBoolean().default(false).value;
         const licenseeIdentityType = ctx.checkQuery('licenseeIdentityType').optional().toInt().in([ContractLicenseeIdentityTypeEnum.Resource, ContractLicenseeIdentityTypeEnum.Node, ContractLicenseeIdentityTypeEnum.ClientUser]).value;
@@ -172,19 +172,14 @@ export class ContractController {
                 case 4: // 未授权
                     conditionBuilder.setNumber('authStatus', ContractAuthStatusEnum.Unauthorized);
                     break;
-                case 5:
-
+                case 5: // 异常
+                    conditionBuilder.setArray('$or', [{fsmRunningStatus: ContractFsmRunningStatusEnum.InitializedError}, {status: ContractStatusEnum.Exception}]);
+                    break;
+                case 6: // 终止
+                    conditionBuilder.setNumber('status', ContractStatusEnum.Terminated);
+                    break;
             }
         }
-
-        // if (isString(keywords) && keywords.length) {
-        //     const searchRegExp = new RegExp(keywords, 'i');
-        //     if (CommonRegex.mongoObjectId.test(keywords)) {
-        //         conditionBuilder.setArray('$or', [{subjectId: keywords}, {_id: keywords}]);
-        //     } else {
-        //         conditionBuilder.setArray('$or', [{contractName: searchRegExp}, {licensorName: searchRegExp}, {licenseeName: searchRegExp}]);
-        //     }
-        // }
         if (isDate(startDate) && isDate(endDate)) {
             conditionBuilder.setObject('createDate', {$gte: startDate, $lte: endDate});
         } else if (isDate(startDate)) {

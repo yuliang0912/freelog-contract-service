@@ -142,6 +142,11 @@ export enum ContractAuthStatusEnum {
     TestNodeAuthorized = 2,
 
     /**
+     * 用户组标签
+     */
+    Label = 4,
+
+    /**
      * 未获得任何授权
      */
     Unauthorized = 128,

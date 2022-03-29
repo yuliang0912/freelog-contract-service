@@ -18,12 +18,6 @@ export class PolicyService implements IPolicyService {
         const list = [];
         for (let policyInfo of policies) {
             policyInfo = Reflect.has(policyInfo, 'toObject') ? policyInfo['toObject']() : policyInfo;
-            console.log(JSON.stringify({
-                audiences: policyInfo.fsmDeclarationInfo?.audiences ?? [],
-                declarations: policyInfo.fsmDeclarationInfo,
-                description: policyInfo.fsmDeclarationInfo,
-                states: policyInfo.fsmDescriptionInfo
-            }));
             policyInfo.translateInfo = report({
                 audiences: policyInfo.fsmDeclarationInfo?.audiences ?? [],
                 declarations: policyInfo.fsmDeclarationInfo,

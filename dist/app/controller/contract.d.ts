@@ -11,6 +11,7 @@ export declare class ContractController {
     outsideApiService: OutsideApiService;
     contractInfoProvider: IMongodbOperation<ContractInfo>;
     index(): Promise<void>;
+    indexForAdmin(): Promise<void>;
     list(): Promise<void>;
     createContract(): Promise<void>;
     batchCreateContracts(): Promise<void>;

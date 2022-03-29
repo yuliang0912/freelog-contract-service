@@ -106,6 +106,100 @@ export class ContractController {
         ctx.success(pageResult);
     }
 
+    @get('/search')
+    @visitorIdentityValidator(IdentityTypeEnum.LoginUser)
+    async indexForAdmin() {
+        const {ctx} = this;
+        const skip = ctx.checkQuery('skip').optional().toInt().default(0).ge(0).value;
+        const limit = ctx.checkQuery('limit').optional().toInt().default(10).gt(0).lt(101).value;
+        const sort = ctx.checkQuery('sort').ignoreParamWhenEmpty().toSortObject().value;
+        const licensorId = ctx.checkQuery('licensorId').optional().value; // 甲方
+        const licenseeId = ctx.checkQuery('licenseeId').optional().value; // 乙方
+        const subjectIds = ctx.checkQuery('subjectIds').optional().isSplitMongoObjectId().toSplitArray().default([]).value;
+        const subjectType = ctx.checkQuery('subjectType').optional().toInt().in([SubjectTypeEnum.Presentable, SubjectTypeEnum.Resource, SubjectTypeEnum.UserGroup]).value;
+        const keywords = ctx.checkQuery('keywords').optional().decodeURIComponent().toLowercase().trim().value;
+        const keywordsType = ctx.checkQuery('keywordsType').optional().toInt().in([1, 2, 3, 4]).value; // 关键字类型(1:合约ID 2:标的物名称 3:甲方名称 4:乙方名称)
+        const status = ctx.checkQuery('status').optional().toInt().in([ContractStatusEnum.Terminated, ContractStatusEnum.Executed, ContractStatusEnum.Exception]).value;
+        const authStatus = ctx.checkQuery('authStatus').optional().toInt().value;
+        const compositeState = ctx.checkQuery('compositeState').optional().toInt().in([1, 2, 3, 4, 5]).value;
+        const isLoadPolicyInfo = ctx.checkQuery('isLoadPolicyInfo').optional().toInt().in([0, 1, 2]).default(0).value;
+        const isTranslate = ctx.checkQuery('isTranslate').optional().toBoolean().default(false).value;
+        const licenseeIdentityType = ctx.checkQuery('licenseeIdentityType').optional().toInt().in([ContractLicenseeIdentityTypeEnum.Resource, ContractLicenseeIdentityTypeEnum.Node, ContractLicenseeIdentityTypeEnum.ClientUser]).value;
+        const startDate = ctx.checkQuery('startDate').ignoreParamWhenEmpty().toDate().value;
+        const endDate = ctx.checkQuery('endDate').ignoreParamWhenEmpty().toDate().value;
+        const projection: string[] = ctx.checkQuery('projection').optional().toSplitArray().default([]).value;
+        ctx.validateParams();
+
+        const conditionBuilder = this.mongoConditionBuilder
+            .setNumber('status', status)
+            .setNumber('authStatus', authStatus)
+            .setNumber('subjectType', subjectType)
+            .setString('licensorId', licensorId, {isAllowEmptyString: false})
+            .setString('licenseeId', licenseeId, {isAllowEmptyString: false})
+            .setNumber('licenseeIdentityType', licenseeIdentityType)
+            .setArray('subjectId', subjectIds, {isAllowEmptyArray: false, operation: '$in'});
+
+        if (isString(keywords) && keywords.length && keywordsType) {
+            const searchRegExp = new RegExp(keywords, 'i');
+            switch (keywordsType) {
+                case 1:
+                    conditionBuilder.setString('_id', keywords);
+                    break;
+                case  2:
+                    conditionBuilder.setRegex('subjectName', searchRegExp);
+                    break;
+                case 3:
+                    conditionBuilder.setRegex('licensorName', searchRegExp);
+                    break;
+                case 4:
+                    conditionBuilder.setRegex('licenseeName', searchRegExp);
+                    break;
+                default:
+                    break;
+            }
+        }
+        if (compositeState) {
+            switch (compositeState) {
+                case 1: // 具备正式授权
+                    conditionBuilder.setArray('authStatus', [1, 3], {operation: '$in'});
+                    break;
+                case 2: // 具备测试授权
+                    conditionBuilder.setArray('authStatus', [2, 3], {operation: '$in'});
+                    break;
+                case 3: // 用户组标签
+                    conditionBuilder.setNumber('authStatus', ContractAuthStatusEnum.Label);
+                    break;
+                case 4: // 未授权
+                    conditionBuilder.setNumber('authStatus', ContractAuthStatusEnum.Unauthorized);
+                    break;
+                case 5:
+
+            }
+        }
+
+        // if (isString(keywords) && keywords.length) {
+        //     const searchRegExp = new RegExp(keywords, 'i');
+        //     if (CommonRegex.mongoObjectId.test(keywords)) {
+        //         conditionBuilder.setArray('$or', [{subjectId: keywords}, {_id: keywords}]);
+        //     } else {
+        //         conditionBuilder.setArray('$or', [{contractName: searchRegExp}, {licensorName: searchRegExp}, {licenseeName: searchRegExp}]);
+        //     }
+        // }
+        if (isDate(startDate) && isDate(endDate)) {
+            conditionBuilder.setObject('createDate', {$gte: startDate, $lte: endDate});
+        } else if (isDate(startDate)) {
+            conditionBuilder.setObject('createDate', {$gte: startDate});
+        } else if (isDate(endDate)) {
+            conditionBuilder.setObject('createDate', {$lte: endDate});
+        }
+
+        const pageResult = await this.contractService.findIntervalList(conditionBuilder.value(), skip, limit, projection, sort ?? {createDate: -1});
+        if (isLoadPolicyInfo) {
+            pageResult.dataList = await this.contractService.fillContractPolicyInfo(pageResult.dataList, isTranslate);
+        }
+        ctx.success(pageResult);
+    }
+
     @get('/list')
     @visitorIdentityValidator(IdentityTypeEnum.LoginUser | IdentityTypeEnum.InternalClient)
     async list() {

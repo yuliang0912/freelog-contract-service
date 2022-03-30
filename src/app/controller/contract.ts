@@ -161,16 +161,16 @@ export class ContractController {
         if (compositeState) {
             switch (compositeState) {
                 case 1: // 具备正式授权
-                    conditionBuilder.setArray('authStatus', [1, 3], {operation: '$in'});
+                    conditionBuilder.setArray('authStatus', [1, 3], {operation: '$in'}).setNumber('status', ContractStatusEnum.Executed);
                     break;
                 case 2: // 具备测试授权
-                    conditionBuilder.setArray('authStatus', [2, 3], {operation: '$in'});
+                    conditionBuilder.setArray('authStatus', [2, 3], {operation: '$in'}).setNumber('status', ContractStatusEnum.Executed);
                     break;
                 case 3: // 用户组标签
-                    conditionBuilder.setNumber('authStatus', ContractAuthStatusEnum.Label);
+                    conditionBuilder.setNumber('authStatus', ContractAuthStatusEnum.Label).setNumber('status', ContractStatusEnum.Executed);
                     break;
                 case 4: // 未授权
-                    conditionBuilder.setNumber('authStatus', ContractAuthStatusEnum.Unauthorized);
+                    conditionBuilder.setNumber('authStatus', ContractAuthStatusEnum.Unauthorized).setNumber('status', ContractStatusEnum.Executed);
                     break;
                 case 5: // 异常
                     conditionBuilder.setArray('$or', [{fsmRunningStatus: ContractFsmRunningStatusEnum.InitializedError}, {status: ContractStatusEnum.Exception}]);

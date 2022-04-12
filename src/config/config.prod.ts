@@ -22,7 +22,7 @@ export default () => {
         enable: true,
         clientId: 'freelog-contract-service',
         logLevel: 1,
-        brokers: ['kafka.production:9092'], // kafka-hs.production.svc.cluster.local:9092
+        brokers: ['kafka-hs.production.svc.cluster.local:9092'],
         connectionTimeout: 3000,
         retry: {
             initialRetryTime: 5000,

@@ -17,13 +17,13 @@ export default () => {
         },
         amzS3: {}
     };
-    
+
 
     config.kafka = {
         enable: true,
         clientId: 'freelog-contract-service',
         logLevel: 1,
-        brokers: ['kafka-hs.production.svc.cluster.local:9092'],
+        brokers: ['kafka-0.kafka-hs.production.svc.cluster.local:9092', 'kafka-1.kafka-hs.production.svc.cluster.local:9092', 'kafka-2.kafka-hs.production.svc.cluster.local:9092'],
         connectionTimeout: 3000,
         retry: {
             initialRetryTime: 5000,

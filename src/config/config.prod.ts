@@ -17,6 +17,7 @@ export default () => {
         },
         amzS3: {}
     };
+    
 
     config.kafka = {
         enable: true,

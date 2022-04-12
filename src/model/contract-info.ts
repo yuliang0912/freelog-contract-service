@@ -52,6 +52,8 @@ export class ContractInfoModel extends MongooseModelBase {
 
         contractInfoSchema.index({licensorId: 1, licensorOwnerId: 1});
         contractInfoSchema.index({licenseeId: 1, licenseeOwnerId: 1});
+        contractInfoSchema.index({licensorOwnerId: 1});
+        contractInfoSchema.index({licenseeOwnerId: 1});
         contractInfoSchema.index({subjectId: 1, subjectType: 1, policyId: 1});
         contractInfoSchema.index({uniqueKey: 1}, {unique: true});
 

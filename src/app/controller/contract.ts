@@ -313,9 +313,7 @@ export class ContractController {
         }));
     }
 
-    /**
-     * 甲方的所有标的物被签约的次数
-     */
+    // 甲方的所有标的物被签约的次数
     @get('/licensors/signCount')
     async licensorSignCount() {
 
@@ -448,9 +446,7 @@ export class ContractController {
         }));
     }
 
-    /**
-     * 合约流转记录
-     */
+    // 合约流转记录
     @get('/:contractId/transitionRecords')
     async contractTransitionRecords() {
         const {ctx} = this;

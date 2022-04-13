@@ -17,7 +17,7 @@ export default () => {
         enable: true,
         clientId: 'freelog-contract-service',
         logLevel: logLevel.ERROR,
-        brokers: ['kafka-hs.development.svc.cluster.local:9092'], // 'kafka-hs.production.svc.cluster.local:9092'
+        brokers: ['kafka-0.kafka-hs.development.svc.cluster.local:9092', 'kafka-1.kafka-hs.development.svc.cluster.local:9092', 'kafka-2.kafka-hs.development.svc.cluster.local:9092'], // 'kafka-hs.production.svc.cluster.local:9092'
     };
 
     return config;

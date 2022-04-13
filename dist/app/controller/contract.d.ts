@@ -17,17 +17,11 @@ export declare class ContractController {
     batchCreateContracts(): Promise<void>;
     count(): Promise<void>;
     subjectSignCount(): Promise<void>;
-    /**
-     * 甲方的所有标的物被签约的次数
-     */
     licensorSignCount(): Promise<void>;
     subjectSignStatistics(): Promise<void>;
     show(): Promise<void>;
     isCanExecEvent(): Promise<void>;
     setDefault(): Promise<void>;
     deleteClientUserPresentableContract(): Promise<void>;
-    /**
-     * 合约流转记录
-     */
     contractTransitionRecords(): Promise<void>;
 }

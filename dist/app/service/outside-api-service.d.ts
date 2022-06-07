@@ -71,6 +71,11 @@ export declare class OutsideApiService implements IOutsideApiService {
      */
     _presentableWrapToSubjectBaseInfo(presentableIds: string[]): Promise<SubjectBaseInfo[]>;
     /**
+     * 用户组信息转换为标的物信息
+     * @param iconIds
+     */
+    _userGroupWrapToSubjectBaseInfo(iconIds: string[]): Promise<SubjectBaseInfo[]>;
+    /**
      * 乙方作为资源时,转换乙方信息
      * @param {string} resourceId
      * @returns {Promise<LicenseeInfo>}

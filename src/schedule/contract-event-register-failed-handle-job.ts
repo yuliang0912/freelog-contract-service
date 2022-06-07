@@ -46,7 +46,7 @@ export class ContractEventRegisterFailedHandleJob implements CommonSchedule {
         return {
             cron: '0 */2 * * * *',
             type: 'worker',
-            immediate: true, // 启动时是否立即执行一次
+            immediate: false, // 启动时是否立即执行一次
             disable: false
         };
     }

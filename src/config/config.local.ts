@@ -32,6 +32,7 @@ export default () => {
     config.mongoose = {
         url: decodeURIComponent(`mongodb%3A%2F%2Fcontract_service%3AQzA4Qzg3QTA3NDRCQTA0NDU1RUQxMjI3MTA4ODQ1MTk%3D%40dds-wz9ac40fee5c09441604-pub.mongodb.rds.aliyuncs.com%3A3717%2Cdds-wz9ac40fee5c09442584-pub.mongodb.rds.aliyuncs.com%3A3717%2Ftest-contracts%3FreplicaSet%3Dmgset-44484047`),
     };
+
     config.gatewayUrl = 'http://api.testfreelog.com';
 
     config.localIdentity = {
@@ -40,7 +41,7 @@ export default () => {
     };
 
     config.kafka = {
-        enable: true,
+        enable: false,
         clientId: 'freelog-contract-service',
         logLevel: logLevel.ERROR,
         brokers: ['112.74.140.101:9094']

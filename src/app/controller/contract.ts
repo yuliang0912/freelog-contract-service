@@ -206,6 +206,7 @@ export class ContractController {
         const licenseeIdentityType = ctx.checkQuery('licenseeIdentityType').optional().toInt().in([ContractLicenseeIdentityTypeEnum.Resource, ContractLicenseeIdentityTypeEnum.Node, ContractLicenseeIdentityTypeEnum.ClientUser]).value;
         const licensorId = ctx.checkQuery('licensorId').optional().value; // 甲方
         const licenseeId = ctx.checkQuery('licenseeId').optional().value; // 乙方
+        const authStatusList = ctx.checkQuery('authStatusList').optional().isSplitNumber().toSplitArray().len(1, 10).value; // 授权状态
         const isLoadPolicyInfo = ctx.checkQuery('isLoadPolicyInfo').optional().toInt().in([0, 1, 2]).default(0).value;
         const isTranslate = ctx.checkQuery('isTranslate').optional().toBoolean().default(false).value;
         const projection: string[] = ctx.checkQuery('projection').optional().toSplitArray().default([]).value;
@@ -222,6 +223,7 @@ export class ContractController {
             .setString('licensorId', licensorId, {isAllowEmptyString: false})
             .setNumber('licenseeIdentityType', licenseeIdentityType)
             .setNumber('subjectType', subjectType)
+            .setArray('authStatus', authStatusList, {isAllowEmptyArray: false, operation: '$in'})
             .value();
 
         let dataList = await this.contractService.find(condition, projection.join(' '));

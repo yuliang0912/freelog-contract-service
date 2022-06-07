@@ -21,6 +21,7 @@ export interface ContractInfo {
     subjectName: string;
     subjectType: SubjectTypeEnum;
     fsmCurrentState?: string | null;
+    fsmCurrentStateColors?: string[];
     fsmRunningStatus?: ContractFsmRunningStatusEnum;
     fsmDeclarations?: {
         [key: string]: any;
@@ -70,6 +71,16 @@ export interface PresentableInfo {
     policies: SubjectPolicyInfo[];
     nodeId: number;
     onlineStatus: number;
+}
+export interface IconInfo {
+    iconId: string;
+    iconName: string;
+    ownerId: number;
+    ownerName: string;
+    ownerUserId: number;
+    ownerUserName: string;
+    policies: SubjectPolicyInfo[];
+    status: number;
 }
 export interface SubjectPolicyInfo {
     policyId: string;
@@ -262,6 +273,7 @@ export interface ContractTransitionRecord {
 }
 export interface IContractAuthStatusChangedEventMessage {
     contractId: string;
+    policyId: string;
     subjectId: string;
     subjectName: string;
     subjectType: SubjectTypeEnum;
@@ -269,6 +281,7 @@ export interface IContractAuthStatusChangedEventMessage {
     licenseeOwnerId: number;
     licensorId: string | number;
     licensorOwnerId: number;
+    afterStateColors: string[];
     beforeAuthStatus: ContractAuthStatusEnum;
     afterAuthStatus: ContractAuthStatusEnum;
     contractStatus: ContractStatusEnum;

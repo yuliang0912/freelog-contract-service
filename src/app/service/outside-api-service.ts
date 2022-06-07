@@ -1,4 +1,4 @@
-import {provide, inject, init} from 'midway';
+import {init, inject, provide} from 'midway';
 import {
     ApiInvokingError,
     ApplicationError,
@@ -7,9 +7,16 @@ import {
     SubjectTypeEnum
 } from 'egg-freelog-base';
 import {
-    IOutsideApiService, LicenseeInfo, NodeInfo, SubjectBaseInfo, UserInfo, ResourceInfo, PresentableInfo
+    IconInfo,
+    IOutsideApiService,
+    LicenseeInfo,
+    NodeInfo,
+    PresentableInfo,
+    ResourceInfo,
+    SubjectBaseInfo,
+    UserInfo
 } from '../../interface';
-import {differenceWith, isEmpty, uniq, isArray, first} from 'lodash';
+import {differenceWith, first, isArray, isEmpty, uniq} from 'lodash';
 
 @provide()
 export class OutsideApiService implements IOutsideApiService {
@@ -164,7 +171,7 @@ export class OutsideApiService implements IOutsideApiService {
         }
         const offlinePresentableIds = presentableInfos.filter(x => x.onlineStatus !== 1).map(x => x.presentableId);
         if (!isEmpty(offlinePresentableIds)) {
-            throw new ApplicationError(this.ctx.gettext('sign-subject-offline-error', `,resourceId:[${offlinePresentableIds.toString()}]`));
+            throw new ApplicationError(this.ctx.gettext('sign-subject-offline-error', `,presentableId:[${offlinePresentableIds.toString()}]`));
         }
         const nodeInfoMap: Map<number, NodeInfo> = await this.ctx.curlIntranetApi(`${this.ctx.webApi.nodeInfoV2}/list?nodeIds=${presentableInfos.map(x => x.nodeId).toString()}`).then(list => {
             return new Map(list.map(x => [x.nodeId, x]));
@@ -182,6 +189,35 @@ export class OutsideApiService implements IOutsideApiService {
                 licensorOwnerName: nodeInfo.ownerUserName,
                 policies: presentableInfo.policies,
                 status: presentableInfo.onlineStatus === 1 ? 1 : 0, // 上线了才可用
+            };
+        });
+    }
+
+    /**
+     * 用户组信息转换为标的物信息
+     * @param iconIds
+     */
+    async _userGroupWrapToSubjectBaseInfo(iconIds: string[]): Promise<SubjectBaseInfo[]> {
+        const iconInfos: IconInfo[] = await this.ctx.curlIntranetApi(`${this.ctx.webApi.iconV2}/list?iconIds=${iconIds.toString()}`);
+        const invalidIconIds = differenceWith(iconIds, iconInfos, (x, y) => x === y.iconId);
+        if (!isEmpty(invalidIconIds)) {
+            throw new ApplicationError(this.ctx.gettext('sign-subject-invalid-error', `,iconIds:[${invalidIconIds.toString()}]`));
+        }
+        const offlineIconIds = iconInfos.filter(x => x.status !== 1).map(x => x.iconId);
+        if (!isEmpty(offlineIconIds)) {
+            throw new ApplicationError(this.ctx.gettext('sign-subject-offline-error', `,iconId:[${offlineIconIds.toString()}]`));
+        }
+        return iconInfos.map(iconInfo => {
+            return {
+                subjectId: iconInfo.iconId,
+                subjectType: SubjectTypeEnum.UserGroup,
+                subjectName: iconInfo.iconName,
+                licensorId: iconInfo.ownerId,
+                licensorName: iconInfo.ownerName,
+                licensorOwnerId: iconInfo.ownerUserId,
+                licensorOwnerName: iconInfo.ownerUserName,
+                policies: iconInfo.policies,
+                status: iconInfo.status
             };
         });
     }
@@ -254,6 +290,7 @@ export class OutsideApiService implements IOutsideApiService {
     _initial() {
         this.subjectWrapMap.set(SubjectTypeEnum.Resource, this._resourceInfoWrapToSubjectBaseInfo);
         this.subjectWrapMap.set(SubjectTypeEnum.Presentable, this._presentableWrapToSubjectBaseInfo);
+        this.subjectWrapMap.set(SubjectTypeEnum.UserGroup, this._userGroupWrapToSubjectBaseInfo);
 
         this.licenseeWrapMap.set(ContractLicenseeIdentityTypeEnum.ClientUser, this._userInfoWrapToLicenseeInfo);
         this.licenseeWrapMap.set(ContractLicenseeIdentityTypeEnum.Node, this._nodeInfoWrapToLicenseeInfo);

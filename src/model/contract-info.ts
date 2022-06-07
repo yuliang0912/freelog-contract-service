@@ -37,6 +37,7 @@ export class ContractInfoModel extends MongooseModelBase {
             signature: {type: String, required: true}, // 具体加密算法以及字段详见代码:extend/contract-common-generator/contract-info-signature-generator.ts
             uniqueKey: {type: String, required: true}, // 具体加密算法以及字段详见代码:extend/contract-common-generator/contract-info-signature-generator.ts
             fsmCurrentState: {type: String, default: null, required: false}, // 状态机中当前的状态
+            fsmCurrentStateColors: {type: [String], default: [], required: false}, // 状态机中当前的状态对应的色块
             fsmDeclarations: {type: this.mongoose.Schema.Types.Mixed, default: {}, required: false}, // 状态机中相关的参数以及声明信息
             fsmRunningStatus: {type: Number, default: 1, required: true}, // 状态机运行状态 1:未初始化 2:等待事件注册 4:生效中(已初始化,未终止) 8:已终止
             authStatus: {type: Number, default: 1, required: true}, // 合同授权状态: 参考ContractAuthStatusEnum

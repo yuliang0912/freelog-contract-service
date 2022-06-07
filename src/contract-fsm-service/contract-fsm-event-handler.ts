@@ -9,7 +9,8 @@ import {
 import {
     ContractLicenseeIdentityTypeEnum,
     ContractStatusEnum,
-    IMongodbOperation
+    IMongodbOperation,
+    SubjectTypeEnum
 } from 'egg-freelog-base';
 import {inject, plugin, provide, scope, ScopeEnum} from 'midway';
 import {ClientSession} from 'mongoose';
@@ -53,7 +54,8 @@ export class ContractFsmEventHandler {
             fsmCurrentState: toState,
             fsmRunningStatus: ContractFsmEventHandler.GetContractFsmRunningStatus(contractInfo, toState),
             authStatus: ContractFsmEventHandler.GetContractAuthStatus(contractInfo, toState),
-            fsmDeclarations: contractInfo.fsmDeclarations
+            fsmDeclarations: contractInfo.fsmDeclarations,
+            fsmCurrentStateColors: contractInfo.policyInfo.fsmDescriptionInfo[toState]?.serviceStates ?? []
         };
         if (updateContractModel.fsmRunningStatus === ContractFsmRunningStatusEnum.Terminated) {
             updateContractModel.status = ContractStatusEnum.Terminated;
@@ -63,6 +65,7 @@ export class ContractFsmEventHandler {
                 status: ContractStatusEnum.Terminated, contractId: contractInfo.contractId
             });
         }
+
         const transitionRecord: ContractTransitionRecord = {
             _id: this.mongoose.getNewObjectId(),
             contractId: contractInfo.contractId,
@@ -75,10 +78,10 @@ export class ContractFsmEventHandler {
             // console.log(`修改合约状态,contractId:${contractInfo.contractId},from:${fromState},to:${toState}`);
             if (fromState === '_none_') {
                 // 2秒之后再发送状态变更消息,给其他服务预留足够的数据处理时间. 因为初始化之后会发生合约状态变更. 也会产生对应的mq消息.
-                setTimeout(() => this.execAuthStatusChangedEventHandle(contractInfo, updateContractModel.authStatus, updateContractModel.status), 2000);
+                setTimeout(() => this.execAuthStatusChangedEventHandle(contractInfo, updateContractModel.authStatus, updateContractModel.status, updateContractModel.fsmCurrentStateColors), 2000);
                 return;
             }
-            return this.execAuthStatusChangedEventHandle(contractInfo, updateContractModel.authStatus, updateContractModel.status);
+            return this.execAuthStatusChangedEventHandle(contractInfo, updateContractModel.authStatus, updateContractModel.status, updateContractModel.fsmCurrentStateColors);
         });
         return transitionRecord._id;
     }
@@ -118,14 +121,16 @@ export class ContractFsmEventHandler {
      * @param contractInfo
      * @param afterAuthStatus
      * @param contractStatus
+     * @param afterStateColors
      */
-    async execAuthStatusChangedEventHandle(contractInfo: ContractInfo, afterAuthStatus: ContractAuthStatusEnum, contractStatus: ContractStatusEnum) {
+    async execAuthStatusChangedEventHandle(contractInfo: ContractInfo, afterAuthStatus: ContractAuthStatusEnum, contractStatus: ContractStatusEnum, afterStateColors: string[]) {
         if (contractInfo.authStatus === afterAuthStatus) {
             return;
         }
 
         const msgBody: IContractAuthStatusChangedEventMessage = {
             contractId: contractInfo.contractId,
+            policyId: contractInfo.policyId,
             subjectId: contractInfo.subjectId,
             subjectName: contractInfo.subjectName,
             subjectType: contractInfo.subjectType,
@@ -135,10 +140,13 @@ export class ContractFsmEventHandler {
             licensorOwnerId: contractInfo.licensorOwnerId,
             beforeAuthStatus: contractInfo.authStatus,
             licenseeIdentityType: contractInfo.licenseeIdentityType,
-            afterAuthStatus, contractStatus
+            afterStateColors, afterAuthStatus, contractStatus
         };
 
-        const topicName = `${ContractLicenseeIdentityTypeEnum[contractInfo.licenseeIdentityType.toString()].toLowerCase()}-contract-auth-status-changed-topic`;
+        let topicName = `${ContractLicenseeIdentityTypeEnum[contractInfo.licenseeIdentityType.toString()].toLowerCase()}-contract-auth-status-changed-topic`;
+        if (contractInfo.subjectType === SubjectTypeEnum.UserGroup) {
+            topicName = `user-group-contract-auth-status-changed-topic`;
+        }
         return this.kafkaClient.send({
             topic: topicName,
             acks: -1,
@@ -191,6 +199,10 @@ export class ContractFsmEventHandler {
         }
         // 如果已经终止,获得了测试授权,且不是C端消费者合约,则依然属于运行状态
         if (fsmStateDescriptionInfo.isTerminate && fsmStateDescriptionInfo.isTestAuth && contractInfo.licenseeIdentityType !== ContractLicenseeIdentityTypeEnum.ClientUser) {
+            return ContractFsmRunningStatusEnum.Running;
+        }
+        // 用户组合约如果终止态还存在对应的色块,则依然处于运行状态
+        if (contractInfo.subjectType === SubjectTypeEnum.UserGroup && fsmStateDescriptionInfo.serviceStates?.length) {
             return ContractFsmRunningStatusEnum.Running;
         }
         return ContractFsmRunningStatusEnum.Terminated;

@@ -196,7 +196,7 @@ export class ContractController {
     }
 
     @get('/list')
-    @visitorIdentityValidator(IdentityTypeEnum.LoginUser | IdentityTypeEnum.InternalClient)
+    // @visitorIdentityValidator(IdentityTypeEnum.LoginUser | IdentityTypeEnum.InternalClient)
     async list() {
         const {ctx} = this;
 

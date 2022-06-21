@@ -294,6 +294,46 @@ export class ContractController {
         }));
     }
 
+    // 签约统计(通用)
+    @get('/signCount')
+    async signStatistics() {
+        const {ctx} = this;
+        const objectIds = ctx.checkQuery('objectIds').exist().toSplitArray().len(0, 100).value;
+        // 1: 甲方ID 2:甲方所属ID 3:乙方ID 4:乙方所属ID 5:标的物ID
+        const objectType = ctx.checkQuery('objectType').exist().toInt().in([1, 2, 3, 4, 5]).value;
+        const subjectType = ctx.checkQuery('subjectType').exist().toInt().in([SubjectTypeEnum.Presentable, SubjectTypeEnum.Resource, SubjectTypeEnum.UserGroup]).value;
+        const startDate = ctx.checkQuery('startDate').ignoreParamWhenEmpty().toDate().value;
+        const endDate = ctx.checkQuery('endDate').ignoreParamWhenEmpty().toDate().value;
+        ctx.validateParams();
+
+        const objectTypeInfo = {
+            1: 'licensorId', 2: 'licensorOwnerId', 3: 'licenseeId', 4: 'licenseeOwnerId', 5: 'subjectId'
+        };
+        const objectTypeName = objectTypeInfo[objectType];
+        const conditionBuilder = this.mongoConditionBuilder
+            .setNumber('subjectType', subjectType)
+            .setArray(objectTypeName, objectIds, {isAllowEmptyArray: false, operation: '$in'});
+
+        if (isDate(startDate) && isDate(endDate)) {
+            conditionBuilder.setObject('createDate', {$gte: startDate, $lte: endDate});
+        } else if (isDate(startDate)) {
+            conditionBuilder.setObject('createDate', {$gte: startDate});
+        } else if (isDate(endDate)) {
+            conditionBuilder.setObject('createDate', {$lte: endDate});
+        }
+        const condition = conditionBuilder.value();
+        const countMap: Map<string, number> = await this.contractService.commonSignCounts(condition, objectTypeName).then(list => {
+            return new Map(list.map(x => [x.key, x.count]));
+        });
+        ctx.success(objectIds.map(item => {
+            return {
+                key: item,
+                field: objectTypeName,
+                count: countMap.get(item) ?? 0
+            };
+        }));
+    }
+
     @get('/subjects/signCount')
     async subjectSignCount() {
 

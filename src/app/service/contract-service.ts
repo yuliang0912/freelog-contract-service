@@ -331,6 +331,27 @@ export class ContractService implements IContractService {
     }
 
     /**
+     * 通用签约次数统计(按合约签约数)
+     * @param condition
+     * @param statisticalField
+     */
+    async commonSignCounts(condition: object, statisticalField: string) {
+
+        const aggregates = [{
+            $match: condition
+        }, {
+            $group: {
+                _id: `$${statisticalField}`, count: {$sum: 1}
+            }
+        }, {
+            $project: {
+                _id: 0, key: '$_id', count: '$count'
+            }
+        }];
+        return this.contractInfoProvider.aggregate(aggregates);
+    }
+
+    /**
      * 获取标的物签约次数(同一个用户去重)
      * @param subjectType
      * @param subjectIds

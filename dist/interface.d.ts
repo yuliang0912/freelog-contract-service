@@ -139,6 +139,7 @@ export interface IContractService {
     findByIds(contractIds: string[], ...args: any[]): Promise<ContractInfo[]>;
     findIntervalList(condition: object, skip?: number, limit?: number, projection?: string[], sort?: object): Promise<PageResult<ContractInfo>>;
     count(condition: object): Promise<number>;
+    commonSignCounts(condition: object, statisticalField: string): any;
     /**
      * 获取标的物签约次数(同一个乙方去重)
      * @param condition

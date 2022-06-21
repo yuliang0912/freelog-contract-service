@@ -78,6 +78,12 @@ export declare class ContractService implements IContractService {
         count: number;
     }>>;
     /**
+     * 通用签约次数统计(按合约签约数)
+     * @param condition
+     * @param statisticalField
+     */
+    commonSignCounts(condition: object, statisticalField: string): Promise<any>;
+    /**
      * 获取标的物签约次数(同一个用户去重)
      * @param subjectType
      * @param subjectIds

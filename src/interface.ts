@@ -180,6 +180,8 @@ export interface IContractService {
 
     count(condition: object): Promise<number>;
 
+    commonSignCounts(condition: object, statisticalField: string);
+
     /**
      * 获取标的物签约次数(同一个乙方去重)
      * @param condition

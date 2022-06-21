@@ -16,6 +16,7 @@ export declare class ContractController {
     createContract(): Promise<void>;
     batchCreateContracts(): Promise<void>;
     count(): Promise<void>;
+    signStatistics(): Promise<void>;
     subjectSignCount(): Promise<void>;
     licensorSignCount(): Promise<void>;
     subjectSignStatistics(): Promise<void>;

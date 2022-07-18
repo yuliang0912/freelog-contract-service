@@ -33,8 +33,8 @@ export class ContractMqEventTriggerHandle implements IKafkaSubscribeMessageHandl
      */
     async messageHandle(payload: EachMessagePayload): Promise<void> {
         const {message} = payload;
+        this.createKafkaConsumeRecord(payload).then();
         const eventInfo = JSON.parse(message.value.toString());
-
         const contractInfo = await this.contractInfoProvider.findOne({_id: eventInfo.contractId});
         if (!contractInfo) {
             console.error(`未找到合约信息,contractId:${eventInfo.contractId},offset:${message.offset}`);
@@ -48,7 +48,11 @@ export class ContractMqEventTriggerHandle implements IKafkaSubscribeMessageHandl
         }).finally(() => {
             session.endSession();
         });
+    }
 
+    private async createKafkaConsumeRecord(payload: EachMessagePayload) {
+        const {message} = payload;
+        console.log('收到消息', message);
         await this.kafkaConsumeRecordProvider.create({
             consumer: this.consumerGroupId,
             topic: payload.topic,

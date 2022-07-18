@@ -17,4 +17,5 @@ export declare class ContractMqEventTriggerHandle implements IKafkaSubscribeMess
      * @param payload
      */
     messageHandle(payload: EachMessagePayload): Promise<void>;
+    private createKafkaConsumeRecord;
 }

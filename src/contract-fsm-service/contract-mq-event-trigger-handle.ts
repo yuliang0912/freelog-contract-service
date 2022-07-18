@@ -3,6 +3,7 @@ import {ContractInfo, IContractStateMachine, IKafkaSubscribeMessageHandle, Polic
 import {EachMessagePayload} from 'kafkajs';
 import {IMongodbOperation} from 'egg-freelog-base';
 import {MongoClient} from 'mongodb';
+import KafkaConsumeRecordProvider from '../app/data-provider/kafka-consume-record-provider';
 
 @provide()
 @scope(ScopeEnum.Singleton)
@@ -14,6 +15,8 @@ export class ContractMqEventTriggerHandle implements IKafkaSubscribeMessageHandl
     policyInfoProvider: IMongodbOperation<PolicyInfo>;
     @inject()
     contractInfoProvider: IMongodbOperation<ContractInfo>;
+    @inject()
+    kafkaConsumeRecordProvider: KafkaConsumeRecordProvider;
     @inject()
     buildContractStateMachine: (contractInfo: ContractInfo) => IContractStateMachine;
 
@@ -44,6 +47,22 @@ export class ContractMqEventTriggerHandle implements IKafkaSubscribeMessageHandl
             return this.buildContractStateMachine(contractInfo).execContractEvent(session, eventInfo);
         }).finally(() => {
             session.endSession();
+        });
+
+        await this.kafkaConsumeRecordProvider.create({
+            consumer: this.consumerGroupId,
+            topic: payload.topic,
+            partition: payload.partition,
+            offset: message.offset,
+            messageKey: message.key,
+            messageTimestamp: message.timestamp,
+            messageValue: JSON.parse(message.value.toString())
+        }).catch(error => {
+            console.log('kafka消费记录失败' + JSON.stringify({
+                topic: payload.topic,
+                partition: payload.partition,
+                offset: message.offset
+            }));
         });
     }
 }

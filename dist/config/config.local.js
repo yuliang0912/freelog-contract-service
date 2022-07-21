@@ -32,7 +32,7 @@ exports.default = () => {
     };
     config.gatewayUrl = 'http://api.testfreelog.com';
     config.localIdentity = {
-        userId: 50022,
+        userId: 50028,
         username: 'yuliang'
     };
     config.kafka = {

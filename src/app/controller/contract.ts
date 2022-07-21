@@ -88,7 +88,7 @@ export class ContractController {
             if (CommonRegex.mongoObjectId.test(keywords)) {
                 conditionBuilder.setArray('$or', [{subjectId: keywords}, {_id: keywords}]);
             } else {
-                conditionBuilder.setArray('$or', [{contractName: searchRegExp}, {licensorName: searchRegExp}, {licenseeName: searchRegExp}]);
+                conditionBuilder.setArray('$or', [{contractName: searchRegExp}, {subjectName: searchRegExp}, {licensorName: searchRegExp}, {licenseeName: searchRegExp}]);
             }
         }
         if (isDate(startDate) && isDate(endDate)) {
@@ -98,7 +98,6 @@ export class ContractController {
         } else if (isDate(endDate)) {
             conditionBuilder.setObject('createDate', {$lte: endDate});
         }
-
         const pageResult = await this.contractService.findIntervalList(conditionBuilder.value(), skip, limit, projection, sort ?? {createDate: -1});
         if (isLoadPolicyInfo) {
             pageResult.dataList = await this.contractService.fillContractPolicyInfo(pageResult.dataList, isTranslate);
